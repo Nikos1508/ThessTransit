@@ -31,9 +31,11 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.outlined.LocalActivity
+import androidx.compose.material.icons.outlined.Route
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -49,129 +51,154 @@ data class BottomBarItem(
 fun ThessTransitBottomBar(
     selectedIndex: Int,
     onItemSelected: (Int) -> Unit
-){
+) {
 
     val items = listOf(
-        BottomBarItem(title = "Εισιτήρια", icon = Icons.Outlined.LocalActivity),
-        BottomBarItem(title = "Αρχική", icon = Icons.Outlined.Home),
-        BottomBarItem(title = "Login", icon = Icons.Outlined.Person)
+        BottomBarItem(
+            "Εισιτήρια",
+            Icons.Outlined.LocalActivity
+        ),
+        BottomBarItem(
+            "Αρχική",
+            Icons.Outlined.Home
+        ),
+        BottomBarItem(
+            "Δρομολόγια",
+            Icons.Outlined.Route
+        )
     )
+
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = MaterialTheme.colorScheme.background
     ) {
-        Column {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(84.dp)
-                    .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                items.forEachIndexed { index, item ->
-                    BottomBarNavItem(
-                        item = item,
-                        selected = index == selectedIndex,
-                        onClick = {
-                            onItemSelected(index)
-                        }
-                    )
-                }
 
-                Spacer(
-                    modifier = Modifier.windowInsetsBottomHeight(
-                        WindowInsets.navigationBars
-                    )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(86.dp)
+                .padding(horizontal = 24.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+
+            items.forEachIndexed { index, item ->
+
+                BottomBarNavItem(
+                    item = item,
+                    selected = selectedIndex == index,
+                    onClick = {
+                        onItemSelected(index)
+                    }
                 )
-
             }
         }
     }
 }
 
 @Composable
-private fun BottomBarNavItem(
+fun BottomBarNavItem(
     item: BottomBarItem,
     selected: Boolean,
     onClick: () -> Unit
 ) {
-
-    val backgroundShape = RoundedCornerShape(26.dp)
 
     val iconTint by animateColorAsState(
         targetValue =
             if (selected)
                 MaterialTheme.colorScheme.onPrimary
             else
-                MaterialTheme.colorScheme.onBackground,
+                MaterialTheme.colorScheme.onSurfaceVariant,
         label = ""
     )
 
     val textTint by animateColorAsState(
         targetValue =
             if (selected)
-                MaterialTheme.colorScheme.onPrimary
+                MaterialTheme.colorScheme.primary
             else
-                MaterialTheme.colorScheme.onBackground,
+                MaterialTheme.colorScheme.onSurfaceVariant,
         label = ""
     )
 
-    val width by animateDpAsState(
+    val pillWidth by animateDpAsState(
         targetValue =
             if (selected)
-                130.dp
+                96.dp
             else
-                88.dp,
+                48.dp,
         animationSpec = spring(),
         label = ""
     )
 
-    Box(
-        modifier = Modifier
-            .height(54.dp)
-            .then(
-                if (selected) {
-                    Modifier
-                        .clip(backgroundShape)
+    val pillHeight by animateDpAsState(
+        targetValue =
+            if (selected)
+                46.dp
+            else
+                0.dp,
+        animationSpec = spring(),
+        label = ""
+    )
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.clickable {
+            onClick()
+        }
+    ) {
+
+        Box(
+            modifier = Modifier
+                .width(pillWidth)
+                .height(
+                    if (selected)
+                        pillHeight
+                    else
+                        46.dp
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+
+            if (selected) {
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(RoundedCornerShape(24.dp))
                         .background(
-                            brush = Brush.horizontalGradient(
+                            Brush.horizontalGradient(
                                 colors = listOf(
                                     MaterialTheme.colorScheme.primary,
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                                    MaterialTheme.colorScheme.secondary
                                 )
                             )
                         )
-                } else{
-                    Modifier
-                }
-            )
-            .clickable{onClick()}
-            .padding(14.dp),
-        contentAlignment = Alignment.Center
-    ){
-        Row(
-            modifier = Modifier.width(width),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
+                )
+            }
+
             Icon(
                 imageVector = item.icon,
                 contentDescription = item.title,
                 tint = iconTint,
-                modifier = Modifier.size( if(selected) 24.dp else 22.dp )
+                modifier = Modifier.size(24.dp)
             )
-
-            if (selected) {
-                Spacer(modifier = Modifier.size(8.dp))
-
-                Text(
-                    text = item.title,
-                    color = textTint,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
         }
+
+        Spacer(
+            modifier = Modifier.height(6.dp)
+        )
+
+        Text(
+            text = item.title,
+            color = textTint,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight =
+                if (selected)
+                    FontWeight.SemiBold
+                else
+                    FontWeight.Normal
+        )
     }
 }
 

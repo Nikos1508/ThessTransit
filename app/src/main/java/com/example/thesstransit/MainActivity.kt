@@ -16,6 +16,7 @@ import com.example.thesstransit.ui.components.ThessTransitBottomBar
 import com.example.thesstransit.ui.theme.ThessTransitTheme
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.navigation.compose.rememberNavController
 
 
 class MainActivity : ComponentActivity() {
@@ -26,6 +27,8 @@ class MainActivity : ComponentActivity() {
             ThessTransitTheme(darkTheme = true) {
 
                 var selectedTab by remember { mutableStateOf(1) }
+
+                val navController = rememberNavController()
 
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
@@ -38,6 +41,7 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                 ) { innerPadding ->
+
                     Box(modifier = Modifier.padding(innerPadding)) {
 
                         when (selectedTab) {
@@ -47,11 +51,11 @@ class MainActivity : ComponentActivity() {
                             1 -> {
                                 HomeScreen(
                                     onLoginClick = { selectedTab = 2 },
-                                    onSearchClick = { /* TODO */ },
-                                    onHowToGoClick = { /* TODO */ },
-                                    onLinesClick = { /* TODO */ },
-                                    onNearbyStopsClick = { /* TODO */ },
-                                    onLiveDeparturesClick = { /* TODO */ }
+                                    onSearchClick = { },
+                                    onHowToGoClick = { },
+                                    onLinesClick = { },
+                                    onNearbyStopsClick = { },
+                                    onLiveDeparturesClick = { }
                                 )
                             }
                             2 -> {
