@@ -43,13 +43,22 @@ import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material.icons.outlined.Train
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material.icons.outlined.Work
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimePicker
 import androidx.compose.material3.VerticalDivider
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -76,6 +85,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.thesstransit.R
 import com.example.thesstransit.ui.theme.ThessTransitTheme
+import java.util.Calendar
 
 @Composable
 fun HomeScreen(
@@ -85,6 +95,9 @@ fun HomeScreen(
     onNearbyStopsClick: () -> Unit = {},
     onLiveDeparturesClick: () -> Unit = {}
 ){
+
+    var showFilters by remember { mutableStateOf(false) }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -106,7 +119,7 @@ fun HomeScreen(
             }
             item {
                 Spacer(modifier = Modifier.height(8.dp))
-                SearchBarSection()
+                SearchBarSection(onFilterClick = { showFilters = true })
             }
             item {
                 Spacer(modifier = Modifier.height(16.dp))
@@ -144,6 +157,12 @@ fun HomeScreen(
             item {
                 Spacer(modifier = Modifier.height(32.dp))
             }
+        }
+
+        if (showFilters) {
+            RouteFiltersBottomSheet(
+                onDismiss = { showFilters = false }
+            )
         }
     }
 }
@@ -272,7 +291,9 @@ fun HeaderSection(
 }
 
 @Composable
-fun SearchBarSection() {
+fun SearchBarSection(
+    onFilterClick: () -> Unit
+) {
 
     var searchQuery by remember {mutableStateOf("")}
 
@@ -350,17 +371,193 @@ fun SearchBarSection() {
                         color = MaterialTheme.colorScheme.surfaceContainerHighest,
                         shape = RoundedCornerShape(12.dp)
                     )
-                    .bounceClick{},
+                    .bounceClick{ onFilterClick() },
                 contentAlignment = Alignment.Center
             ){
                 Icon(
                     imageVector = Icons.Outlined.Tune,
-                    contentDescription = null,
+                    contentDescription = "Φίλτρα Αναζήτησης",
                     tint = MaterialTheme.colorScheme.onSurface
                 )
             }
 
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun RouteFiltersBottomSheet(
+    onDismiss: () -> Unit
+) {
+    val sheetState = rememberModalBottomSheetState()
+
+    var fastRoute by remember { mutableStateOf(true) }
+    var lessWalking by remember { mutableStateOf(false) }
+    var avoidMetro by remember { mutableStateOf(false) }
+    var avoidTransfer by remember { mutableStateOf(false) }
+
+    var timeType by remember { mutableStateOf("DEPART") }
+    var selectedHour by remember { mutableStateOf(Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) }
+    var selectedMinute by remember { mutableStateOf(Calendar.getInstance().get(Calendar.MINUTE)) }
+    var showTimePickerDialog by remember { mutableStateOf(false) }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 32.dp)
+        ) {
+            Text(
+                text = "Προτιμήσεις Διαδρομής",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Text(
+                text = "Προγραμματισμός Ώρας",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                FilterChip(
+                    selected = timeType == "DEPART",
+                    onClick = { timeType = "DEPART" },
+                    label = { Text("Αναχώρηση στις") }
+                )
+
+                FilterChip(
+                    selected = timeType == "ARRIVE",
+                    onClick = { timeType = "ARRIVE" },
+                    label = { Text("Άφιξη στις") }
+                )
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                Surface(
+                    onClick = { showTimePickerDialog = true },
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.bounceClick { showTimePickerDialog = true }
+                ) {
+                    Text(
+                        text = String.format("%02d:%02d", selectedHour, selectedMinute),
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+            VerticalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = "Κριτήρια",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilterChip(
+                        selected = fastRoute,
+                        onClick = { fastRoute = !fastRoute },
+                        label = { Text("Ταχύτερη διαδρομή") }
+                    )
+                    FilterChip(
+                        selected = lessWalking,
+                        onClick = { lessWalking = !lessWalking },
+                        label = { Text("Λιγότερο περπάτημα") }
+                    )
+                }
+
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilterChip(
+                        selected = avoidMetro,
+                        onClick = { avoidMetro = !avoidMetro },
+                        label = { Text("Αποφυγή Μετρό") }
+                    )
+                    FilterChip(
+                        selected = avoidTransfer,
+                        onClick = { avoidTransfer = !avoidTransfer },
+                        label = { Text("Χωρίς μετεπιβίβαση") }
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(28.dp))
+
+
+            Button(
+                onClick = onDismiss,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text("Εφαρμογή Φίλτρων", fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+
+    if (showTimePickerDialog) {
+        val timePickerState = rememberTimePickerState(
+            initialHour = selectedHour,
+            initialMinute = selectedMinute,
+            is24Hour = true
+        )
+
+        AlertDialog(
+            onDismissRequest = { showTimePickerDialog = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    selectedHour = timePickerState.hour
+                    selectedMinute = timePickerState.minute
+                    showTimePickerDialog = false
+                }) {
+                    Text("Εντάξει", fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showTimePickerDialog = false }) {
+                    Text("Ακύρωση")
+                }
+            },
+            text = {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = if (timeType == "DEPART") "Επιλογή ώρας αναχώρησης" else "Επιλογή ώρας άφιξης",
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+                    TimePicker(state = timePickerState)
+                }
+            },
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+            shape = RoundedCornerShape(28.dp)
+        )
     }
 }
 
@@ -501,7 +698,7 @@ fun MainFeatureCard(
 ) {
     Surface(
         modifier = modifier
-            .height(120.dp) // Ελαφρώς αυξημένο ύψος για να χωράνε άνετα οι 3 σειρές αν χρειαστεί
+            .height(120.dp)
             .bounceClick { onClick() },
         shape = RoundedCornerShape(18.dp),
         color = MaterialTheme.colorScheme.surfaceContainer,
