@@ -5,11 +5,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.ui.composed
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,17 +23,23 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.DirectionsBus
+import androidx.compose.material.icons.outlined.DirectionsCar
+import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.LocalActivity
 import androidx.compose.material.icons.outlined.LocationOn
+import androidx.compose.material.icons.outlined.Map
+import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.QrCode2
 import androidx.compose.material.icons.outlined.Route
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Star
+import androidx.compose.material.icons.outlined.Train
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material.icons.outlined.Work
 import androidx.compose.material3.Icon
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.getValue
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -53,12 +54,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -112,6 +115,26 @@ fun HomeScreen(
             }
             item {
                 Spacer(modifier = Modifier.height(24.dp))
+
+                SectionTitle(
+                    title = "Ενημερώσεις / Νέα"
+                )
+            }
+            item {
+                AIUpdateSection()
+            }
+            item {
+                Spacer(modifier = Modifier.height(24.dp))
+
+                SectionTitle(
+                    title = "Επιπλέον λειτουργίες"
+                )
+            }
+            item {
+                FeatureTilesGrid()
+            }
+            item {
+                Spacer(modifier = Modifier.height(32.dp))
             }
         }
     }
@@ -142,7 +165,7 @@ fun HeaderSection(
                         colors = listOf(
                             MaterialTheme.colorScheme.background,
                             MaterialTheme.colorScheme.background.copy(alpha = 0.8f),
-                            androidx.compose.ui.graphics.Color.Transparent
+                            Color.Transparent
                         ),
                         startX = 0f,
                         endX = 600f
@@ -155,7 +178,7 @@ fun HeaderSection(
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            androidx.compose.ui.graphics.Color.Transparent,
+                            Color.Transparent,
                             MaterialTheme.colorScheme.background.copy(alpha = 0.5f),
                             MaterialTheme.colorScheme.background
                         )
@@ -220,7 +243,7 @@ fun HeaderSection(
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "Flow", // Διορθώθηκε σε Flow όπως στην εικόνα
+                        text = "Flow",
                         color = MaterialTheme.colorScheme.primary,
                         fontSize = 34.sp,
                         fontWeight = FontWeight.Bold
@@ -249,7 +272,7 @@ fun SearchBarSection(
             .fillMaxWidth()
             .padding(horizontal = 20.dp)
             .height(68.dp)
-            .bounceClick { onSearchClick() }, // Προσθήκη animation πίεσης
+            .bounceClick { onSearchClick() },
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surfaceContainer,
         tonalElevation = 4.dp,
@@ -298,7 +321,7 @@ fun SearchBarSection(
                         color = MaterialTheme.colorScheme.surfaceContainerHighest,
                         shape = RoundedCornerShape(12.dp)
                     )
-                    .bounceClick { /* Φίλτρα */ }, // Προσθήκη animation πίεσης
+                    .bounceClick { },
                 contentAlignment = Alignment.Center
             ){
                 Icon(
@@ -319,6 +342,7 @@ data class QuickCard(
 
 @Composable
 fun QuickAccessRow() {
+
     val items = listOf(
         QuickCard("Οικία", "25ης Μαρτίου, 17, Επανομή", Icons.Outlined.Home),
         QuickCard("Εργασία", "Καθόρισε", Icons.Outlined.Work),
@@ -328,15 +352,15 @@ fun QuickAccessRow() {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp),
+            .padding(horizontal = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         items.forEach { item ->
             Surface(
                 modifier = Modifier
                     .weight(1f)
-                    .height(68.dp)
-                    .bounceClick { /* Ενέργεια κλικ */ }, // Προσθήκη animation πίεσης
+                    .height(88.dp)
+                    .bounceClick { },
                 shape = RoundedCornerShape(14.dp),
                 color = MaterialTheme.colorScheme.surfaceContainer,
                 border = BorderStroke(
@@ -344,35 +368,44 @@ fun QuickAccessRow() {
                     MaterialTheme.colorScheme.outline.copy(alpha = 0.15f)
                 )
             ) {
-                Row(
+                Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(horizontal = 8.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                        .padding(horizontal = 10.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Icon(
-                        imageVector = item.icon,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(24.dp)
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = item.icon,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(18.dp)
+                        )
 
-                    Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
 
-                    Column {
                         Text(
-                            item.title,
+                            text = item.title,
                             color = MaterialTheme.colorScheme.onSurface,
                             fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                        Text(
-                            item.subtitle,
-                            fontSize = 11.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
+
+                    Text(
+                        text = item.subtitle,
+                        fontSize = 10.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        lineHeight = 14.sp,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
             }
         }
@@ -444,7 +477,7 @@ fun MainFeatureCard(
     Surface(
         modifier = modifier
             .height(180.dp)
-            .bounceClick { onClick() }, // Προσθήκη animation πίεσης
+            .bounceClick { onClick() },
         shape = RoundedCornerShape(18.dp),
         color = MaterialTheme.colorScheme.surfaceContainer,
         border = BorderStroke(
@@ -453,7 +486,6 @@ fun MainFeatureCard(
         )
     ) {
         Column(
-            // Προστέθηκε fillMaxHeight() για να δουλέψει σωστά το SpaceBetween
             modifier = Modifier.fillMaxSize().padding(16.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
@@ -484,6 +516,222 @@ fun MainFeatureCard(
         }
     }
 }
+
+@Composable
+fun SectionTitle(
+    title: String
+) {
+    Text(
+        text = title,
+        modifier = Modifier
+            .padding(horizontal = 20.dp, vertical = 8.dp),
+        fontSize = 20.sp,
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.onSurface
+    )
+}
+
+data class AIUpdate(
+    val title: String,
+    val description: String,
+    val icon: ImageVector
+)
+
+val aiUpdates = listOf(
+
+    AIUpdate(
+        title = "Κυκλοφορία",
+        description = "Αυξημένη κίνηση στην Εγνατία Οδό",
+        icon = Icons.Outlined.DirectionsCar
+    ),
+
+    AIUpdate(
+        title = "Έργα & Διακοπές",
+        description = "Γραμμή 3K: Καθυστέρηση 10 λεπτών",
+        icon = Icons.Outlined.Notifications
+    )
+
+)
+
+@Composable
+fun  AIUpdateSection(){
+    Column(
+        modifier = Modifier.padding(horizontal = 20.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        aiUpdates.forEach {
+            AIUpdateCard(update = it)
+        }
+    }
+}
+
+@Composable
+fun AIUpdateCard(
+    update: AIUpdate
+){
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        border = BorderStroke(
+            1.dp,
+            MaterialTheme.colorScheme.outline.copy(alpha = 0.15f)
+        ),
+        shape = RoundedCornerShape(16.dp),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ){
+            Icon(
+                imageVector = update.icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(28.dp)
+            )
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Column(
+                modifier = Modifier.weight(1f)
+            ){
+                Text(
+                    text = update.title,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                Text(
+                    text = update.description,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 12.sp
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun FeatureTilesGrid() {
+    Column(
+        modifier = Modifier.padding(horizontal = 20.dp)
+    ) {
+        featureTiles.chunked(2).forEach { rowItems ->
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ){
+                rowItems.forEach {
+                    SmallFeatureTile(
+                        modifier = Modifier.weight(1f),
+                        tile = it
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+    }
+}
+
+@Composable
+fun SmallFeatureTile(
+    modifier: Modifier = Modifier,
+    tile: FeatureTile
+) {
+    Surface(
+        modifier = modifier
+            .height(125.dp)
+            .bounceClick {},
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        border = BorderStroke(
+            1.dp,
+            MaterialTheme.colorScheme.outline.copy(alpha = 0.15f)
+        )
+    ){
+        Icon(
+            imageVector = tile.icon,
+            contentDescription = null,
+            modifier = Modifier.size(26.dp),
+            tint = MaterialTheme.colorScheme.primary
+        )
+
+        Column {
+            Text(
+                text = tile.title,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Text(
+                text = tile.subtitle,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 11.sp,
+                lineHeight = 14.sp
+            )
+        }
+    }
+}
+
+data class FeatureTile(
+    val title: String,
+    val subtitle: String,
+    val icon: ImageVector
+)
+
+val featureTiles = listOf(
+    FeatureTile(
+        "Εισιτήρια & Τιμές",
+        "Τύποι εισιτηρίων,\nτιμές & οδηγίες",
+        Icons.Outlined.LocalActivity
+    ),
+
+    FeatureTile(
+        "Αγορά Εισιτηρίου",
+        "Αγοράστε ψηφιακά\nεισιτήρια",  /* Αυτό πρέπει να το δουμε TODO */
+        Icons.Outlined.QrCode2
+    ),
+
+    FeatureTile(
+        "Κυκλοφορία",
+        "Δες την κίνηση\nστους δρόμους",
+        Icons.Outlined.DirectionsCar
+    ),
+    FeatureTile(
+        "Μετρό",
+        "Χάρτης, γραμμές\n& δρομολόγια",
+        Icons.Outlined.Train
+    ),
+
+    FeatureTile(
+        "Αγαπημένες\nΔιαδρομές",
+        "Οι συχνότερες\nδιαδρομές σου",
+        Icons.Outlined.Favorite
+    ),
+
+    FeatureTile(
+        "Αποθηκευμένοι\nΧάρτες",
+        "Κατέβασε χάρτες\nγια offline χρήση",
+        Icons.Outlined.Map
+    ),
+
+    FeatureTile(
+        "Ειδοποιήσεις",
+        "Λάβε ειδοποιήσεις για\nγραμμές & διακοπές",
+        Icons.Outlined.Notifications
+    ),
+
+    FeatureTile(
+        "Ρυθμίσεις",
+        "Γλώσσα, εμφάνιση\n& προτιμήσεις",
+        Icons.Outlined.Settings
+    )
+)
+
 
 fun Modifier.bounceClick(onClick: () -> Unit) = this.composed {
     var isPressed by remember { mutableStateOf(false) }
