@@ -90,7 +90,6 @@ class MainActivity : ComponentActivity() {
                                     /* Πατώντας το login, σε πάει στα Εισιτήρια μέσω Navigation  TODO change */
                                     navController.navigate(TicketsRoute)
                                 },
-                                onSearchClick = { /*TODO*/ },
                                 onHowToGoClick = { /*TODO*/ },
                                 onLinesClick = { /*TODO*/ },
                                 onNearbyStopsClick = { /*TODO*/ },
