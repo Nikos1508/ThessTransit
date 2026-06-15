@@ -1,6 +1,7 @@
 package com.example.thesstransit.ui.item
 
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -10,6 +11,8 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -47,17 +50,16 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.VerticalDivider
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -67,6 +69,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
@@ -160,7 +163,7 @@ fun HomeScreen(
         }
 
         if (showFilters) {
-            RouteFiltersBottomSheet(
+            RouteFiltersDialog(
                 onDismiss = { showFilters = false }
             )
         }
@@ -385,13 +388,11 @@ fun SearchBarSection(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-fun RouteFiltersBottomSheet(
+fun RouteFiltersDialog(
     onDismiss: () -> Unit
 ) {
-    val sheetState = rememberModalBottomSheetState()
-
     var fastRoute by remember { mutableStateOf(true) }
     var lessWalking by remember { mutableStateOf(false) }
     var avoidMetro by remember { mutableStateOf(false) }
@@ -402,83 +403,146 @@ fun RouteFiltersBottomSheet(
     var selectedMinute by remember { mutableStateOf(Calendar.getInstance().get(Calendar.MINUTE)) }
     var showTimePickerDialog by remember { mutableStateOf(false) }
 
-    ModalBottomSheet(
+    AlertDialog(
         onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp)
-                .padding(bottom = 32.dp)
-        ) {
-            Text(
-                text = "Προτιμήσεις Διαδρομής",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            Text(
-                text = "Προγραμματισμός Ώρας",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
+        confirmButton = {},
+        dismissButton = {},
+        shape = RoundedCornerShape(28.dp),
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp)
             ) {
-                FilterChip(
-                    selected = timeType == "DEPART",
-                    onClick = { timeType = "DEPART" },
-                    label = { Text("Αναχώρηση στις") }
+                Text(
+                    text = "Προτιμήσεις Διαδρομής",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
 
-                FilterChip(
-                    selected = timeType == "ARRIVE",
-                    onClick = { timeType = "ARRIVE" },
-                    label = { Text("Άφιξη στις") }
+                Spacer(modifier = Modifier.height(20.dp))
+
+                Text(
+                    text = "Προγραμματισμός Ώρας",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                Spacer(modifier = Modifier.height(8.dp))
 
-                Spacer(modifier = Modifier.weight(1f))
-
-                Surface(
-                    onClick = { showTimePickerDialog = true },
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier.bounceClick { showTimePickerDialog = true }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = String.format("%02d:%02d", selectedHour, selectedMinute),
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                    )
+
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                        border = BorderStroke(
+                            1.dp,
+                            MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                        )
+
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(4.dp)
+                        ){
+                            Surface(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .bounceClick{timeType = "DEPART"},
+                                shape = RoundedCornerShape(12.dp),
+                                color =
+                                    if (timeType == "DEPART")
+                                        MaterialTheme.colorScheme.primary
+                                    else
+                                        Color.Transparent
+                            ) {
+                                Text(
+                                    text = "Αναχώρηση",
+                                    modifier = Modifier.padding(vertical = 12.dp),
+                                    textAlign = TextAlign.Center,
+                                    color =
+                                        if (timeType == "DEPART")
+                                            MaterialTheme.colorScheme.onPrimary
+                                        else
+                                            MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+
+                            Surface(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .bounceClick{timeType == "ARRIVE"},
+                                shape = RoundedCornerShape(12.dp),
+                                color =
+                                    if (timeType == "ARRIVE")
+                                        MaterialTheme.colorScheme.primary
+                                    else
+                                        Color.Transparent
+                            ){
+                                Text(
+                                    text = "Άφιξη",
+                                    modifier = Modifier.padding(vertical = 12.dp),
+                                    textAlign = TextAlign.Center,
+                                    color =
+                                        if(timeType == "ARRIVE")
+                                            MaterialTheme.colorScheme.onPrimary
+                                        else
+                                            MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    OutlinedButton(
+                        onClick = {
+                            showTimePickerDialog = true
+                        },
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.AccessTime,
+                            contentDescription = null
+                        )
+
+                        Spacer(modifier = Modifier.width(6.dp))
+
+                        Text(
+                            String.format(
+                                "%02d:%02d",
+                                selectedHour,
+                                selectedMinute
+                            )
+                        )
+                    }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(20.dp))
-            VerticalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(20.dp))
 
-            Text(
-                text = "Κριτήρια",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(8.dp))
+                HorizontalDivider(
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
+                )
 
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = "Κριτήρια",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     FilterChip(
                         selected = fastRoute,
                         onClick = { fastRoute = !fastRoute },
@@ -489,9 +553,6 @@ fun RouteFiltersBottomSheet(
                         onClick = { lessWalking = !lessWalking },
                         label = { Text("Λιγότερο περπάτημα") }
                     )
-                }
-
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FilterChip(
                         selected = avoidMetro,
                         onClick = { avoidMetro = !avoidMetro },
@@ -503,20 +564,21 @@ fun RouteFiltersBottomSheet(
                         label = { Text("Χωρίς μετεπιβίβαση") }
                     )
                 }
-            }
 
-            Spacer(modifier = Modifier.height(28.dp))
+                Spacer(modifier = Modifier.height(28.dp))
 
 
-            Button(
-                onClick = onDismiss,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Text("Εφαρμογή Φίλτρων", fontWeight = FontWeight.Bold)
+                Button(
+                    onClick = onDismiss,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("Εφαρμογή Φίλτρων", fontWeight = FontWeight.Bold)
+                }
+
             }
         }
-    }
+    )
 
     if (showTimePickerDialog) {
         val timePickerState = rememberTimePickerState(
@@ -688,6 +750,7 @@ fun MainFeatureGrid(
         }
     }
 }
+
 @Composable
 fun MainFeatureCard(
     modifier: Modifier = Modifier,
@@ -759,6 +822,7 @@ fun MainFeatureCard(
         }
     }
 }
+
 @Composable
 fun SectionTitle(
     title: String
@@ -941,17 +1005,41 @@ val featureTiles = listOf(
 )
 
 
-fun Modifier.bounceClick(onClick: () -> Unit) = this.composed {
+fun Modifier.bounceClick(
+    tintColor: Color = Color.Black,
+    maxOverlayAlpha: Float = 0.08f,
+    onClick: () -> Unit
+) = composed {
     var isPressed by remember { mutableStateOf(false) }
+
     val scale by animateFloatAsState(
         targetValue = if (isPressed) 0.94f else 1f,
+        animationSpec = spring(
+            dampingRatio = 0.55f,
+            stiffness = 1500f
+        ),
         label = "BounceAnimation"
+    )
+
+    val overlayAlpha by animateFloatAsState(
+        targetValue = if (isPressed) maxOverlayAlpha else 0f,
+        animationSpec = spring(stiffness = 1000f),
+        label = "BounceColorOverlay"
     )
 
     this
         .graphicsLayer {
             scaleX = scale
             scaleY = scale
+        }
+        .drawWithContent {
+            drawContent()
+            if (overlayAlpha > 0f) {
+                drawRect(
+                    color = tintColor.copy(alpha = overlayAlpha),
+                    size = size
+                )
+            }
         }
         .pointerInput(Unit) {
             detectTapGestures(

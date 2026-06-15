@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.Placeholder
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -22,14 +23,14 @@ import kotlinx.serialization.Serializable
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavGraph.Companion.findStartDestination
 
-@Serializable
-object HomeRoute
+@Serializable object HomeRoute
+@Serializable object RoutesRoute
+@Serializable object TicketsRoute
 
-@Serializable
-object RoutesRoute
-
-@Serializable
-object TicketsRoute
+@Serializable object HowToGoRoute
+@Serializable object LinesRoute
+@Serializable object NearbyStopsRoute
+@Serializable object LiveDeparturesRoute
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -100,6 +101,28 @@ class MainActivity : ComponentActivity() {
                         composable<TicketsRoute> {
                             TicketsScreen()
                         }
+
+                        /*
+
+                        composable<HowToGoRoute> {
+
+                        }
+
+                        composable<LinesRoute> {
+
+                        }
+
+                        composable<NearbyStopsRoute> {
+
+                        }
+
+                        composable<LiveDeparturesRoute> {
+
+                        }
+
+
+                        */
+
                     }
                 }
             }
