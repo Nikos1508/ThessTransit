@@ -273,7 +273,7 @@ fun HeaderSection(
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "Flow",
+                        text = "Transit",
                         color = MaterialTheme.colorScheme.primary,
                         fontSize = 34.sp,
                         fontWeight = FontWeight.Bold
