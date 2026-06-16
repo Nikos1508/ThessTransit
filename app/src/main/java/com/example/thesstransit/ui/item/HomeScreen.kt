@@ -87,17 +87,30 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.thesstransit.R
-import com.example.thesstransit.ui.theme.ThessTransitTheme
 import java.util.Calendar
 
 @Composable
 fun HomeScreen(
     onLoginClick: () -> Unit = {},
     onHowToGoClick: () -> Unit = {},
+    onTicketsClick: () -> Unit,
     onLinesClick: () -> Unit = {},
     onNearbyStopsClick: () -> Unit = {},
-    onLiveDeparturesClick: () -> Unit = {}
+    onLiveDeparturesClick: () -> Unit = {},
+    onBuyTicketClick: () -> Unit = {},
+    onFavouritesClick: () -> Unit = {},
+    onNotificationsClick: () -> Unit = {},
+    onSettingsClick: () -> Unit = {}
 ){
+
+    val tiles = listOf(
+        FeatureTile("Εισιτήρια\n& Τιμές", "", Icons.Outlined.LocalActivity, onTicketsClick),
+        FeatureTile("Αγορά\nΕισιτηρίου", "", Icons.Outlined.QrCode2, onBuyTicketClick),
+        FeatureTile("Γραμμές\nΜετρό", "", Icons.Outlined.Train, onLinesClick),
+        FeatureTile("Αγαπημένες\nΔιαδρομές", "", Icons.Outlined.Favorite, onFavouritesClick),
+        FeatureTile("Ειδοποιήσεις", "", Icons.Outlined.Notifications, onNotificationsClick),
+        FeatureTile("Ρυθμίσεις", "", Icons.Outlined.Settings, onSettingsClick)
+    )
 
     var showFilters by remember { mutableStateOf(false) }
 
@@ -155,7 +168,7 @@ fun HomeScreen(
                 )
             }
             item {
-                FeatureTilesGrid()
+                FeatureTilesGrid(tilesList = tiles)
             }
             item {
                 Spacer(modifier = Modifier.height(32.dp))
@@ -251,7 +264,7 @@ fun HeaderSection(
             Column(
                 modifier = Modifier
                     .fillMaxHeight()
-                    .fillMaxWidth(0.6f)
+                    .fillMaxWidth(0.7f)
                     .align(Alignment.TopStart),
                 verticalArrangement = Arrangement.Center
             ) {
@@ -919,9 +932,9 @@ fun AIUpdateCard(
 }
 
 @Composable
-fun FeatureTilesGrid() {
+fun FeatureTilesGrid(tilesList: List<FeatureTile>) {
 
-    val chunkedTiles = featureTiles.chunked(3)
+    val chunkedTiles = tilesList.chunked(3)
 
     Column(
         modifier = Modifier.padding(horizontal = 12.dp),
@@ -931,7 +944,7 @@ fun FeatureTilesGrid() {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth()
-            ){
+            ) {
                 rowItems.forEach { tile ->
                     SmallFeatureTile(
                         modifier = Modifier.weight(1f),
@@ -942,7 +955,6 @@ fun FeatureTilesGrid() {
         }
     }
 }
-
 @Composable
 fun SmallFeatureTile(
     modifier: Modifier = Modifier,
@@ -951,14 +963,11 @@ fun SmallFeatureTile(
     Surface(
         modifier = modifier
             .height(85.dp)
-            .bounceClick {},
+            .bounceClick { tile.onClick() },
         color = MaterialTheme.colorScheme.surfaceContainer,
         shape = RoundedCornerShape(14.dp),
-        border = BorderStroke(
-            1.dp,
-            MaterialTheme.colorScheme.outline.copy(alpha = 0.15f)
-        )
-    ){
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.15f))
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -966,7 +975,6 @@ fun SmallFeatureTile(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
             Icon(
                 imageVector = tile.icon,
                 contentDescription = null,
@@ -992,18 +1000,9 @@ fun SmallFeatureTile(
 data class FeatureTile(
     val title: String,
     val subtitle: String,
-    val icon: ImageVector
+    val icon: ImageVector,
+    val onClick: () -> Unit
 )
-
-val featureTiles = listOf(
-    FeatureTile("Εισιτήρια\n& Τιμές", "", Icons.Outlined.LocalActivity),
-    FeatureTile("Αγορά\nΕισιτηρίου", "", Icons.Outlined.QrCode2),
-    FeatureTile("Γραμμές\nΜετρό", "", Icons.Outlined.Train),
-    FeatureTile("Αγαπημένες\nΔιαδρομές", "", Icons.Outlined.Favorite),
-    FeatureTile("Ειδοποιήσεις", "", Icons.Outlined.Notifications),
-    FeatureTile("Ρυθμίσεις", "", Icons.Outlined.Settings)
-)
-
 
 fun Modifier.bounceClick(
     tintColor: Color = Color.Black,
@@ -1014,10 +1013,7 @@ fun Modifier.bounceClick(
 
     val scale by animateFloatAsState(
         targetValue = if (isPressed) 0.94f else 1f,
-        animationSpec = spring(
-            dampingRatio = 0.55f,
-            stiffness = 1500f
-        ),
+        animationSpec = spring(dampingRatio = 0.55f, stiffness = 1500f),
         label = "BounceAnimation"
     )
 
@@ -1056,10 +1052,19 @@ fun Modifier.bounceClick(
         }
 }
 
-@Preview (showBackground = true)
+@Preview(showBackground = true)
 @Composable
 fun HomeScreenPreview() {
-    ThessTransitTheme(darkTheme = true) {
-        HomeScreen()
-    }
+    HomeScreen(
+        onLoginClick = TODO(),
+        onHowToGoClick = TODO(),
+        onTicketsClick = TODO(),
+        onLinesClick = TODO(),
+        onNearbyStopsClick = TODO(),
+        onLiveDeparturesClick = TODO(),
+        onBuyTicketClick = TODO(),
+        onFavouritesClick = TODO(),
+        onNotificationsClick = TODO(),
+        onSettingsClick = TODO()
+    )
 }
