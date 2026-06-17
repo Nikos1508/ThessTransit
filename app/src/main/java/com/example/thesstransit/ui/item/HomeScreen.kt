@@ -93,7 +93,7 @@ import java.util.Calendar
 fun HomeScreen(
     onLoginClick: () -> Unit = {},
     onHowToGoClick: () -> Unit = {},
-    onTicketsClick: () -> Unit,
+    onTicketsClick: () -> Unit = {},
     onLinesClick: () -> Unit = {},
     onNearbyStopsClick: () -> Unit = {},
     onLiveDeparturesClick: () -> Unit = {},
@@ -144,10 +144,10 @@ fun HomeScreen(
             item {
                 Spacer(modifier = Modifier.height(18.dp))
                 MainFeatureGrid(
-                    onHowToGoClick,
-                    onLinesClick,
-                    onNearbyStopsClick,
-                    onLiveDeparturesClick
+                    onHowToGoClick = onHowToGoClick,
+                    onLinesClick = onLinesClick,
+                    onNearbyStopsClick = onNearbyStopsClick,
+                    onLiveDeparturesClick = onLiveDeparturesClick
                 )
             }
             item {

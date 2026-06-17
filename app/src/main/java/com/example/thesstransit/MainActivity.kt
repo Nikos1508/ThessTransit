@@ -56,8 +56,14 @@ class MainActivity : ComponentActivity() {
                                 onTicketsClick = {
                                     navController.navigate(TicketsRoute)
                                 },
-                                onHowToGoClick = { /*TODO*/ },
-                                onLinesClick = { /*TODO*/ },
+                                onHowToGoClick = {
+
+                                },
+
+                                onLinesClick = {
+                                    navController.navigate(RoutesRoute)
+                                },
+
                                 onNearbyStopsClick = { /*TODO*/ },
                                 onLiveDeparturesClick = { /*TODO*/ }
                             )
@@ -66,17 +72,6 @@ class MainActivity : ComponentActivity() {
                         composable<TicketsRoute> {
                             TicketsScreen()
                         }
-
-                        /*
-                        composable<HowToGoRoute> { }
-
-                        composable<LinesRoute> { }
-
-                        composable<NearbyStopsRoute> { }
-
-                        composable<LiveDeparturesRoute> { }
-
-                        */
                     }
                 }
             }

@@ -1,8 +1,16 @@
 package com.example.thesstransit.ui.item
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -11,48 +19,168 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import xyz.teogramm.oasth.Oasth
-import xyz.teogramm.oasth.OasthData
-import xyz.teogramm.oasth.base.BusMasterLine
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.DirectionsBus
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+
+data class MockBusLine(
+    val number: String,
+    val name: String,
+)
+
+val mockRoutes = listOf(
+    MockBusLine("01X", "ΚΤΕΛ - Αεροδρόμιο (Express)"),
+    MockBusLine("03K", "Ν.Σ.Σ. - ΑΣ ΙΚΕΑ"),
+    MockBusLine("01X", "ΚΤΕΛ - Αεροδρόμιο (Express)"),
+    MockBusLine("02K", "Παράδειγμα - Test"),
+    MockBusLine("01X", "ΚΤΕΛ - Αεροδρόμιο (Express)"),
+    MockBusLine("69A", "ΑΣ ΙΚΕΑ - Παραλία Επανομής")
+)
 
 @Composable
 fun RoutesScreen() {
-    var oasthData by remember { mutableStateOf<OasthData?>(null) }
-    var isLoading by remember { mutableStateOf(true) }
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    listOf(
+                        MaterialTheme.colorScheme.background,
+                        MaterialTheme.colorScheme.surface
+                    )
+                )
+            )
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
 
-    LaunchedEffect(Unit) {
-        withContext(Dispatchers.IO) {
-            try {
-                val fetchedData = Oasth().fetchData()
+            Column(modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 12.dp)) {
+                Text(
+                    text = "Διαδρομές",
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = "Δείτε τις γραμμές και τα δρομολόγια των λεωφορείων",
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
 
-                withContext(Dispatchers.Main) {
-                    oasthData = fetchedData
-                    isLoading = false
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                item { Spacer(modifier = Modifier.height(4.dp)) }
+
+                items(mockRoutes) { route ->
+                    BusRouteRowItem(route = route)
                 }
-            } catch (e: Exception) {
-                e.printStackTrace()
-                withContext(Dispatchers.Main) {
-                    isLoading = false
-                }
+
+                item { Spacer(modifier = Modifier.height(24.dp)) }
             }
         }
     }
+}
 
-    if (isLoading) {
-        Text(text = "Φόρτωση γραμμών...")
-    } else {
+@Composable
+fun BusRouteRowItem(route: MockBusLine){
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .bounceClick{
+                /* TODO Εδώ θα μπει link για συγκεκριμένη γραμμη*/
+            },
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(contentColor = MaterialTheme.colorScheme.surfaceContainer),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f))
+    ){
+        Row(
+            modifier = Modifier
+                .size(44.dp)
+                .background(
+                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
+                    shape = RoundedCornerShape(12.dp)
+                ),
+            verticalAlignment = Alignment.CenterVertically
+        ){
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .background(
+                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
+                        shape = RoundedCornerShape(12.dp)
+                    ),
+                contentAlignment = Alignment.Center
+            ){
+                Icon(
+                    imageVector = Icons.Outlined.DirectionsBus,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
 
-        val allMasterLines: Map<Int, BusMasterLine> = oasthData?.masterLines ?: emptyMap()
+            Spacer(modifier = Modifier.width(14.dp))
 
-        println(allMasterLines)
+            Column( modifier = Modifier.weight(1f) ) {
+                Row(verticalAlignment = Alignment.CenterVertically){
+                    Text(
+                        text = route.number,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
 
-        LazyColumn(modifier = Modifier.fillMaxSize()) {
-            items(allMasterLines.values.toList()) { masterLine ->
-                Text(text = "${masterLine.number}: ${masterLine.nameEL}")
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    Text(
+                        text = route.name,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text = "Keimeno poy ua htan h perigrafh",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1
+                )
             }
         }
-
     }
 }
