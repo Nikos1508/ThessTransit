@@ -56,9 +56,7 @@ class MainActivity : ComponentActivity() {
                                 onTicketsClick = {
                                     navController.navigate(TicketsRoute)
                                 },
-                                onHowToGoClick = {
-
-                                },
+                                onHowToGoClick = { /* TODO */},
 
                                 onLinesClick = {
                                     navController.navigate(RoutesRoute)
