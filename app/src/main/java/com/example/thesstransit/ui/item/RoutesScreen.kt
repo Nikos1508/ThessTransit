@@ -30,6 +30,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.thesstransit.ui.components.ScreenHeader
 
 data class MockBusLine(
     val number: String,
@@ -46,48 +47,60 @@ val mockRoutes = listOf(
 )
 
 @Composable
-fun RoutesScreen() {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    listOf(
-                        MaterialTheme.colorScheme.background,
-                        MaterialTheme.colorScheme.surface
+fun RoutesScreen(
+    onBackClick: () -> Unit
+) {
+    Column {
+        ScreenHeader(title = "Γραμμές", onBackClick = onBackClick)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            MaterialTheme.colorScheme.background,
+                            MaterialTheme.colorScheme.surface
+                        )
                     )
                 )
-            )
-    ) {
-        Column(modifier = Modifier.fillMaxSize()) {
+        ) {
+            Column(modifier = Modifier.fillMaxSize()) {
 
-            Column(modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 12.dp)) {
-                Text(
-                    text = "Διαδρομές",
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = "Δείτε τις γραμμές και τα δρομολόγια των λεωφορείων",
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                item { Spacer(modifier = Modifier.height(4.dp)) }
-
-                items(mockRoutes) { route ->
-                    BusRouteRowItem(route = route)
+                Column(
+                    modifier = Modifier.padding(
+                        start = 20.dp,
+                        end = 20.dp,
+                        top = 24.dp,
+                        bottom = 12.dp
+                    )
+                ) {
+                    Text(
+                        text = "Διαδρομές",
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "Δείτε τις γραμμές και τα δρομολόγια των λεωφορείων",
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
 
-                item { Spacer(modifier = Modifier.height(24.dp)) }
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    item { Spacer(modifier = Modifier.height(4.dp)) }
+
+                    items(mockRoutes) { route ->
+                        BusRouteRowItem(route = route)
+                    }
+
+                    item { Spacer(modifier = Modifier.height(24.dp)) }
+                }
             }
         }
     }

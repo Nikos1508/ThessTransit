@@ -44,10 +44,6 @@ class MainActivity : ComponentActivity() {
                         startDestination = HomeRoute,
                         modifier = Modifier.padding(innerPadding)
                     ) {
-                        composable<RoutesRoute> {
-                            RoutesScreen()
-                        }
-
                         composable<HomeRoute> {
                             HomeScreen(
                                 onLoginClick = {
@@ -67,8 +63,20 @@ class MainActivity : ComponentActivity() {
                             )
                         }
 
+                        composable<RoutesRoute> {
+                            RoutesScreen(
+                                onBackClick = {
+                                    navController.popBackStack()
+                                }
+                            )
+                        }
+
                         composable<TicketsRoute> {
-                            TicketsScreen()
+                            TicketsScreen(
+                                onBackClick = {
+                                    navController.popBackStack()
+                                }
+                            )
                         }
                     }
                 }

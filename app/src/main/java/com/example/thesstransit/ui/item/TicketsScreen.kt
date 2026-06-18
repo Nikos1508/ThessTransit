@@ -45,220 +45,290 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.thesstransit.ui.components.ScreenHeader
 
 
 @Composable
-fun TicketsScreen() {
+fun TicketsScreen(
+    onBackClick: () -> Unit
+) {
 
     var selectedTab by remember { mutableStateOf(0) }
 
     val tabs = listOf("Τιμές & Είδη", "Εκπτώσεις", "Πού αγοράζω εισιτήρια", "Πρόστιμα")
+    Column {
+        ScreenHeader(
+            title = "Εισητήρια",
+            onBackClick = onBackClick
+        )
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    listOf(
-                        MaterialTheme.colorScheme.background,
-                        MaterialTheme.colorScheme.surface
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            MaterialTheme.colorScheme.background,
+                            MaterialTheme.colorScheme.surface
+                        )
                     )
                 )
-            )
-    ){
-        Column(modifier = Modifier.fillMaxSize()){
-            Column(modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 12.dp)) {
-                Text(
-                    text = "Εισητήρια",
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = "Πληροφορίες για τη μετακίνησή σου στη Θεσσαλονίκη",
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            ScrollableTabRow(
-                selectedTabIndex = selectedTab,
-                edgePadding = 16.dp,
-                containerColor = Color.Transparent,
-                contentColor = MaterialTheme.colorScheme.primary,
-                divider = { HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant) }
-            ) {
-                tabs.forEachIndexed { index, title ->
-                    Tab(
-                        selected = selectedTab == index,
-                        onClick = { selectedTab = index },
-                        text = {
-                            Text(
-                                text = title,
-                                fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Normal,
-                                fontSize = 15.sp
-                            )
-                        }
+        ) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                Column(
+                    modifier = Modifier.padding(
+                        start = 20.dp,
+                        end = 20.dp,
+                        top = 24.dp,
+                        bottom = 12.dp
+                    )
+                ) {
+                    Text(
+                        text = "Εισητήρια",
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "Πληροφορίες για τη μετακίνησή σου στη Θεσσαλονίκη",
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-            }
 
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .weight(1f),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-
-                item { Spacer(modifier = Modifier.height(8.dp)) }
-
-                if (selectedTab == 0) {
-                    item {
-                        Column(modifier = Modifier.padding(horizontal = 16.dp)){
-                            Text(
-                                text = "Εισητήρια λεωφορείου",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.padding(bottom = 12.dp)
-                            )
-
-                            Surface(
-                                shape = RoundedCornerShape(16.dp),
-                                color = MaterialTheme.colorScheme.surfaceContainer,
-                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)),
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Column{
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f))
-                                            .padding(14.dp)
-                                    ){
-                                        Text("Τύπος Εισητήριου", modifier = Modifier.weight(1.8f))
-                                        Text("Κανονικό", modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold, textAlign = TextAlign.End, fontSize = 14.sp)
-                                        Text("Μειωμένο", modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold, textAlign = TextAlign.End, fontSize = 14.sp)
-                                    }
-
-                                    TableRow("Αστικής Ζώνης", "0,60€", "0,30€")
-                                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
-                                    TableRow("Περιαστικής Ζώνης", "0,60€", "0,30€")
-                                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
-                                    TableRow("Αεροδρόμιο (1Χ)", "0,60€", "0,30€")
-                                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
-                                    TableRow("10+1 Αστικής Ζώνης", "0,60€", "0,30€")
-                                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
-                                    TableRow("10+1 Περιαστικής Ζώνης", "0,60€", "0,30€")
-                                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
-                                    TableRow("30 Ημερών", "0,60€", "0,30€")
-                                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
-                                    TableRow("60 Ημερών", "0,60€", "0,30€")
-                                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
-                                    TableRow("90 Ημερών", "0,60€", "0,30€")
-                                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
-                                }
+                ScrollableTabRow(
+                    selectedTabIndex = selectedTab,
+                    edgePadding = 16.dp,
+                    containerColor = Color.Transparent,
+                    contentColor = MaterialTheme.colorScheme.primary,
+                    divider = { HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant) }
+                ) {
+                    tabs.forEachIndexed { index, title ->
+                        Tab(
+                            selected = selectedTab == index,
+                            onClick = { selectedTab = index },
+                            text = {
+                                Text(
+                                    text = title,
+                                    fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Normal,
+                                    fontSize = 15.sp
+                                )
                             }
-
-                            Spacer(modifier = Modifier.height(20.dp))
-
-                            InfoNoteCard(
-                                text = "Τα χρονικά εισιτήρια επιτρέπουν την επιβίβαση σε διαφορετικά λεωφορεία ή και στο Μετρό εντός του χρονικού ορίου από την πρώτη επικύρωση."
-                            )
-                        }
+                        )
                     }
                 }
 
-                if (selectedTab == 1){
-                    item {
-                        Column(modifier = Modifier.padding(horizontal = 16.dp)){
-                            Text(
-                                text = "Δικαιούχοι Μειωμένου Κομίστρου",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.padding(bottom = 12.dp)
-                            )
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
 
-                            InfoCard(
-                                icon = Icons.Outlined.Percent,
-                                title = "Ποιοι πληρώνουν Μειωμένο (50%)",
-                                description =   "• Φοιτητές ελληνικών δημόσιων πανεπιστημίων (με επίδειξη ακαδημαϊκής ταυτότητας)\n" +
-                                                "• Μαθητές σχολείων Πρωτοβάθμιας & Δευτεροβάθμιας εκπαίδευσης\n" +
-                                                "• Νέοι ηλικίας 7 έως 18 ετών\n" +
-                                                "• Ηλικιωμένοι άνω των 65 ετών (με επίδειξη αστυνομικής ταυτότητας)"
-                            )
+                    item { Spacer(modifier = Modifier.height(8.dp)) }
 
-                            Spacer(modifier = Modifier.height(16.dp))
+                    if (selectedTab == 0) {
+                        item {
+                            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                                Text(
+                                    text = "Εισητήρια λεωφορείου",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.padding(bottom = 12.dp)
+                                )
 
-                            InfoCard(
-                                icon = Icons.Outlined.ConfirmationNumber,
-                                title = "Ποιοι μετακινούνται Δωρεάν",
-                                description =   "• Παιδιά έως 6 ετών (πρέπει να συνοδεύονται από ενήλικα)\n" // +
-                                            // "• Άνεργοι εγγεγραμμένοι στη ΔΥΠΑ (με πρόσφατη ψηφιακή βεβαίωση)\n" +
-                                            // "• Άτομα με Αναπηρία (ΑμεΑ) με την επίδειξη της ειδικής κάρτας"
-                            )
+                                Surface(
+                                    shape = RoundedCornerShape(16.dp),
+                                    color = MaterialTheme.colorScheme.surfaceContainer,
+                                    border = BorderStroke(
+                                        1.dp,
+                                        MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
+                                    ),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Column {
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .background(
+                                                    MaterialTheme.colorScheme.primaryContainer.copy(
+                                                        alpha = 0.4f
+                                                    )
+                                                )
+                                                .padding(14.dp)
+                                        ) {
+                                            Text(
+                                                "Τύπος Εισητήριου",
+                                                modifier = Modifier.weight(1.8f)
+                                            )
+                                            Text(
+                                                "Κανονικό",
+                                                modifier = Modifier.weight(1f),
+                                                fontWeight = FontWeight.Bold,
+                                                textAlign = TextAlign.End,
+                                                fontSize = 14.sp
+                                            )
+                                            Text(
+                                                "Μειωμένο",
+                                                modifier = Modifier.weight(1f),
+                                                fontWeight = FontWeight.Bold,
+                                                textAlign = TextAlign.End,
+                                                fontSize = 14.sp
+                                            )
+                                        }
+
+                                        TableRow("Αστικής Ζώνης", "0,60€", "0,30€")
+                                        HorizontalDivider(
+                                            color = MaterialTheme.colorScheme.outlineVariant.copy(
+                                                alpha = 0.2f
+                                            )
+                                        )
+                                        TableRow("Περιαστικής Ζώνης", "0,60€", "0,30€")
+                                        HorizontalDivider(
+                                            color = MaterialTheme.colorScheme.outlineVariant.copy(
+                                                alpha = 0.2f
+                                            )
+                                        )
+                                        TableRow("Αεροδρόμιο (1Χ)", "0,60€", "0,30€")
+                                        HorizontalDivider(
+                                            color = MaterialTheme.colorScheme.outlineVariant.copy(
+                                                alpha = 0.2f
+                                            )
+                                        )
+                                        TableRow("10+1 Αστικής Ζώνης", "0,60€", "0,30€")
+                                        HorizontalDivider(
+                                            color = MaterialTheme.colorScheme.outlineVariant.copy(
+                                                alpha = 0.2f
+                                            )
+                                        )
+                                        TableRow("10+1 Περιαστικής Ζώνης", "0,60€", "0,30€")
+                                        HorizontalDivider(
+                                            color = MaterialTheme.colorScheme.outlineVariant.copy(
+                                                alpha = 0.2f
+                                            )
+                                        )
+                                        TableRow("30 Ημερών", "0,60€", "0,30€")
+                                        HorizontalDivider(
+                                            color = MaterialTheme.colorScheme.outlineVariant.copy(
+                                                alpha = 0.2f
+                                            )
+                                        )
+                                        TableRow("60 Ημερών", "0,60€", "0,30€")
+                                        HorizontalDivider(
+                                            color = MaterialTheme.colorScheme.outlineVariant.copy(
+                                                alpha = 0.2f
+                                            )
+                                        )
+                                        TableRow("90 Ημερών", "0,60€", "0,30€")
+                                        HorizontalDivider(
+                                            color = MaterialTheme.colorScheme.outlineVariant.copy(
+                                                alpha = 0.2f
+                                            )
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(20.dp))
+
+                                InfoNoteCard(
+                                    text = "Τα χρονικά εισιτήρια επιτρέπουν την επιβίβαση σε διαφορετικά λεωφορεία ή και στο Μετρό εντός του χρονικού ορίου από την πρώτη επικύρωση."
+                                )
+                            }
                         }
                     }
-                }
 
-                if (selectedTab == 2){
-                    item {
-                        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-                            Text(
-                                text = "Πού θα εκδώσεις εισιτήριο ή κάρτα",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.padding(bottom = 12.dp)
-                            )
+                    if (selectedTab == 1) {
+                        item {
+                            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                                Text(
+                                    text = "Δικαιούχοι Μειωμένου Κομίστρου",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.padding(bottom = 12.dp)
+                                )
 
-                            InfoCard(
-                                icon = Icons.Outlined.CreditCard,
-                                title = "Προσωποποιημένη Κάρτα (ThessCard)",
-                                description = "Μπλα Μπλε Μπλι Μπλο" /* TODO */
-                            )
+                                InfoCard(
+                                    icon = Icons.Outlined.Percent,
+                                    title = "Ποιοι πληρώνουν Μειωμένο (50%)",
+                                    description = "• Φοιτητές ελληνικών δημόσιων πανεπιστημίων (με επίδειξη ακαδημαϊκής ταυτότητας)\n" +
+                                            "• Μαθητές σχολείων Πρωτοβάθμιας & Δευτεροβάθμιας εκπαίδευσης\n" +
+                                            "• Νέοι ηλικίας 7 έως 18 ετών\n" +
+                                            "• Ηλικιωμένοι άνω των 65 ετών (με επίδειξη αστυνομικής ταυτότητας)"
+                                )
 
-                            Spacer(modifier = Modifier.height(16.dp))
+                                Spacer(modifier = Modifier.height(16.dp))
 
-                            InfoCard(
-                                icon = Icons.Outlined.Storefront,
-                                title = "Φυσικά σημεία & Εκδοτήρια",
-                                description = "Μπλα Μπλε Μπλι Μπλο" /* TODO */
-                            )
+                                InfoCard(
+                                    icon = Icons.Outlined.ConfirmationNumber,
+                                    title = "Ποιοι μετακινούνται Δωρεάν",
+                                    description = "• Παιδιά έως 6 ετών (πρέπει να συνοδεύονται από ενήλικα)\n" // +
+                                    // "• Άνεργοι εγγεγραμμένοι στη ΔΥΠΑ (με πρόσφατη ψηφιακή βεβαίωση)\n" +
+                                    // "• Άτομα με Αναπηρία (ΑμεΑ) με την επίδειξη της ειδικής κάρτας"
+                                )
+                            }
                         }
                     }
-                }
 
-                if(selectedTab == 3){
-                    item {
-                        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-                            Text(
-                                text = "Έλεγχοι Κομίστρου & Πρόστημα",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.padding(bottom = 12.dp)
-                            )
+                    if (selectedTab == 2) {
+                        item {
+                            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                                Text(
+                                    text = "Πού θα εκδώσεις εισιτήριο ή κάρτα",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.padding(bottom = 12.dp)
+                                )
 
-                            InfoCard(
-                                icon = Icons.Outlined.Gavel,
-                                title = "Μη επικύρωση εισιτηρίου",
-                                description = "Μπλα Μπλε Μπλι Μπλο"
-                            )
+                                InfoCard(
+                                    icon = Icons.Outlined.CreditCard,
+                                    title = "Προσωποποιημένη Κάρτα (ThessCard)",
+                                    description = "Μπλα Μπλε Μπλι Μπλο" /* TODO */
+                                )
 
-                            Spacer(modifier = Modifier.height(16.dp))
+                                Spacer(modifier = Modifier.height(16.dp))
 
-                            InfoCard(
-                                icon = Icons.Outlined.Info,
-                                title = "Έκπτωση 50% στην εξόφλιση",
-                                description = "Μπλα Μπλε Μπλι Μπλο"
-                            )
+                                InfoCard(
+                                    icon = Icons.Outlined.Storefront,
+                                    title = "Φυσικά σημεία & Εκδοτήρια",
+                                    description = "Μπλα Μπλε Μπλι Μπλο" /* TODO */
+                                )
+                            }
                         }
                     }
-                }
 
-                item{ Spacer(modifier =Modifier.height(32.dp)) }
+                    if (selectedTab == 3) {
+                        item {
+                            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                                Text(
+                                    text = "Έλεγχοι Κομίστρου & Πρόστημα",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.padding(bottom = 12.dp)
+                                )
+
+                                InfoCard(
+                                    icon = Icons.Outlined.Gavel,
+                                    title = "Μη επικύρωση εισιτηρίου",
+                                    description = "Μπλα Μπλε Μπλι Μπλο"
+                                )
+
+                                Spacer(modifier = Modifier.height(16.dp))
+
+                                InfoCard(
+                                    icon = Icons.Outlined.Info,
+                                    title = "Έκπτωση 50% στην εξόφλιση",
+                                    description = "Μπλα Μπλε Μπλι Μπλο"
+                                )
+                            }
+                        }
+                    }
+
+                    item { Spacer(modifier = Modifier.height(32.dp)) }
+                }
             }
         }
     }
