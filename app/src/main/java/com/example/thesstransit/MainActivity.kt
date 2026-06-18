@@ -4,19 +4,27 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.example.thesstransit.ui.item.HomeScreen
-import com.example.thesstransit.ui.components.ThessTransitBottomBar
+import com.example.thesstransit.ui.item.RoutesScreen
+import com.example.thesstransit.ui.item.TicketsScreen
 import com.example.thesstransit.ui.theme.ThessTransitTheme
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
+import kotlinx.serialization.Serializable
 
+@Serializable object HomeRoute
+@Serializable object RoutesRoute
+@Serializable object TicketsRoute
+
+@Serializable object HowToGoRoute
+@Serializable object LinesRoute
+@Serializable object NearbyStopsRoute
+@Serializable object LiveDeparturesRoute
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -25,38 +33,50 @@ class MainActivity : ComponentActivity() {
         setContent {
             ThessTransitTheme(darkTheme = true) {
 
-                var selectedTab by remember { mutableStateOf(1) }
+                val navController = rememberNavController()
 
                 Scaffold(
-                    modifier = Modifier.fillMaxSize(),
-                    bottomBar = {
-                        ThessTransitBottomBar(
-                            selectedIndex = selectedTab,
-                            onItemSelected = { newIndex ->
-                                selectedTab = newIndex
-                            }
-                        )
-                    }
+                    modifier = Modifier.fillMaxSize()
                 ) { innerPadding ->
-                    Box(modifier = Modifier.padding(innerPadding)) {
 
-                        when (selectedTab) {
-                            0 -> {
+                    NavHost(
+                        navController = navController,
+                        startDestination = HomeRoute,
+                        modifier = Modifier.padding(innerPadding)
+                    ) {
+                        composable<HomeRoute> {
+                            HomeScreen(
+                                onLoginClick = {
+                                    navController.navigate(TicketsRoute)
+                                },
+                                onTicketsClick = {
+                                    navController.navigate(TicketsRoute)
+                                },
+                                onHowToGoClick = { /* TODO */},
 
-                            }
-                            1 -> {
-                                HomeScreen(
-                                    onLoginClick = { selectedTab = 2 },
-                                    onSearchClick = { /* TODO */ },
-                                    onHowToGoClick = { /* TODO */ },
-                                    onLinesClick = { /* TODO */ },
-                                    onNearbyStopsClick = { /* TODO */ },
-                                    onLiveDeparturesClick = { /* TODO */ }
-                                )
-                            }
-                            2 -> {
+                                onLinesClick = {
+                                    navController.navigate(RoutesRoute)
+                                },
 
-                            }
+                                onNearbyStopsClick = { /*TODO*/ },
+                                onLiveDeparturesClick = { /*TODO*/ }
+                            )
+                        }
+
+                        composable<RoutesRoute> {
+                            RoutesScreen(
+                                onBackClick = {
+                                    navController.popBackStack()
+                                }
+                            )
+                        }
+
+                        composable<TicketsRoute> {
+                            TicketsScreen(
+                                onBackClick = {
+                                    navController.popBackStack()
+                                }
+                            )
                         }
                     }
                 }
