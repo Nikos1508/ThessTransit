@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -49,7 +48,6 @@ import androidx.compose.material.icons.outlined.Work
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -87,6 +85,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.thesstransit.R
+import com.example.thesstransit.ui.components.RouteFilterSwitch
+import com.example.thesstransit.ui.components.RouteSegmentedControl
 import java.util.Calendar
 
 @Composable
@@ -451,89 +451,27 @@ fun RouteFiltersDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
 
-                    Surface(
-                        shape = RoundedCornerShape(16.dp),
-                        color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                        border = BorderStroke(
-                            1.dp,
-                            MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
-                        )
-
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(4.dp)
-                        ){
-                            Surface(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .bounceClick{timeType = "DEPART"},
-                                shape = RoundedCornerShape(12.dp),
-                                color =
-                                    if (timeType == "DEPART")
-                                        MaterialTheme.colorScheme.primary
-                                    else
-                                        Color.Transparent
-                            ) {
-                                Text(
-                                    text = "Αναχώρηση",
-                                    modifier = Modifier.padding(vertical = 12.dp),
-                                    textAlign = TextAlign.Center,
-                                    color =
-                                        if (timeType == "DEPART")
-                                            MaterialTheme.colorScheme.onPrimary
-                                        else
-                                            MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-
-                            Surface(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .bounceClick{timeType == "ARRIVE"},
-                                shape = RoundedCornerShape(12.dp),
-                                color =
-                                    if (timeType == "ARRIVE")
-                                        MaterialTheme.colorScheme.primary
-                                    else
-                                        Color.Transparent
-                            ){
-                                Text(
-                                    text = "Άφιξη",
-                                    modifier = Modifier.padding(vertical = 12.dp),
-                                    textAlign = TextAlign.Center,
-                                    color =
-                                        if(timeType == "ARRIVE")
-                                            MaterialTheme.colorScheme.onPrimary
-                                        else
-                                            MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
+                    RouteSegmentedControl(
+                        selected = timeType,
+                        onSelected = {
+                            timeType = it
                         }
-                    }
+                    )
 
                     Spacer(modifier = Modifier.weight(1f))
 
-                    OutlinedButton(
-                        onClick = {
-                            showTimePickerDialog = true
-                        },
-                        shape = RoundedCornerShape(14.dp)
+                     /*
+
+                    RouteTimeSelector(
+                        hour = selectedHour,
+                        minute = selectedMinute
                     ) {
-                        Icon(
-                            imageVector = Icons.Outlined.AccessTime,
-                            contentDescription = null
-                        )
-
-                        Spacer(modifier = Modifier.width(6.dp))
-
-                        Text(
-                            String.format(
-                                "%02d:%02d",
-                                selectedHour,
-                                selectedMinute
-                            )
-                        )
+                        showTimePickerDialog = true
                     }
+
+
+                    */
+
                 }
 
                 Spacer(modifier = Modifier.height(20.dp))
@@ -552,30 +490,35 @@ fun RouteFiltersDialog(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
 
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    FilterChip(
-                        selected = fastRoute,
-                        onClick = { fastRoute = !fastRoute },
-                        label = { Text("Ταχύτερη διαδρομή") }
-                    )
-                    FilterChip(
-                        selected = lessWalking,
-                        onClick = { lessWalking = !lessWalking },
-                        label = { Text("Λιγότερο περπάτημα") }
-                    )
-                    FilterChip(
-                        selected = avoidMetro,
-                        onClick = { avoidMetro = !avoidMetro },
-                        label = { Text("Αποφυγή Μετρό") }
-                    )
-                    FilterChip(
-                        selected = avoidTransfer,
-                        onClick = { avoidTransfer = !avoidTransfer },
-                        label = { Text("Χωρίς μετεπιβίβαση") }
-                    )
+                Column {
+
+                    RouteFilterSwitch(
+                        title = "Ταχύτερη διαδρομή",
+                        checked = fastRoute
+                    ) {
+                        fastRoute = it
+                    }
+
+                    RouteFilterSwitch(
+                        title = "Λιγότερο περπάτημα",
+                        checked = lessWalking
+                    ) {
+                        lessWalking = it
+                    }
+
+                    RouteFilterSwitch(
+                        title = "Αποφυγή Μετρό",
+                        checked = avoidMetro
+                    ) {
+                        avoidMetro = it
+                    }
+
+                    RouteFilterSwitch(
+                        title = "Χωρίς μετεπιβίβαση",
+                        checked = avoidTransfer
+                    ) {
+                        avoidTransfer = it
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(28.dp))
@@ -593,13 +536,13 @@ fun RouteFiltersDialog(
         }
     )
 
-    if (showTimePickerDialog) {
-        val timePickerState = rememberTimePickerState(
-            initialHour = selectedHour,
-            initialMinute = selectedMinute,
-            is24Hour = true
-        )
+    val timePickerState = rememberTimePickerState(
+        initialHour = selectedHour,
+        initialMinute = selectedMinute,
+        is24Hour = true
+    )
 
+    if (showTimePickerDialog) {
         AlertDialog(
             onDismissRequest = { showTimePickerDialog = false },
             confirmButton = {
@@ -1055,16 +998,5 @@ fun Modifier.bounceClick(
 @Preview(showBackground = true)
 @Composable
 fun HomeScreenPreview() {
-    HomeScreen(
-        onLoginClick = TODO(),
-        onHowToGoClick = TODO(),
-        onTicketsClick = TODO(),
-        onLinesClick = TODO(),
-        onNearbyStopsClick = TODO(),
-        onLiveDeparturesClick = TODO(),
-        onBuyTicketClick = TODO(),
-        onFavouritesClick = TODO(),
-        onNotificationsClick = TODO(),
-        onSettingsClick = TODO()
-    )
+    TODO()
 }

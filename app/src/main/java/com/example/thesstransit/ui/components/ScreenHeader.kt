@@ -47,16 +47,39 @@ fun ScreenHeader(
     title: String,
     onBackClick: () -> Unit,
 ){
-    CenterAlignedTopAppBar(
-        title = { Text(text = title) },
-        navigationIcon = {
-            IconButton(onClick = onBackClick) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(52.dp),
+        color = MaterialTheme.colorScheme.primary,
+        shadowElevation = 6.dp
+    ){
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ){
+            IconButton(
+                onClick = onBackClick,
+                modifier = Modifier.size(36.dp)
+            ){
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back"
+                    contentDescription = "Back",
+                    tint = MaterialTheme.colorScheme.onPrimary
                 )
             }
-        },
-        modifier = Modifier.fillMaxWidth()
-    )
+
+            Spacer( modifier = Modifier.width(8.dp) )
+
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onPrimary,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1
+            )
+        }
+    }
 }
