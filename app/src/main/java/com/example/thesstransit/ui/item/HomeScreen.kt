@@ -11,7 +11,6 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -45,20 +44,13 @@ import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material.icons.outlined.Train
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material.icons.outlined.Work
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TimePicker
 import androidx.compose.material3.VerticalDivider
-import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -85,9 +77,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.thesstransit.R
-import com.example.thesstransit.ui.components.RouteFilterSwitch
-import com.example.thesstransit.ui.components.RouteSegmentedControl
-import java.util.Calendar
+import com.example.thesstransit.ui.components.RouteFiltersDialog
 
 @Composable
 fun HomeScreen(
@@ -177,7 +167,11 @@ fun HomeScreen(
 
         if (showFilters) {
             RouteFiltersDialog(
-                onDismiss = { showFilters = false }
+                onDismiss = { showFilters = false },
+                onApplyFilters = { filterResults ->
+
+                    println("Applied Filters: $filterResults")
+                }
             )
         }
     }
@@ -398,184 +392,6 @@ fun SearchBarSection(
             }
 
         }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
-@Composable
-fun RouteFiltersDialog(
-    onDismiss: () -> Unit
-) {
-    var fastRoute by remember { mutableStateOf(true) }
-    var lessWalking by remember { mutableStateOf(false) }
-    var avoidMetro by remember { mutableStateOf(false) }
-    var avoidTransfer by remember { mutableStateOf(false) }
-
-    var timeType by remember { mutableStateOf("DEPART") }
-    var selectedHour by remember { mutableStateOf(Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) }
-    var selectedMinute by remember { mutableStateOf(Calendar.getInstance().get(Calendar.MINUTE)) }
-    var showTimePickerDialog by remember { mutableStateOf(false) }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        confirmButton = {},
-        dismissButton = {},
-        shape = RoundedCornerShape(28.dp),
-        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-        text = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp)
-            ) {
-                Text(
-                    text = "Προτιμήσεις Διαδρομής",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                Text(
-                    text = "Προγραμματισμός Ώρας",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-
-                    RouteSegmentedControl(
-                        selected = timeType,
-                        onSelected = {
-                            timeType = it
-                        }
-                    )
-
-                    Spacer(modifier = Modifier.weight(1f))
-
-                     /*
-
-                    RouteTimeSelector(
-                        hour = selectedHour,
-                        minute = selectedMinute
-                    ) {
-                        showTimePickerDialog = true
-                    }
-
-
-                    */
-
-                }
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                HorizontalDivider(
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    text = "Κριτήρια",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Column {
-
-                    RouteFilterSwitch(
-                        title = "Ταχύτερη διαδρομή",
-                        checked = fastRoute
-                    ) {
-                        fastRoute = it
-                    }
-
-                    RouteFilterSwitch(
-                        title = "Λιγότερο περπάτημα",
-                        checked = lessWalking
-                    ) {
-                        lessWalking = it
-                    }
-
-                    RouteFilterSwitch(
-                        title = "Αποφυγή Μετρό",
-                        checked = avoidMetro
-                    ) {
-                        avoidMetro = it
-                    }
-
-                    RouteFilterSwitch(
-                        title = "Χωρίς μετεπιβίβαση",
-                        checked = avoidTransfer
-                    ) {
-                        avoidTransfer = it
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(28.dp))
-
-
-                Button(
-                    onClick = onDismiss,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text("Εφαρμογή Φίλτρων", fontWeight = FontWeight.Bold)
-                }
-
-            }
-        }
-    )
-
-    val timePickerState = rememberTimePickerState(
-        initialHour = selectedHour,
-        initialMinute = selectedMinute,
-        is24Hour = true
-    )
-
-    if (showTimePickerDialog) {
-        AlertDialog(
-            onDismissRequest = { showTimePickerDialog = false },
-            confirmButton = {
-                TextButton(onClick = {
-                    selectedHour = timePickerState.hour
-                    selectedMinute = timePickerState.minute
-                    showTimePickerDialog = false
-                }) {
-                    Text("Εντάξει", fontWeight = FontWeight.Bold)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showTimePickerDialog = false }) {
-                    Text("Ακύρωση")
-                }
-            },
-            text = {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = if (timeType == "DEPART") "Επιλογή ώρας αναχώρησης" else "Επιλογή ώρας άφιξης",
-                        fontSize = 14.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(bottom = 16.dp)
-                    )
-                    TimePicker(state = timePickerState)
-                }
-            },
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-            shape = RoundedCornerShape(28.dp)
-        )
     }
 }
 
