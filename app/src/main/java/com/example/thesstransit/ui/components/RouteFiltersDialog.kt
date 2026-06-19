@@ -3,7 +3,6 @@ package com.example.thesstransit.ui.components
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -24,18 +23,24 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
+import androidx.compose.material3.TabRowDefaults
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -59,18 +64,22 @@ fun RouteFiltersDialog(
     initialHour: Int = Calendar.getInstance().get(Calendar.HOUR_OF_DAY),
     initialMinute: Int = Calendar.getInstance().get(Calendar.MINUTE)
 ){
-
+    //Κατάσταση φίλτρων
     var fastRoute by remember { mutableStateOf(true) }
     var lessWalking by remember { mutableStateOf(false)}
     var avoidMetro by remember { mutableStateOf(false) }
     var avoidTransfer by remember { mutableStateOf(false) }
 
+    // "DEPART" ή "ARRIVE"
     var timeType by remember { mutableStateOf("DEPART") }
 
-    val calendar = Calendar.getInstance()
-    var selectedHour by remember { mutableStateOf(initialHour) }
-    var selectedMinute by remember { mutableStateOf(initialMinute) }
+    // Καταστάσεις Ώρας
+    var selectedHour by remember { mutableIntStateOf(initialHour) }
+    var selectedMinute by remember { mutableIntStateOf(initialMinute) }
     var showTimePickerDialog by remember { mutableStateOf(false) }
+
+    val tabs = listOf("Αναχώρηση", "Άφιξη")
+    val selectedTabIndex = if (timeType == "DEPART") 0 else 1
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -99,39 +108,58 @@ fun RouteFiltersDialog(
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+
                 Spacer(modifier = Modifier.height(8.dp))
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(modifier = Modifier.weight(1.2f)) {
-                        RouteSegmentedControl(
-                            selected = timeType,
-                            onSelected = { timeType = it }
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    Box(modifier = Modifier.weight(0.8f), contentAlignment = Alignment.CenterEnd){
-                        RouteTimeSelector(
-                            hour = selectedHour,
-                            minute = selectedMinute
-                        ) {
-                            showTimePickerDialog = true
+                TabRow(
+                    selectedTabIndex = selectedTabIndex,
+                    containerColor = Color.Transparent,
+                    contentColor = MaterialTheme.colorScheme.primary,
+                    divider = { HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)) },
+                    indicator = { tabPositions ->
+                        if (selectedTabIndex < tabPositions.size) {
+                            TabRowDefaults.SecondaryIndicator(
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex])
+                            )
                         }
+                    }
+                ){
+                    tabs.forEachIndexed { index, title ->
+                        val isSelected = selectedTabIndex == index
+
+                        Tab(
+                            selected = isSelected,
+                            onClick = { timeType = if (index == 0) "DEPART" else "ARRIVE"},
+                            text = {
+                                Text(
+                                    text = title,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                    fontSize = 15.sp,
+                                    color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(16.dp))
+
+                RouteTimeSelector(
+                    hour = selectedHour,
+                    minute = selectedMinute,
+                    timeType = timeType
+                ){
+                    showTimePickerDialog = true
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
 
                 HorizontalDivider(
                     color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(20.dp))
 
                 Text(
                     text = "Κριτήρια",
@@ -192,10 +220,7 @@ fun RouteFiltersDialog(
                 }
             },
             text = {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                     Text(
                         text = if (timeType == "DEPART") "Επιλογή ώρας αναχώρησης" else "Επιλογή ώρας άφιξης",
                         fontSize = 14.sp,
@@ -212,77 +237,20 @@ fun RouteFiltersDialog(
 }
 
 @Composable
-fun RouteSegmentedControl(
-    selected: String,
-    onSelected: (String) -> Unit
-){
-    Surface(
-        shape = RoundedCornerShape(18.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerHighest
-    ){
-        Row(
-            modifier = Modifier.padding(4.dp)
-        ){
-            SegmentItem(
-                text = "Αναχώρηση",
-                selected = selected == "DEPART",
-            ){
-                onSelected("DEPART")
-            }
-
-            SegmentItem(
-                text = "Άφιξη",
-                selected = selected == "ARRIVE"
-            ) {
-                onSelected("ARRIVE")
-            }
-        }
-    }
-}
-
-@Composable
-private fun SegmentItem(
-    text: String,
-    selected: Boolean,
-    onClick: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .background(
-                if (selected)
-                    MaterialTheme.colorScheme.primary
-                else
-                    MaterialTheme.colorScheme.surfaceContainerHighest,
-                RoundedCornerShape(14.dp)
-            )
-            .clickable(onClick = onClick)
-            .padding(horizontal = 18.dp, vertical = 10.dp),
-        contentAlignment = Alignment.Center
-    ){
-        Text(
-            text = text,
-            color =
-                if (selected)
-                    MaterialTheme.colorScheme.primary
-                else
-                    MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
-
-@Composable
 fun RouteTimeSelector(
     hour: Int,
     minute: Int,
+    timeType: String,
     onClick: () -> Unit
 ){
     Surface(
         onClick = onClick,
-        shape = MaterialTheme.shapes.large,
-        tonalElevation = 2.dp
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerHighest,
+        modifier = Modifier.fillMaxWidth()
     ){
         Row(
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 12.dp),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically
         ){
             Icon(
@@ -291,13 +259,21 @@ fun RouteTimeSelector(
                 tint = MaterialTheme.colorScheme.primary
             )
 
-            Spacer ( Modifier.width(6.dp) )
+            Spacer(Modifier.width(12.dp))
 
-            Text(
-                String.format("%02d:%02d", hour, minute),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+            Column {
+                Text(
+                    text = if (timeType == "DEPART") "Ώρα Αναχώρησης" else "Ώρα Άφιξης",
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = String.format("%02d:%02d", hour, minute),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
     }
 }
@@ -319,7 +295,7 @@ fun RouteFilterSwitch(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 10.dp),
+            .padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ){
         Text(
@@ -332,8 +308,8 @@ fun RouteFilterSwitch(
 
         Box(
             modifier = Modifier
-                .width(54.dp)
-                .height(30.dp)
+                .width(50.dp)
+                .height(28.dp)
                 .clip(RoundedCornerShape(50))
                 .background(trackColor)
                 .clickable {
@@ -349,7 +325,7 @@ fun RouteFilterSwitch(
                         else
                             Alignment.CenterStart
                     )
-                    .size(24.dp)
+                    .size(22.dp)
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.surface)
             )
