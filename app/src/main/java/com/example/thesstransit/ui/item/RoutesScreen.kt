@@ -56,7 +56,7 @@ fun RoutesScreen(
     val error = viewModel.errorMessage
 
     Column {
-        ScreenHeader(title = "Γραμμές", onBackClick = onBackClick)
+        ScreenHeader(title = "Γραμμές", onBackClick = onBackClick, onProfileClick = onBackClick)
         Box(
             modifier = Modifier
                 .fillMaxSize()

@@ -59,7 +59,8 @@ fun TicketsScreen(
     Column {
         ScreenHeader(
             title = "Εισητήρια",
-            onBackClick = onBackClick
+            onBackClick = onBackClick,
+            onProfileClick = onBackClick
         )
 
         Box(
