@@ -6,10 +6,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.gitlab.mitsiosm.oseth.Oseth
 import io.gitlab.mitsiosm.oseth.data.Route
+import io.gitlab.mitsiosm.oseth.data.RouteId
 import io.gitlab.mitsiosm.oseth.data.ShapeId
 import io.gitlab.mitsiosm.oseth.data.Stop
 import io.gitlab.mitsiosm.oseth.data.TimetableTrip
 import kotlinx.coroutines.launch
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 class RouteDetailsViewModel : ViewModel() {
 
@@ -33,13 +36,14 @@ class RouteDetailsViewModel : ViewModel() {
         this.route.value = route
 
         if (route.tripHeadsigns.isNotEmpty()) {
-            loadShape(route.tripHeadsigns.first().shapeId)
+            loadShape(route.tripHeadsigns.first().shapeId, route.tripHeadsigns.first().routeId)
         }
     }
 
-    fun loadShape(shapeId: ShapeId){
+    @OptIn(ExperimentalTime::class)
+    fun loadShape(shapeId: ShapeId, routeId: RouteId){
 
-        val routeId = route.value?.id ?: return
+        // val routeId = route.value?.id ?: return
 
         selectedShape.value = shapeId
 
@@ -55,9 +59,10 @@ class RouteDetailsViewModel : ViewModel() {
                     )
 
                 val timetable =
-                    api.getTimetableForToday(
+                    api.getTimetable(
                         routeId = routeId,
-                        shapeId = shapeId
+                        shapeId = shapeId,
+                        Clock.System.now()
                     )
 
                 stops.clear()

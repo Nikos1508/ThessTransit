@@ -30,6 +30,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.thesstransit.ui.components.ScreenHeader
 import com.example.thesstransit.ui.viewModels.RouteDetailsViewModel
 import io.gitlab.mitsiosm.oseth.data.Route
+import io.gitlab.mitsiosm.oseth.data.RouteId
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -66,7 +67,7 @@ fun RouteDetailsScreen(
             onExpandedChange = { expanded = !expanded }
         ) {
             OutlinedTextField(
-                value = route.tripHeadsigns.find { it.shapeId == viewModel.selectedShape.value }?.headsign ?: "",
+                value = route.tripHeadsigns.find {it.shapeId == viewModel.selectedShape.value}?.headsign ?: "",
                 onValueChange = {},
                 readOnly = true,
                 label = { Text("Κατεύθυνση") },
@@ -93,7 +94,7 @@ fun RouteDetailsScreen(
                             expanded = false
 
                             viewModel.loadShape(
-                                direction.shapeId
+                                direction.shapeId, direction.routeId
                             )
                         }
                     )
