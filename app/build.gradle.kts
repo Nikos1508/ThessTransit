@@ -47,6 +47,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -59,11 +60,12 @@ dependencies {
 
     implementation(libs.androidx.material3)
     implementation(libs.androidx.material.icons.extended)
-    implementation(libs.androidx.compose.foundation.layout)
-    implementation(libs.androidx.compose.material3)
 
     //ΑΠΙ
     implementation("io.gitlab.mitsiosm:oseth:1.1.0")
+
+    //Help for the ΑΠΙ
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
 
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.androidx.navigation.compose)

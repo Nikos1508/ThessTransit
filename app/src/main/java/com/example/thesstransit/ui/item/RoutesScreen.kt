@@ -37,10 +37,12 @@ import com.example.thesstransit.ui.viewModels.RoutesViewModel
 import androidx.compose.foundation.lazy.rememberLazyListState
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
+import io.gitlab.mitsiosm.oseth.data.Route
 
 @Composable
 fun RoutesScreen(
     onBackClick: () -> Unit,
+    onRouteSelected: (Route) -> Unit,
     viewModel: RoutesViewModel = viewModel()
 ) {
 
@@ -198,7 +200,12 @@ fun RoutesScreen(
                                     }
 
                                     items(routes) { route ->
-                                        BusRouteRowItem(route)
+                                        BusRouteRowItem(
+                                            route = route,
+                                            onClick = {
+                                                onRouteSelected(it)
+                                            }
+                                        )
                                     }
                                 }
                             }

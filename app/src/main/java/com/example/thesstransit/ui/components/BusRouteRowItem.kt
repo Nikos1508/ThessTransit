@@ -27,12 +27,17 @@ import androidx.compose.ui.unit.sp
 import io.gitlab.mitsiosm.oseth.data.Route
 
 @Composable
-fun BusRouteRowItem(route: Route) {
+fun BusRouteRowItem(
+    route: Route,
+    onClick: (Route) -> Unit
+) {
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { },
+            .clickable {
+                onClick(route)
+            },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer

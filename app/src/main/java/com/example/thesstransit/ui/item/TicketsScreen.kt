@@ -27,13 +27,13 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ScrollableTabRow
+import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -53,7 +53,7 @@ fun TicketsScreen(
     onBackClick: () -> Unit
 ) {
 
-    var selectedTab by remember { mutableStateOf(0) }
+    var selectedTab by remember { mutableIntStateOf(0) }
 
     val tabs = listOf("Τιμές & Είδη", "Εκπτώσεις", "Πού αγοράζω εισιτήρια", "Πρόστιμα")
     Column {
@@ -97,7 +97,7 @@ fun TicketsScreen(
                     )
                 }
 
-                ScrollableTabRow(
+                PrimaryScrollableTabRow(
                     selectedTabIndex = selectedTab,
                     edgePadding = 16.dp,
                     containerColor = Color.Transparent,

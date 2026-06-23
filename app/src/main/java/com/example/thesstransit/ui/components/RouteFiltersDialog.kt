@@ -22,10 +22,12 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.TabRowDefaults
+import androidx.compose.material3.TabRowDefaults.PrimaryIndicator
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -111,18 +113,16 @@ fun RouteFiltersDialog(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                TabRow(
+                PrimaryTabRow(
                     selectedTabIndex = selectedTabIndex,
                     containerColor = Color.Transparent,
                     contentColor = MaterialTheme.colorScheme.primary,
                     divider = { HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)) },
-                    indicator = { tabPositions ->
-                        if (selectedTabIndex < tabPositions.size) {
-                            TabRowDefaults.SecondaryIndicator(
-                                color = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex])
-                            )
-                        }
+                    indicator = {
+                        PrimaryIndicator(
+                            modifier = Modifier.tabIndicatorOffset(selectedTabIndex),
+                            color = MaterialTheme.colorScheme.primary
+                        )
                     }
                 ){
                     tabs.forEachIndexed { index, title ->

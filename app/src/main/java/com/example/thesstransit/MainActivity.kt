@@ -16,6 +16,8 @@ import com.example.thesstransit.ui.item.RoutesScreen
 import com.example.thesstransit.ui.item.TicketsScreen
 import com.example.thesstransit.ui.theme.ThessTransitTheme
 import kotlinx.serialization.Serializable
+import io.gitlab.mitsiosm.oseth.data.Route
+import com.example.thesstransit.ui.item.RouteDetailsScreen
 
 @Serializable object HomeRoute
 @Serializable object RoutesRoute
@@ -25,6 +27,11 @@ import kotlinx.serialization.Serializable
 @Serializable object LinesRoute
 @Serializable object NearbyStopsRoute
 @Serializable object LiveDeparturesRoute
+
+@Serializable
+data class RouteDetailsRoute(
+    val routeId: String
+)
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -67,6 +74,9 @@ class MainActivity : ComponentActivity() {
                             RoutesScreen(
                                 onBackClick = {
                                     navController.popBackStack()
+                                },
+                                onRouteSelected = { route ->
+                                    navController.navigate( RouteDetailsRoute(route.id.value) )
                                 }
                             )
                         }
@@ -77,6 +87,21 @@ class MainActivity : ComponentActivity() {
                                     navController.popBackStack()
                                 }
                             )
+                        }
+
+                        composable<RouteDetailsRoute> {
+                            val route = navController.previousBackStackEntry
+                                ?.savedStateHandle
+                                ?.get<Route>("route")
+
+                            route?.let {
+                                RouteDetailsScreen(
+                                    route = route,
+                                    onBackClick = {
+                                        navController.popBackStack()
+                                    }
+                                )
+                            }
                         }
                     }
                 }
