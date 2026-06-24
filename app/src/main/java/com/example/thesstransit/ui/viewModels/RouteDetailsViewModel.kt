@@ -1,7 +1,9 @@
 package com.example.thesstransit.ui.viewModels
 
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.gitlab.mitsiosm.oseth.Oseth
@@ -11,6 +13,12 @@ import io.gitlab.mitsiosm.oseth.data.ShapeId
 import io.gitlab.mitsiosm.oseth.data.Stop
 import io.gitlab.mitsiosm.oseth.data.TimetableTrip
 import kotlinx.coroutines.launch
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
+import kotlinx.datetime.plus
+import kotlinx.datetime.todayIn
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -27,9 +35,25 @@ class RouteDetailsViewModel : ViewModel() {
     var route = mutableStateOf<Route?>(null)
         private set
 
-    val stops = mutableListOf<Stop>()
+    @OptIn(ExperimentalTime::class)
+    var selectedDate by mutableStateOf(
+        Clock.System.todayIn( TimeZone.currentSystemDefault() )
+    )
+        private set
+
+    val stops = mutableStateListOf<Stop>()
 
     val trips = mutableStateListOf<TimetableTrip>()
+
+    @OptIn(ExperimentalTime::class)
+    val weekDays: List<LocalDate>
+        get() {
+            val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
+
+            return (0..6).map {
+                today.plus(it, DateTimeUnit.DAY)
+            }
+        }
 
     fun loadRoute(route: Route) {
 
@@ -41,9 +65,14 @@ class RouteDetailsViewModel : ViewModel() {
     }
 
     @OptIn(ExperimentalTime::class)
-    fun loadShape(shapeId: ShapeId, routeId: RouteId){
+    fun loadShape(
+        shapeId: ShapeId,
+        routeId: RouteId,
+        date: LocalDate = selectedDate
+    ){
+        selectedDate = date
 
-        // val routeId = route.value?.id ?: return
+        val midnight = date.atStartOfDayIn(TimeZone.currentSystemDefault())
 
         selectedShape.value = shapeId
 
@@ -62,7 +91,7 @@ class RouteDetailsViewModel : ViewModel() {
                     api.getTimetable(
                         routeId = routeId,
                         shapeId = shapeId,
-                        Clock.System.now()
+                        midnight
                     )
 
                 stops.clear()
