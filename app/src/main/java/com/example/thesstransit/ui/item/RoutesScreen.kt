@@ -19,10 +19,14 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -59,24 +63,20 @@ fun RoutesScreen(
     val loading = viewModel.isLoading
     val error = viewModel.errorMessage
 
-    val filteredRoutes = routes.filter {
-        it.shortName.contains(searchQuery, ignoreCase = true) ||
-                it.longName.contains(searchQuery, ignoreCase = true)
-    }
-
     val favoritesViewModel: FavoritesViewModel = viewModel()
 
     val favorites by favoritesViewModel.favorites.collectAsState()
+
+    val filteredRoutes = routes.filter {
+        it.shortName.contains(searchQuery, true) ||
+                it.longName.contains(searchQuery, true)
+    }
 
     val favoriteRoutes = filteredRoutes.filter {
         favorites.contains(it.id.value)
     }
 
-    val normalRoutes = filteredRoutes.filterNot {
-        favorites.contains(it.id.value)
-    }
-
-
+    var selectedTab by rememberSaveable{ mutableIntStateOf(0) }
 
 
     Column {
@@ -99,21 +99,23 @@ fun RoutesScreen(
                     modifier = Modifier.padding(
                         start = 20.dp,
                         end = 20.dp,
-                        top = 24.dp,
+                        top = 18.dp,
                         bottom = 12.dp
                     )
                 ) {
-                    Text(
-                        text = "Διαδρομές",
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = "Δείτε τις γραμμές και τα δρομολόγια των λεωφορείων",
-                        fontSize = 14.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+
+                    PrimaryTabRow(selectedTabIndex = selectedTab) {
+                        Tab(
+                            selected = selectedTab == 0,
+                            onClick = { selectedTab = 0},
+                            text = { Text("Όλες")}
+                        )
+                        Tab(
+                            selected = selectedTab == 1,
+                            onClick = { selectedTab = 1},
+                            text = { Text("Αγαπημένα")}
+                        )
+                    }
                 }
 
                 OutlinedTextField(
@@ -122,20 +124,20 @@ fun RoutesScreen(
                         searchQuery = it
                     },
                     singleLine = true,
+                    shape = RoundedCornerShape(18.dp),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                        .height(52.dp),
-                    shape = RoundedCornerShape(16.dp),
+                        .padding(horizontal = 16.dp),
                     placeholder = {
-                        Text(text = "Αναζήτηση γραμμής...", fontSize = 14.sp)
+                        Text("Αναζήτηση γραμμής...")
                     },
                     leadingIcon = {
-                        Icon(
-                            Icons.Default.Search,
-                            contentDescription = null
-                        )
-                    }
+                        Icon(Icons.Default.Search, null)
+                    },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                    )
                 )
 
                 when {
@@ -171,10 +173,14 @@ fun RoutesScreen(
                             )
                         }
 
-                        val groupedRoutes =
-                            filteredRoutes.groupBy {
-                            it.shortName.firstOrNull()?.toString() ?: "#"
+                        if (selectedTab == 1 && favoriteRoutes.isEmpty()) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text("Δεν υπάρχουν αγαπημένες γραμμές")
                             }
+                        }
 
                         Box(
                             modifier = Modifier.fillMaxSize()
@@ -182,6 +188,16 @@ fun RoutesScreen(
                             val sectionIndexes = mutableMapOf<String, Int>()
 
                             var currentIndex = 0
+
+                            val shownRoutes = if (selectedTab == 1) {
+                                favoriteRoutes
+                            } else {
+                                filteredRoutes
+                            }
+
+                            val groupedRoutes = shownRoutes.groupBy {
+                                it.shortName.firstOrNull()?.toString() ?: "#"
+                            }
 
                             groupedRoutes.forEach { (digit, routesInSection) ->
 
@@ -202,14 +218,16 @@ fun RoutesScreen(
                                     ),
                                 verticalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
+
+
+
                                 groupedRoutes.forEach { (digit, routes) ->
 
                                     stickyHeader {
-
                                         Box(
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .background(MaterialTheme.colorScheme.background)
+                                                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.95f))
                                                 .padding(vertical = 8.dp)
                                         ){
                                             Text(

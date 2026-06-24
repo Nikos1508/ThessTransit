@@ -66,7 +66,6 @@ dependencies {
 
     //Help for the ΑΠΙ
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
-
     implementation("androidx.datastore:datastore-preferences:1.1.1")
 
     implementation(libs.kotlinx.serialization.json)
