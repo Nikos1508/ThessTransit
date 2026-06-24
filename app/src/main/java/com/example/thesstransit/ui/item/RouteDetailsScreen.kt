@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
@@ -112,7 +113,16 @@ fun RouteDetailsScreen(
                 route.tripHeadsigns.forEach { direction ->
 
                     DropdownMenuItem(
-                        text = { Text(direction.headsign) },
+                        text = {
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp),
+                                shape = RoundedCornerShape(18.dp)
+                            ) {
+                                Text(direction.headsign)
+                            }
+                        },
                         onClick = {
                             expanded = false
 
@@ -144,7 +154,7 @@ fun RouteDetailsScreen(
 
         when (selectedTab) {
             0 -> StopsTab(viewModel)
-            1 -> TimetableTab(viewModel) //Ισως εδώ πρέπει να βάλω το LazyRow
+            1 -> TimetableTab(viewModel)
         }
     }
 }
@@ -224,6 +234,7 @@ private fun TimetableTab(
         modifier = Modifier.padding(12.dp)
     ){
         items(vm.weekDays) { day ->
+
             FilterChip(
                 selected = day == vm.selectedDate,
                 onClick = {

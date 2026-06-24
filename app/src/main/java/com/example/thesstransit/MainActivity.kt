@@ -12,7 +12,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import ch.qos.logback.classic.android.BasicLogcatConfigurator
 import com.example.thesstransit.ui.item.HomeScreen
 import com.example.thesstransit.ui.item.RoutesScreen
 import com.example.thesstransit.ui.item.TicketsScreen
@@ -59,10 +58,6 @@ val CustomRouteType = object : NavType<Route>(isNullableAllowed = false) {
 }
 
 class MainActivity : ComponentActivity() {
-
-    init {
-        BasicLogcatConfigurator.configureDefaultContext()
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

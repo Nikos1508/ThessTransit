@@ -67,8 +67,7 @@ dependencies {
     //Help for the ΑΠΙ
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
 
-    implementation("org.slf4j:slf4j-api:2.0.7")
-    implementation("com.github.tony19:logback-android:3.0.0")
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
 
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.androidx.navigation.compose)

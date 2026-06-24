@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
@@ -20,8 +21,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -33,11 +36,10 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.thesstransit.ui.components.BusRouteRowItem
 import com.example.thesstransit.ui.components.ScreenHeader
+import com.example.thesstransit.ui.viewModels.FavoritesViewModel
 import com.example.thesstransit.ui.viewModels.RoutesViewModel
-import androidx.compose.foundation.lazy.rememberLazyListState
-import kotlinx.coroutines.launch
-import androidx.compose.runtime.rememberCoroutineScope
 import io.gitlab.mitsiosm.oseth.data.Route
+import kotlinx.coroutines.launch
 
 @Composable
 fun RoutesScreen(
@@ -57,8 +59,28 @@ fun RoutesScreen(
     val loading = viewModel.isLoading
     val error = viewModel.errorMessage
 
+    val filteredRoutes = routes.filter {
+        it.shortName.contains(searchQuery, ignoreCase = true) ||
+                it.longName.contains(searchQuery, ignoreCase = true)
+    }
+
+    val favoritesViewModel: FavoritesViewModel = viewModel()
+
+    val favorites by favoritesViewModel.favorites.collectAsState()
+
+    val favoriteRoutes = filteredRoutes.filter {
+        favorites.contains(it.id.value)
+    }
+
+    val normalRoutes = filteredRoutes.filterNot {
+        favorites.contains(it.id.value)
+    }
+
+
+
+
     Column {
-        ScreenHeader(title = "Γραμμές", onBackClick = onBackClick, onProfileClick = onBackClick)
+        ScreenHeader(title = "Διαδρομές", onBackClick = onBackClick, onProfileClick = onBackClick)
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -202,6 +224,10 @@ fun RoutesScreen(
                                     items(routes) { route ->
                                         BusRouteRowItem(
                                             route = route,
+                                            isFavorite = favorites.contains(route.id.value),
+                                            onFavoriteClick = {
+                                                favoritesViewModel.toggleFavorite(route.id.value)
+                                            },
                                             onClick = {
                                                 onRouteSelected(it)
                                             }
