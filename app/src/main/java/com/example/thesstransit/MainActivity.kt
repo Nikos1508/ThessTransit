@@ -21,6 +21,7 @@ import kotlinx.serialization.json.Json
 import io.gitlab.mitsiosm.oseth.data.Route
 import android.net.Uri
 import androidx.navigation.NavType
+import com.example.thesstransit.ui.item.GroupRouteDetailsScreen
 import kotlin.reflect.typeOf
 import com.example.thesstransit.ui.item.RouteDetailsScreen
 import io.gitlab.mitsiosm.oseth.data.RouteId
@@ -37,6 +38,11 @@ import io.gitlab.mitsiosm.oseth.data.RouteId
 @Serializable
 data class RouteDetailsRoute(
     val route: Route
+)
+
+@Serializable
+data class GroupDetailsRoute(
+    val groupId: String
 )
 
 val CustomRouteType = object : NavType<Route>(isNullableAllowed = false) {
@@ -109,7 +115,14 @@ class MainActivity : ComponentActivity() {
                                     navController.popBackStack()
                                 },
                                 onRouteSelected = { route ->
-                                    navController.navigate( RouteDetailsRoute(route) )
+                                    navController.navigate(
+                                        RouteDetailsRoute(route)
+                                    )
+                                },
+                                onGroupSelected = { groupId ->
+                                    navController.navigate(
+                                        GroupDetailsRoute(groupId)
+                                    )
                                 }
                             )
                         }

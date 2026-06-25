@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.thesstransit.ui.data.RoutePreferences
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -22,10 +23,25 @@ class FavoritesViewModel(
         initialValue = emptySet()
     )
 
+    val favoriteGroups =
+        prefs.favoriteGroups
+            .stateIn(
+                viewModelScope,
+                SharingStarted.WhileSubscribed(5000),
+                emptySet()
+            )
+
     fun toggleFavorite(routeId: String) {
 
         viewModelScope.launch {
             prefs.toggleFavorite(routeId)
+        }
+    }
+
+    fun toggleFavoriteGroup(groupId: String) {
+
+        viewModelScope.launch {
+            prefs.toggleFavoriteGroup(groupId)
         }
     }
 }

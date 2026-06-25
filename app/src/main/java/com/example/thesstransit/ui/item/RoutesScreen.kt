@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.thesstransit.ui.components.BusRouteRowItem
 import com.example.thesstransit.ui.components.ScreenHeader
+import com.example.thesstransit.ui.utils.groupRoutes
 import com.example.thesstransit.ui.viewModels.FavoritesViewModel
 import com.example.thesstransit.ui.viewModels.RoutesViewModel
 import io.gitlab.mitsiosm.oseth.data.Route
@@ -49,6 +50,7 @@ import kotlinx.coroutines.launch
 fun RoutesScreen(
     onBackClick: () -> Unit,
     onRouteSelected: (Route) -> Unit,
+    onGroupSelected: (String) -> Unit,
     viewModel: RoutesViewModel = viewModel()
 ) {
 
@@ -75,6 +77,9 @@ fun RoutesScreen(
     val favoriteRoutes = filteredRoutes.filter {
         favorites.contains(it.id.value)
     }
+
+    val groupedRoutesData = routes.groupRoutes()
+    val favoriteGroups by favoritesViewModel.favoriteGroups.collectAsState()
 
     var selectedTab by rememberSaveable{ mutableIntStateOf(0) }
 
@@ -114,6 +119,11 @@ fun RoutesScreen(
                             selected = selectedTab == 1,
                             onClick = { selectedTab = 1},
                             text = { Text("Αγαπημένα")}
+                        )
+                        Tab(
+                            selected = selectedTab == 2,
+                            onClick = { selectedTab = 2},
+                            text = { Text("Κατηγορίες")}
                         )
                     }
                 }
@@ -180,6 +190,16 @@ fun RoutesScreen(
                             ) {
                                 Text("Δεν υπάρχουν αγαπημένες γραμμές")
                             }
+                        }
+
+                        if (selectedTab == 2) {
+                            GroupedRoutesScreen(
+                                groups = groupedRoutesData,
+                                favoriteGroups = favoriteGroups,
+                                onGroupClick = {group -> onGroupSelected(group.groupId)},
+                                onFavoriteClick = { favoritesViewModel.toggleFavoriteGroup(it) }
+                            )
+                            return@Column
                         }
 
                         Box(

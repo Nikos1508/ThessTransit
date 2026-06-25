@@ -18,11 +18,19 @@ class RoutePreferences(
     companion object {
         private val FAVORITES_KEY =
             stringSetPreferencesKey("favorites_routes")
+
+        private val  FAVORITE_GROUPS_KEY =
+            stringSetPreferencesKey("favorite_groups")
     }
 
     val favoriteRoutes: Flow<Set<String>> =
         context.dataStore.data.map { preferences ->
             preferences[FAVORITES_KEY] ?: emptySet()
+        }
+
+    val favoriteGroups: Flow<Set<String>> =
+        context.dataStore.data.map {
+            it[FAVORITE_GROUPS_KEY] ?: emptySet()
         }
 
     suspend fun toggleFavorite(routeId: String) {
@@ -37,6 +45,22 @@ class RoutePreferences(
             }
 
             preferences[FAVORITES_KEY] = current
+        }
+    }
+
+    suspend fun toggleFavoriteGroup(
+      groupId: String
+    ){
+        context.dataStore.edit { preferences ->
+            val current = preferences[FAVORITE_GROUPS_KEY]?.toMutableSet()?:mutableSetOf()
+
+            if (current.contains(groupId)) {
+                current.remove(groupId)
+            } else {
+                current.add(groupId)
+            }
+
+            preferences[FAVORITE_GROUPS_KEY] = current
         }
     }
 
