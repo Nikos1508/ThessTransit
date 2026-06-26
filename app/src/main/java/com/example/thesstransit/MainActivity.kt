@@ -1,5 +1,6 @@
 package com.example.thesstransit
 
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -7,24 +8,26 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.example.thesstransit.ui.item.GroupRouteDetailsScreen
 import com.example.thesstransit.ui.item.HomeScreen
+import com.example.thesstransit.ui.item.RouteDetailsScreen
 import com.example.thesstransit.ui.item.RoutesScreen
 import com.example.thesstransit.ui.item.TicketsScreen
 import com.example.thesstransit.ui.theme.ThessTransitTheme
+import com.example.thesstransit.ui.utils.groupRoutes
+import com.example.thesstransit.ui.viewModels.RoutesViewModel
+import io.gitlab.mitsiosm.oseth.data.Route
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import io.gitlab.mitsiosm.oseth.data.Route
-import android.net.Uri
-import androidx.navigation.NavType
-import com.example.thesstransit.ui.item.GroupRouteDetailsScreen
 import kotlin.reflect.typeOf
-import com.example.thesstransit.ui.item.RouteDetailsScreen
-import io.gitlab.mitsiosm.oseth.data.RouteId
 
 @Serializable object HomeRoute
 @Serializable object RoutesRoute
@@ -90,14 +93,18 @@ class MainActivity : ComponentActivity() {
                                 onTicketsClick = {
                                     navController.navigate(TicketsRoute)
                                 },
-                                onHowToGoClick = { /* TODO */},
-
+                                onHowToGoClick = {
+                                    /* TODO */
+                                },
                                 onLinesClick = {
                                     navController.navigate(RoutesRoute)
                                 },
-
-                                onNearbyStopsClick = { /*TODO*/ },
-                                onLiveDeparturesClick = { /*TODO*/ }
+                                onNearbyStopsClick = {
+                                    /*TODO*/
+                                },
+                                onLiveDeparturesClick = {
+                                    /*TODO*/
+                                }
                             )
                         }
 
@@ -140,6 +147,31 @@ class MainActivity : ComponentActivity() {
                                 }
                             )
 
+                        }
+
+                        composable<GroupDetailsRoute> {
+
+                            val details = it.toRoute<GroupDetailsRoute>()
+                            val routesViewModel: RoutesViewModel = viewModel()
+                            val groups =
+                                routesViewModel.routes.groupRoutes()
+                            val group = groups.firstOrNull {
+                                it.groupId == details.groupId
+                            }
+
+                            if (group == null) {
+                                Text("Η κατηγορία δεν βρέθηκε.")
+                            } else {
+                                GroupRouteDetailsScreen(
+                                    group = group,
+                                    onBackClick = {
+                                        navController.popBackStack()
+                                    },
+                                    onRouteSelected = { route ->
+                                        navController.navigate(RouteDetailsRoute(route))
+                                    }
+                                )
+                            }
                         }
                     }
                 }

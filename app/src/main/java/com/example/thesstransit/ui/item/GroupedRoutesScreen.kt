@@ -35,8 +35,7 @@ fun GroupedRoutesScreen(
     onFavoriteClick: (String) -> Unit
 ){
     LazyColumn(
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+        contentPadding = PaddingValues(8.dp)
     ) {
         items(groups) {group ->
             Card(
@@ -49,7 +48,7 @@ fun GroupedRoutesScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ){
                     Text(

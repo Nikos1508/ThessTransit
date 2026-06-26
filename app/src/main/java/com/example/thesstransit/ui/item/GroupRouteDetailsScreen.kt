@@ -4,17 +4,24 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.thesstransit.ui.components.BusRouteRowItem
 import com.example.thesstransit.ui.components.ScreenHeader
 import com.example.thesstransit.ui.data.RouteGroup
+import com.example.thesstransit.ui.viewModels.FavoritesViewModel
 import io.gitlab.mitsiosm.oseth.data.Route
 
 @Composable
 fun GroupRouteDetailsScreen(
     group: RouteGroup,
     onBackClick: () -> Unit,
-    onRouteSelected: (Route) -> Unit
+    onRouteSelected: (Route) -> Unit,
+    favoritesViewModel: FavoritesViewModel = viewModel()
 ){
+    val favorites by favoritesViewModel.favorites.collectAsState()
+
     Column {
 
         ScreenHeader(
@@ -28,11 +35,14 @@ fun GroupRouteDetailsScreen(
 
                 BusRouteRowItem(
                     route = route,
-                    isFavorite = false,
-                    onFavoriteClick = {},
-                    onClick = { onRouteSelected(route) }
+                    isFavorite = favorites.contains(route.id.value),
+                    onFavoriteClick = {
+                        favoritesViewModel.toggleFavorite(route.id.value)
+                    },
+                    onClick = {
+                        onRouteSelected(route)
+                    }
                 )
-
             }
         }
     }
