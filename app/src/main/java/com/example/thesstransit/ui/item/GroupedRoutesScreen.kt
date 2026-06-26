@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.thesstransit.ui.data.RouteGroup
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
@@ -20,6 +21,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -37,20 +39,16 @@ fun GroupedRoutesScreen(
     LazyColumn(
         contentPadding = PaddingValues(8.dp)
     ) {
-        items(groups) {group ->
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable{
-                        onGroupClick(group)
-                    }
-            ){
+        items(groups) { group ->
+            Column {
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .clickable{ onGroupClick(group) }
                         .padding(horizontal = 16.dp, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically
-                ){
+                ) {
                     Text(
                         text = group.groupId,
                         style = MaterialTheme.typography.headlineSmall,
@@ -58,27 +56,35 @@ fun GroupedRoutesScreen(
                     )
 
                     Text(
-                        text = "${group.routes.size} γραμμές"
+                        text = "${group.routes.size} γραμμές",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
                     Spacer(Modifier.width(12.dp))
 
                     IconButton(
-                        onClick = {
-                            onFavoriteClick(group.groupId)
-                        }
-                    ){
+                        onClick = { onFavoriteClick(group.groupId) }
+                    ) {
                         Icon(
                             imageVector =
                                 if (favoriteGroups.contains(group.groupId))
                                     Icons.Default.Favorite
                                 else
                                     Icons.Outlined.FavoriteBorder,
-                            contentDescription = null
+                            contentDescription = "Favorite",
+                            tint = if (favoriteGroups.contains(group.groupId))
+                                MaterialTheme.colorScheme.error
+                            else
+                                MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-
                 }
+
+                HorizontalDivider(
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                )
             }
         }
     }

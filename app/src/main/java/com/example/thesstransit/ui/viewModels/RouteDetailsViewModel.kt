@@ -110,3 +110,38 @@ class RouteDetailsViewModel : ViewModel() {
         }
     }
 }
+
+class RouteRepository {
+
+    private val api = Oseth()
+
+    @OptIn(ExperimentalTime::class)
+    suspend fun loadRoute(
+        routeId: RouteId,
+        shapeId: ShapeId,
+        date: LocalDate
+    ): Pair<List<Stop>, List<TimetableTrip>> {
+
+        val midnight =
+            date.atStartOfDayIn(
+                TimeZone.currentSystemDefault()
+            )
+
+        val info =
+            api.getRouteInfo(routeId, shapeId)
+
+        val timetable =
+            api.getTimetable(
+                routeId,
+                shapeId,
+                midnight
+            )
+
+        return Pair(
+
+            info.getOrNull()?.stops ?: emptyList(),
+
+            timetable.getOrNull()?.trips ?: emptyList()
+        )
+    }
+}
