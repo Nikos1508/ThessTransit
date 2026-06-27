@@ -1,6 +1,8 @@
 package com.example.thesstransit.ui.viewModels
 
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.thesstransit.ui.data.RouteGroup
@@ -11,6 +13,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
+import androidx.compose.runtime.State
 
 class GroupRouteDetailsViewModel(
     private val repository: RouteRepository = RouteRepository()
@@ -26,48 +29,57 @@ class GroupRouteDetailsViewModel(
         val routeShortName: String
     )
 
-    val stops = mutableStateListOf<GroupStop>()
-    val trips = mutableStateListOf<GroupTrip>()
+    val stops = androidx.compose.runtime.mutableStateListOf<GroupStop>()
+    val trips = androidx.compose.runtime.mutableStateListOf<GroupTrip>()
+
+    val refreshKey = mutableIntStateOf(0)
+    val isLoaded = mutableStateOf(false)
 
     @OptIn(ExperimentalTime::class)
-    fun loadGroup(group: RouteGroup) {
+    fun loadGroup(group: RouteGroup, direction: Int = 0) {
+
+        isLoaded.value = false
+
         viewModelScope.launch {
             stops.clear()
             trips.clear()
 
+
             val date = Clock.System.todayIn(TimeZone.currentSystemDefault())
 
-            for (route in group.routes) {
 
-                val primaryShape = route.tripHeadsigns.firstOrNull()?.shapeId
-                    ?: continue
+            val newStops = mutableListOf<GroupStop>()
+            val newTrips = mutableListOf<GroupTrip>()
 
-                val (routeStops, routeTrips) = repository.loadRoute(
-                    route.id,
-                    primaryShape,
-                    date
-                )
+            val results = group.routes.mapNotNull { route ->
+                val primaryShape = route.tripHeadsigns.firstOrNull()?.shapeId ?: return@mapNotNull null
 
-                routeStops.forEach { stop ->
-                    stops.add(
-                        GroupStop(
-                            stop = stop,
-                            routeShortName = route.shortName
-                        )
-                    )
-                }
+                repository.loadRoute(route.id, primaryShape, date)
+            }
 
-                routeTrips.forEach { trip ->
-                    trips.add(
-                        GroupTrip(
-                            trip = trip,
-                            routeShortName = route.shortName
-                        )
-                    )
+            results.forEachIndexed { index, (routeStops, routeTrips) ->
+                val route = group.routes[index]
+
+                newStops += routeStops
+                    .distinctBy { it.code }
+                    .map { GroupStop(it, route.shortName) }
+
+                newTrips += routeTrips.map {
+                    GroupTrip(it, route.shortName)
                 }
             }
 
-            trips.sortBy { it.trip.departureTime }
+            stops.clear()
+            stops.addAll(newStops)
+
+            trips.clear()
+            trips.addAll(
+                newTrips.sortedBy { it.trip.departureTime }
+            )
+
+            refreshKey.intValue++
         }
+
+        isLoaded.value = true
     }
 }

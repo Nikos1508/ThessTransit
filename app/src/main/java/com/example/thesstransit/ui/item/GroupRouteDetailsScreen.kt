@@ -1,5 +1,6 @@
 package com.example.thesstransit.ui.item
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,7 +15,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -37,6 +42,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -45,8 +51,6 @@ import com.example.thesstransit.ui.components.ScreenHeader
 import com.example.thesstransit.ui.data.RouteGroup
 import com.example.thesstransit.ui.viewModels.FavoritesViewModel
 import com.example.thesstransit.ui.viewModels.GroupRouteDetailsViewModel
-import io.gitlab.mitsiosm.oseth.data.Route
-import io.gitlab.mitsiosm.oseth.data.TimetableTrip
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -65,8 +69,10 @@ fun GroupRouteDetailsScreen(
     var selectedDirection by remember { mutableIntStateOf(0) }
     val vm: GroupRouteDetailsViewModel = viewModel()
 
-    LaunchedEffect(group) {
-        vm.loadGroup(group)
+    val loaded by vm.isLoaded
+
+    LaunchedEffect(selectedDirection, group) {
+        vm.loadGroup(group, selectedDirection)
     }
 
     Column(Modifier.fillMaxSize()) {
@@ -89,6 +95,9 @@ fun GroupRouteDetailsScreen(
                 value = directions[selectedDirection],
                 onValueChange = {},
                 readOnly = true,
+                modifier = Modifier
+                    .menuAnchor()
+                    .fillMaxWidth(),
                 label = { Text("Κατεύθυνση") },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                 colors = OutlinedTextFieldDefaults.colors(
@@ -128,9 +137,15 @@ fun GroupRouteDetailsScreen(
             )
         }
 
-        when (selectedTab) {
-            0 -> GroupTimetableTab(vm.trips)
-            1 -> GroupStopsTab(group, vm.stops)
+        if (!loaded) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        } else {
+            when (selectedTab) {
+                0 -> GroupTimetableTab(vm.trips)
+                1 -> GroupStopsTab(vm.stops)
+            }
         }
     }
 }
@@ -139,22 +154,79 @@ fun GroupRouteDetailsScreen(
 @Composable
 private fun GroupTimetableTab(
     trips: List<GroupRouteDetailsViewModel.GroupTrip>
-) {
+){
+
+    val now = Clock.System.now()
+        .toLocalDateTime(TimeZone.currentSystemDefault())
+        .time
+
+    val sortedTrips = remember(trips) {
+        trips.sortedBy { it.trip.departureTime }
+    }
 
     val departureTrips = remember(trips) {
         trips.sortedBy { it.trip.departureTime }
     }
 
-    LazyColumn(modifier = Modifier.fillMaxSize()) {
-        items(departureTrips) { item ->
-            TimetableRowItem(
-                departureTime = item.trip.departureTime,
-                routeName = item.routeShortName,
-                headsign = item.trip.headsign,
-                currentTime = Clock.System.now()
-                    .toLocalDateTime(TimeZone.currentSystemDefault())
-                    .time
-            )
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(vertical = 8.dp)
+    ) {
+        itemsIndexed(sortedTrips) { index, item ->
+
+
+            val isPast = item.trip.departureTime < now
+            val isNext = index == sortedTrips.indexOfFirst {
+                it.trip.departureTime > now
+            }
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 4.dp),
+                border = if (isNext)
+                    BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+                else null,
+                colors = CardDefaults.cardColors(
+                    containerColor =
+                        if (isNext)
+                            MaterialTheme.colorScheme.primaryContainer
+                        else
+                            MaterialTheme.colorScheme.surface
+                )
+            ) {
+                Column(
+                    modifier = Modifier
+                        .alpha(if (isPast) 0.4f else 1f)
+                        .padding(12.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = item.trip.departureTime.toString().substring(0, 5),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp
+                        )
+
+                        Spacer( Modifier.width(8.dp) )
+
+                        Text(
+                            text = "(${item.routeShortName})",
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp
+                        )
+                    }
+
+                    if (item.trip.headsign.isNotEmpty()) {
+                        Text(
+                            text = item.trip.headsign,
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1
+                        )
+                    }
+                }
+            }
         }
     }
 }
@@ -204,7 +276,6 @@ private fun TimetableRowItem(
 
 @Composable
 private fun GroupStopsTab(
-    group: RouteGroup,
     stops: List<GroupRouteDetailsViewModel.GroupStop>
 ) {
 
@@ -220,7 +291,10 @@ private fun GroupStopsTab(
 
             val stop = groupStop.stop
 
-            val passingRoutes = group.routes.map { it.shortName }
+            val passingRoutes = stops
+                .filter { it.stop.code == stop.code }
+                .map { it.routeShortName }
+                .distinct()
 
             Row(
                 modifier = Modifier

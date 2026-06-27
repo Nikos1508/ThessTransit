@@ -77,7 +77,10 @@ fun RoutesScreen(
         favorites.contains(it.id.value)
     }
 
-    val groupedRoutesData = routes.groupRoutes()
+    val groupedRoutesData = routes
+        .groupRoutes()
+        .filter { it.routes.size > 1 }
+
     val favoriteGroups by favoritesViewModel.favoriteGroups.collectAsState()
 
     var selectedTab by rememberSaveable{ mutableIntStateOf(0) }
