@@ -150,28 +150,20 @@ class MainActivity : ComponentActivity() {
                         }
 
                         composable<GroupDetailsRoute> {
-
                             val details = it.toRoute<GroupDetailsRoute>()
                             val routesViewModel: RoutesViewModel = viewModel()
-                            val groups =
-                                routesViewModel.routes.groupRoutes()
-                            val group = groups.firstOrNull {
-                                it.groupId == details.groupId
-                            }
+                            val groups = routesViewModel.routes.groupRoutes()
+                            val group = groups.firstOrNull { it.groupId == details.groupId }
 
                             if (group == null) {
                                 Text("Η κατηγορία δεν βρέθηκε.")
                             } else {
                                 GroupRouteDetailsScreen(
                                     group = group,
-                                    onBackClick = {
-                                        navController.popBackStack()
-                                    },
-                                    onRouteSelected = { route ->
-                                        navController.navigate(RouteDetailsRoute(route))
-                                    }
+                                    onBackClick = { navController.popBackStack() }
                                 )
                             }
+
                         }
                     }
                 }

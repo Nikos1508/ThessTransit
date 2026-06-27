@@ -82,7 +82,6 @@ fun RoutesScreen(
 
     var selectedTab by rememberSaveable{ mutableIntStateOf(0) }
 
-
     Column {
         ScreenHeader(title = "Διαδρομές", onBackClick = onBackClick, onProfileClick = onBackClick)
         Box(
@@ -129,20 +128,14 @@ fun RoutesScreen(
 
                 OutlinedTextField(
                     value = searchQuery,
-                    onValueChange = {
-                        searchQuery = it
-                    },
+                    onValueChange = { searchQuery = it },
                     singleLine = true,
                     shape = RoundedCornerShape(18.dp),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    placeholder = {
-                        Text("Αναζήτηση γραμμής...")
-                    },
-                    leadingIcon = {
-                        Icon(Icons.Default.Search, null)
-                    },
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    placeholder = { Text("Αναζήτηση γραμμής...") },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = MaterialTheme.colorScheme.primary,
                         unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
