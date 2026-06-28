@@ -76,11 +76,15 @@ fun RoutesScreen(
         favorites.contains(it.id.value)
     }
 
+    val favoriteGroups by favoritesViewModel.favoriteGroups.collectAsState()
+
     val groupedRoutesData = routes
         .groupRoutes()
         .filter { it.routes.size > 1 }
 
-    val favoriteGroups by favoritesViewModel.favoriteGroups.collectAsState()
+    val filteredFavoriteGroups = groupedRoutesData.filter {
+        favoriteGroups.contains(it.groupId) && it.groupId.contains(searchQuery, true)
+    }
 
     val searchedRoutes = routes.filter {
         it.shortName.contains(searchQuery, true) ||
@@ -93,7 +97,13 @@ fun RoutesScreen(
     }
 
     Column {
-        ScreenHeader(title = "Διαδρομές", onBackClick = onBackClick, onProfileClick = onBackClick)
+
+        ScreenHeader(
+            title = "Διαδρομές",
+            onBackClick = onBackClick,
+            onProfileClick = onBackClick
+        )
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -169,12 +179,6 @@ fun RoutesScreen(
 
                     else -> {
 
-                        val shownRoutes = if (selectedTab == 2) {
-                            favoriteRoutes
-                        } else {
-                            filteredRoutes
-                        }
-
                         if (selectedTab == 1) {
                             GroupedRoutesScreen(
                                 groups = groupedRoutesData,
@@ -192,7 +196,7 @@ fun RoutesScreen(
 
                             var currentIndex = 0
 
-                            val shownRoutes = if (selectedTab == 1) {
+                            val shownRoutes = if (selectedTab == 2) {
                                 favoriteRoutes
                             } else {
                                 filteredRoutes
