@@ -34,6 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.data.Group
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -52,20 +53,18 @@ fun RoutesScreen(
     onGroupSelected: (String) -> Unit,
     viewModel: RoutesViewModel = viewModel()
 ) {
-
     val listState = rememberLazyListState()
+
     val scope = rememberCoroutineScope()
 
-    var searchQuery by rememberSaveable {
-        mutableStateOf("")
-    }
+    var searchQuery by rememberSaveable { mutableStateOf("") }
+    var selectedTab by rememberSaveable{ mutableIntStateOf(0) }
 
     val routes = viewModel.routes
     val loading = viewModel.isLoading
     val error = viewModel.errorMessage
 
     val favoritesViewModel: FavoritesViewModel = viewModel()
-
     val favorites by favoritesViewModel.favorites.collectAsState()
 
     val filteredRoutes = routes.filter {
@@ -83,7 +82,15 @@ fun RoutesScreen(
 
     val favoriteGroups by favoritesViewModel.favoriteGroups.collectAsState()
 
-    var selectedTab by rememberSaveable{ mutableIntStateOf(0) }
+    val searchedRoutes = routes.filter {
+        it.shortName.contains(searchQuery, true) ||
+                it.longName.contains(searchQuery, true)
+    }
+
+    val shownRoutes = when (selectedTab) {
+        2 -> searchedRoutes.filter { favorites.contains(it.id.value) }
+        else -> searchedRoutes
+    }
 
     Column {
         ScreenHeader(title = "Διαδρομές", onBackClick = onBackClick, onProfileClick = onBackClick)
@@ -113,20 +120,21 @@ fun RoutesScreen(
                     PrimaryTabRow(selectedTabIndex = selectedTab) {
                         Tab(
                             selected = selectedTab == 0,
-                            onClick = { selectedTab = 0},
-                            text = { Text("Όλες")}
+                            onClick = { selectedTab = 0 },
+                            text = { Text("Όλες") }
                         )
                         Tab(
                             selected = selectedTab == 1,
-                            onClick = { selectedTab = 1},
-                            text = { Text("Αγαπημένα")}
+                            onClick = { selectedTab = 1 },
+                            text = { Text("Κατηγορίες") }
                         )
                         Tab(
                             selected = selectedTab == 2,
-                            onClick = { selectedTab = 2},
-                            text = { Text("Κατηγορίες")}
+                            onClick = { selectedTab = 2 },
+                            text = { Text("Αγαπημένα") }
                         )
                     }
+
                 }
 
                 OutlinedTextField(
@@ -156,38 +164,18 @@ fun RoutesScreen(
                     }
 
                     error != null -> {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-
-                        )
+                        //Error code
                     }
 
                     else -> {
-                        val filteredRoutes = routes.filter {
 
-                            it.shortName.contains(
-                                searchQuery,
-                                ignoreCase = true
-                            )
-
-                            ||
-
-                            it.longName.contains(
-                                searchQuery,
-                                ignoreCase = true
-                            )
+                        val shownRoutes = if (selectedTab == 2) {
+                            favoriteRoutes
+                        } else {
+                            filteredRoutes
                         }
 
-                        if (selectedTab == 1 && favoriteRoutes.isEmpty()) {
-                            Box(
-                                modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text("Δεν υπάρχουν αγαπημένες γραμμές")
-                            }
-                        }
-
-                        if (selectedTab == 2) {
+                        if (selectedTab == 1) {
                             GroupedRoutesScreen(
                                 groups = groupedRoutesData,
                                 favoriteGroups = favoriteGroups,
@@ -227,52 +215,38 @@ fun RoutesScreen(
                                 state = listState,
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .padding(
-                                        start = 16.dp,
-                                        end = 56.dp
-                                    ),
+                                    .padding(start = 16.dp, end = 56.dp),
                                 verticalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
-
-
-
-                                groupedRoutes.forEach { (digit, routes) ->
-
+                                groupedRoutes.entries.sortedBy { it.key }.forEach { (letter, routes) ->
                                     stickyHeader {
                                         Box(
                                             modifier = Modifier
                                                 .fillMaxWidth()
                                                 .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.95f))
                                                 .padding(vertical = 8.dp)
-                                        ){
+                                        ) {
                                             Text(
-                                                text = digit,
+                                                text = letter,
                                                 fontSize = 22.sp,
                                                 modifier = Modifier.padding(start = 4.dp),
                                                 fontWeight = FontWeight.ExtraBold
                                             )
                                         }
                                     }
-
                                     items(routes) { route ->
                                         BusRouteRowItem(
                                             route = route,
                                             isFavorite = favorites.contains(route.id.value),
-                                            onFavoriteClick = {
-                                                favoritesViewModel.toggleFavorite(route.id.value)
-                                            },
-                                            onClick = {
-                                                onRouteSelected(it)
-                                            }
+                                            onFavoriteClick = { favoritesViewModel.toggleFavorite(route.id.value) },
+                                            onClick = { onRouteSelected(route) }
                                         )
                                     }
                                 }
                             }
 
                             Column(
-                                modifier = Modifier
-                                    .align(Alignment.CenterEnd)
-                                    .padding(end = 6.dp)
+                                modifier = Modifier.align(Alignment.CenterEnd).padding(end = 6.dp)
                                     .background(
                                         MaterialTheme.colorScheme.surfaceContainer,
                                         RoundedCornerShape(20.dp)
@@ -280,25 +254,22 @@ fun RoutesScreen(
                                     .padding(vertical = 8.dp, horizontal = 4.dp),
                                 verticalArrangement = Arrangement.spacedBy(3.dp)
                             ) {
-                                groupedRoutes.keys.sorted().forEach {digit ->
-
+                                groupedRoutes.keys.sorted().forEach { digit ->
                                     Text(
                                         text = digit,
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier
-                                            .clickable {
-                                                scope.launch {
-                                                    listState.animateScrollToItem(
-                                                        sectionIndexes[digit] ?: 0
-                                                    )
+                                        modifier = Modifier.clickable {
+                                            scope.launch {
+                                                var targetIndex = 0
+                                                for ((key, list) in groupedRoutes.entries.sortedBy { it.key }) {
+                                                    if (key == digit) break
+                                                    targetIndex += list.size + 1
                                                 }
+                                                listState.animateScrollToItem(targetIndex)
                                             }
-                                            .padding(
-                                                horizontal = 6.dp,
-                                                vertical = 2.dp
-                                            )
+                                        }.padding(horizontal = 6.dp, vertical = 2.dp)
                                     )
                                 }
                             }

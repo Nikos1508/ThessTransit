@@ -224,11 +224,10 @@ private fun GroupStopsTab(
     stops: List<GroupRouteDetailsViewModel.GroupStop>
 ) {
     val groupedStops = stops.groupBy {
-        it.stop.name.firstOrNull()?.uppercase() ?: '#'
+        it.stop.name.firstOrNull()?.uppercaseChar() ?: '#'
     }.toSortedMap()
 
     val letters = groupedStops.keys.toList()
-
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
 
@@ -313,7 +312,7 @@ private fun GroupStopsTab(
                 .align(Alignment.CenterEnd)
                 .padding(end = 8.dp)
         ) {
-            letters.forEach { letter ->
+            letters.forEachIndexed { idx, letter ->
                 Text(
                     text = letter.toString(),
                     fontSize = 12.sp,
@@ -321,16 +320,13 @@ private fun GroupStopsTab(
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier
                         .clickable {
-                            val index = groupedStops.keys.indexOf(letter)
+                            coroutineScope.launch {
 
-                            if (index >= 0) {
-
-                                val offset = groupedStops.entries
-                                    .take(index)
-                                    .sumOf { it.value.size + 1 }
-                                coroutineScope.launch {
-                                    listState.scrollToItem(offset)
+                                var offset = 0
+                                for (i in 0 until idx) {
+                                    offset += groupedStops.values.elementAt(i).size + 1
                                 }
+                                listState.scrollToItem(offset)
                             }
                         }
                         .padding(horizontal = 4.dp, vertical = 2.dp)

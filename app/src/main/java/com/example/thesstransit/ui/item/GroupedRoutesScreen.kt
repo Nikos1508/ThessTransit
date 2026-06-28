@@ -35,9 +35,10 @@ fun GroupedRoutesScreen(
     favoriteGroups: Set<String>,
     onGroupClick: (RouteGroup) -> Unit,
     onFavoriteClick: (String) -> Unit
-){
+) {
     LazyColumn(
-        contentPadding = PaddingValues(8.dp)
+        contentPadding = PaddingValues(8.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         items(groups) { group ->
             Column {
@@ -45,10 +46,11 @@ fun GroupedRoutesScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable{ onGroupClick(group) }
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                        .clickable { onGroupClick(group) }
+                        .padding(horizontal = 16.dp, vertical = 10.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+
                     Text(
                         text = group.groupId,
                         style = MaterialTheme.typography.headlineSmall,
@@ -61,7 +63,7 @@ fun GroupedRoutesScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
-                    Spacer(Modifier.width(12.dp))
+                    Spacer(Modifier.width(8.dp))
 
                     IconButton(
                         onClick = { onFavoriteClick(group.groupId) }
@@ -69,14 +71,15 @@ fun GroupedRoutesScreen(
                         Icon(
                             imageVector =
                                 if (favoriteGroups.contains(group.groupId))
-                                    Icons.Default.Favorite
+                                    Icons.Filled.Favorite
                                 else
                                     Icons.Outlined.FavoriteBorder,
                             contentDescription = "Favorite",
-                            tint = if (favoriteGroups.contains(group.groupId))
-                                MaterialTheme.colorScheme.error
-                            else
-                                MaterialTheme.colorScheme.onSurfaceVariant
+                            tint =
+                                if (favoriteGroups.contains(group.groupId))
+                                    MaterialTheme.colorScheme.error
+                                else
+                                    MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
