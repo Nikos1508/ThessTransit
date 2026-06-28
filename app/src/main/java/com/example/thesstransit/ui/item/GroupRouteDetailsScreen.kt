@@ -2,6 +2,7 @@ package com.example.thesstransit.ui.item
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -16,7 +17,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -24,7 +25,6 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -38,11 +38,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -51,7 +51,7 @@ import com.example.thesstransit.ui.components.ScreenHeader
 import com.example.thesstransit.ui.data.RouteGroup
 import com.example.thesstransit.ui.viewModels.FavoritesViewModel
 import com.example.thesstransit.ui.viewModels.GroupRouteDetailsViewModel
-import kotlinx.datetime.LocalTime
+import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
@@ -69,13 +69,12 @@ fun GroupRouteDetailsScreen(
     var selectedDirection by remember { mutableIntStateOf(0) }
     val vm: GroupRouteDetailsViewModel = viewModel()
 
-    val loaded by vm.isLoaded
-
     LaunchedEffect(selectedDirection, group) {
         vm.loadGroup(group, selectedDirection)
     }
 
     Column(Modifier.fillMaxSize()) {
+
         ScreenHeader(
             title = "Γραμμή ${group.groupId}",
             onBackClick = onBackClick,
@@ -84,6 +83,7 @@ fun GroupRouteDetailsScreen(
 
         val directions = listOf("Αφετηρία", "Τέρμα")
         var expanded by remember { mutableStateOf(false) }
+
         ExposedDropdownMenuBox(
             expanded = expanded,
             onExpandedChange = { expanded = !expanded },
@@ -95,23 +95,18 @@ fun GroupRouteDetailsScreen(
                 value = directions[selectedDirection],
                 onValueChange = {},
                 readOnly = true,
-                modifier = Modifier
-                    .menuAnchor()
-                    .fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 label = { Text("Κατεύθυνση") },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha=0.4f),
-                    unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha=0.2f),
-                    focusedContainerColor = MaterialTheme.colorScheme.surface,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha=0.2f)
                 )
             )
-
             ExposedDropdownMenu(
                 expanded = expanded,
                 onDismissRequest = { expanded = false }
-            ){
+            ) {
                 directions.forEachIndexed { index, label ->
                     DropdownMenuItem(
                         text = { Text(label) },
@@ -137,7 +132,7 @@ fun GroupRouteDetailsScreen(
             )
         }
 
-        if (!loaded) {
+        if (!vm.isLoaded.value) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
@@ -160,20 +155,13 @@ private fun GroupTimetableTab(
         .toLocalDateTime(TimeZone.currentSystemDefault())
         .time
 
-    val sortedTrips = remember(trips) {
-        trips.sortedBy { it.trip.departureTime }
-    }
-
-    val departureTrips = remember(trips) {
-        trips.sortedBy { it.trip.departureTime }
-    }
+    val sortedTrips = trips.sortedBy { it.trip.departureTime }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(vertical = 8.dp)
     ) {
         itemsIndexed(sortedTrips) { index, item ->
-
 
             val isPast = item.trip.departureTime < now
             val isNext = index == sortedTrips.indexOfFirst {
@@ -232,110 +220,121 @@ private fun GroupTimetableTab(
 }
 
 @Composable
-private fun TimetableRowItem(
-    departureTime: LocalTime,
-    routeName: String,
-    headsign: String,
-    currentTime: LocalTime
-){
-    val departed = departureTime < currentTime
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .alpha(if (departed) 0.45f else 1.0f)
-            .padding(horizontal = 12.dp, vertical = 10.dp)
-    ) {
-        Row( verticalAlignment = Alignment.CenterVertically ) {
-            Text(
-                text = departureTime.toString().substring(0, 5),
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp
-            )
-            Text(
-                text = "($routeName)",
-                fontWeight = FontWeight.Bold,
-                fontSize = 13.sp,
-                color = MaterialTheme.colorScheme.primary
-            )
-        }
-        if (headsign.isNotEmpty()) {
-            Text(
-                text = headsign,
-                fontSize = 11.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1
-            )
-        }
-
-        Spacer(Modifier.height(6.dp))
-
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-    }
-}
-
-@Composable
 private fun GroupStopsTab(
     stops: List<GroupRouteDetailsViewModel.GroupStop>
 ) {
+    val groupedStops = stops.groupBy {
+        it.stop.name.firstOrNull()?.uppercase() ?: '#'
+    }.toSortedMap()
 
-    val combinedStops = remember(stops) {
-        stops.distinctBy { it.stop.code }
-    }
+    val letters = groupedStops.keys.toList()
 
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(vertical = 12.dp)
-    ) {
-        items(combinedStops) { groupStop ->
+    val listState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
 
-            val stop = groupStop.stop
+    Box {
 
-            val passingRoutes = stops
-                .filter { it.stop.code == stop.code }
-                .map { it.routeShortName }
-                .distinct()
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp)
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        LazyColumn(
+            state = listState,
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(vertical = 12.dp)
+        ) {
+            for ((letter, stopsForLetter) in groupedStops) {
+                stickyHeader {
                     Box(
                         modifier = Modifier
-                            .size(12.dp)
-                            .background(MaterialTheme.colorScheme.primary, CircleShape)
-                    )
+                            .fillMaxWidth()
+                            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.95f))
+                            .padding(vertical = 6.dp)
+                    ){
+                        Text(
+                            text = letter.toString(),
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            modifier = Modifier.padding(start = 16.dp)
+                        )
+                    }
                 }
 
-                Spacer(modifier = Modifier.width(16.dp))
+                items(stopsForLetter) { groupStop ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 8.dp)
+                    ){
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Box(
+                                modifier = Modifier
+                                    .size(12.dp)
+                                    .background(MaterialTheme.colorScheme.primary)
+                            )
+                        }
 
-                Column(modifier = Modifier.padding(bottom = 12.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = stop.name,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 15.sp,
-                            modifier = Modifier.weight(1f)
-                        )
+                        Spacer( Modifier.width(16.dp) )
 
-                        if (passingRoutes.isNotEmpty()) {
+                        Column {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = groupStop.stop.name,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 15.sp,
+                                    modifier = Modifier.weight(1f)
+                                )
+
+                                val passing = stops
+                                    .filter {it.stop.code == groupStop.stop.code}
+                                    .map {it.routeShortName}
+                                    .distinct()
+
+                                if (passing.isNotEmpty()) {
+                                    Text(
+                                        text = passing.joinToString(prefix = "(", separator = ",", postfix = ")"),
+                                        fontSize = 13.sp,
+                                        color = MaterialTheme.colorScheme.secondary
+                                    )
+                                }
+                            }
+
+                            Spacer(Modifier.height(4.dp))
+
                             Text(
-                                text = "(${passingRoutes.joinToString(", ")})",
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 13.sp,
-                                color = MaterialTheme.colorScheme.secondary,
-                                modifier = Modifier.padding(start = 4.dp)
+                                text = "Κωδικός: ${groupStop.stop.code}",
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
-                    Text(
-                        text = "Κωδικός στάσης: ${stop.code}",
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
                 }
+            }
+        }
+
+        Column(
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .padding(end = 8.dp)
+        ) {
+            letters.forEach { letter ->
+                Text(
+                    text = letter.toString(),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier
+                        .clickable {
+                            val index = groupedStops.keys.indexOf(letter)
+
+                            if (index >= 0) {
+
+                                val offset = groupedStops.entries
+                                    .take(index)
+                                    .sumOf { it.value.size + 1 }
+                                coroutineScope.launch {
+                                    listState.scrollToItem(offset)
+                                }
+                            }
+                        }
+                        .padding(horizontal = 4.dp, vertical = 2.dp)
+                )
             }
         }
     }
