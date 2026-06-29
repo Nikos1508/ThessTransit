@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
@@ -20,11 +22,15 @@ import com.example.thesstransit.ui.item.GroupRouteDetailsScreen
 import com.example.thesstransit.ui.item.HomeScreen
 import com.example.thesstransit.ui.item.RouteDetailsScreen
 import com.example.thesstransit.ui.item.RoutesScreen
+import com.example.thesstransit.ui.item.StopDetailsScreen
 import com.example.thesstransit.ui.item.TicketsScreen
 import com.example.thesstransit.ui.theme.ThessTransitTheme
 import com.example.thesstransit.ui.utils.groupRoutes
 import com.example.thesstransit.ui.viewModels.RoutesViewModel
+import com.example.thesstransit.ui.viewModels.StopDetailsViewModel
 import io.gitlab.mitsiosm.oseth.data.Route
+import io.gitlab.mitsiosm.oseth.data.Stop
+import io.gitlab.mitsiosm.oseth.data.StopId
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlin.reflect.typeOf
@@ -46,6 +52,11 @@ data class RouteDetailsRoute(
 @Serializable
 data class GroupDetailsRoute(
     val groupId: String
+)
+
+@Serializable
+data class StopDetailsRoute(
+    val stopId: String
 )
 
 val CustomRouteType = object : NavType<Route>(isNullableAllowed = false) {
@@ -142,8 +153,13 @@ class MainActivity : ComponentActivity() {
 
                             RouteDetailsScreen(
                                 route = route,
-                                onBackClick = {
-                                    navController.popBackStack()
+                                onBackClick = { navController.popBackStack() },
+                                onStopClick = { stop ->
+                                    navController.navigate(
+                                        StopDetailsRoute(
+                                            stopId = stop.id.id
+                                        )
+                                    )
                                 }
                             )
 
@@ -164,6 +180,31 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
 
+                        }
+
+                        composable<StopDetailsRoute> { backStackEntry ->
+                            val stopId = backStackEntry.toRoute<StopDetailsRoute>().stopId
+                            val vm: StopDetailsViewModel = viewModel()
+
+                            val stop = remember(stopId) {
+                                Stop(
+                                    id = StopId(stopId),
+                                    code = "",
+                                    name = "Loading...",
+                                    latitude = 0.0,
+                                    longitude = 0.0,
+                                    sequence = 0u
+                                )
+                            }
+
+                            LaunchedEffect(stopId) {
+                                vm.load(stop)
+                            }
+
+                            StopDetailsScreen(
+                                stop = stop,
+                                viewModel = vm
+                            )
                         }
                     }
                 }

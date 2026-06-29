@@ -1,10 +1,13 @@
 package com.example.thesstransit.ui.viewModels
 
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.gitlab.mitsiosm.oseth.Oseth
+import io.gitlab.mitsiosm.oseth.data.DetailedRoute
 import io.gitlab.mitsiosm.oseth.data.Route
 import io.gitlab.mitsiosm.oseth.data.RouteId
+import io.gitlab.mitsiosm.oseth.data.ShapeId
 import io.gitlab.mitsiosm.oseth.data.Stop
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -23,40 +26,60 @@ data class StopArrivalUi (
     val isLive: Boolean
 )
 
-
 class StopDetailsViewModel : ViewModel() {
 
     private val api = Oseth()
 
+    val isLoading = mutableStateOf(false)
     val routes = MutableStateFlow<List<Route>>(emptyList())
     val arrivals = MutableStateFlow<List<StopArrivalUi>>(emptyList())
-    val selectedTab = MutableStateFlow(0)
+
+    private val routeInfoCache = mutableMapOf<RouteId, DetailedRoute>()
 
     fun load(stop: Stop) {
         viewModelScope.launch {
-            val routesResult = api.getRoutes()
 
-            if (routesResult.isFailure) return@launch
+            isLoading.value = true
 
-            val allRoutes = routesResult.getOrThrow()
+            try {
+                val routesResult = api.getRoutes()
 
-            val matching = mutableListOf<Route>()
+                if (routesResult.isFailure) {
+                    routes.value = emptyList()
+                    arrivals.value = emptyList()
+                    return@launch
+                }
 
-            allRoutes.forEach { route ->
-                val shape = route.tripHeadsigns.firstOrNull() ?: return@forEach
-                val info = api.getRouteInfo(route.id, shape.shapeId)
-                if (info.isSuccess) {
-                    val detailed = info.getOrNull()!!
-                    if (detailed.stops.any { it.id == stop.id }) {
-                        matching.add(route)
+                val allRoutes = routesResult.getOrThrow()
+
+                val matchingRoutes = mutableListOf<Route>()
+
+                for (route in allRoutes) {
+                    val shape = route.tripHeadsigns.firstOrNull() ?: continue
+                    val detailed = getRouteInfoCached(route.id, shape.shapeId)
+
+                    if (detailed?.stops?.any { it.id == stop.id } == true) {
+                        matchingRoutes.add(route)
                     }
                 }
+
+                routes.value = matchingRoutes
+                computeArrivals(stop, matchingRoutes)
+
+            } finally {
+                isLoading.value = false
             }
-
-            routes.value = matching
-
-            computeArrivals(stop, matching)
         }
+    }
+
+    private suspend fun getRouteInfoCached(
+        routeId: RouteId,
+        shapeId: ShapeId
+    ): DetailedRoute? {
+        return routeInfoCache[routeId]
+            ?: api.getRouteInfo(routeId, shapeId)
+            .getOrNull()
+            ?.also {routeInfoCache[routeId] =it}
     }
 
     @OptIn(ExperimentalTime::class)
@@ -68,18 +91,17 @@ class StopDetailsViewModel : ViewModel() {
 
         val result = mutableListOf<StopArrivalUi>()
 
-        routes.forEach { route ->
-            val shape = route.tripHeadsigns.firstOrNull() ?: return@forEach
+        for (route in routes) {
+            val shape = route.tripHeadsigns.firstOrNull() ?: continue
 
             val timetable = api.getTimetableForToday(route.id, shape.shapeId)
             val live = api.getRouteInfo(route.id, shape.shapeId)
 
-            if (timetable.isSuccess) {
-                timetable.getOrNull()!!.trips.forEach { trip ->
+            timetable.getOrNull()?.trips?.forEach { trip ->
+                val minutes = calculateMinutes(trip.departureTime, now)
 
-                    val minutes = calculateMinutes(trip.departureTime, now)
-
-                    result.add (
+                if (minutes >= 0) {
+                    result.add(
                         StopArrivalUi(
                             routeId = route.id,
                             routeName = route.shortName,
@@ -91,29 +113,32 @@ class StopDetailsViewModel : ViewModel() {
                 }
             }
 
-            if (live.isSuccess) {
-                live.getOrNull()!!.vehicles.forEach { v ->
-                    result.add(
-                        StopArrivalUi(
-                            routeId = route.id,
-                            routeName = route.shortName,
-                            headsign = "",
-                            minutes = null,
-                            isLive = true
-                        )
+            live.getOrNull()?.vehicles?.forEach {
+                result.add(
+                    StopArrivalUi(
+                        routeId = route.id,
+                        routeName = route.shortName,
+                        headsign = "LIVE",
+                        minutes = 0,
+                        isLive = true
                     )
-                }
+                )
             }
         }
-        arrivals.value = result.sortedBy { it.minutes ?: Int.MAX_VALUE }
+        arrivals.value = result
+            .sortedWith(
+                compareBy(
+                    {it.isLive.not()},
+                    {it.minutes ?: Int.MAX_VALUE}
+                )
+            )
     }
 
-    private fun calculateMinutes(
-        departure: LocalTime,
-        now: LocalTime
-    ): Int{
+    private fun calculateMinutes(departure: LocalTime, now: LocalTime): Int {
         val dep = departure.hour * 60 + departure.minute
         val n = now.hour * 60 + now.minute
-        return dep - n
+
+        val diff = dep - n
+        return if (diff < 0) -1 else diff
     }
 }

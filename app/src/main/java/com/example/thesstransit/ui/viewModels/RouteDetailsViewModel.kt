@@ -56,11 +56,10 @@ class RouteDetailsViewModel : ViewModel() {
         }
 
     fun loadRoute(route: Route) {
-
         this.route.value = route
 
-        if (route.tripHeadsigns.isNotEmpty()) {
-            loadShape(route.tripHeadsigns.first().shapeId, route.tripHeadsigns.first().routeId)
+        route.tripHeadsigns.firstOrNull()?.let {
+            loadShape(it.shapeId, route.id)
         }
     }
 

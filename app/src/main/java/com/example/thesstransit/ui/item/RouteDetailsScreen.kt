@@ -3,6 +3,7 @@ package com.example.thesstransit.ui.item
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -56,7 +57,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -65,6 +65,7 @@ import com.example.thesstransit.ui.components.ScreenHeader
 import com.example.thesstransit.ui.viewModels.FavoritesViewModel
 import com.example.thesstransit.ui.viewModels.RouteDetailsViewModel
 import io.gitlab.mitsiosm.oseth.data.Route
+import io.gitlab.mitsiosm.oseth.data.Stop
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -90,6 +91,7 @@ private fun formatDay(day: LocalDate): String {
 fun RouteDetailsScreen(
     route: Route,
     onBackClick: () -> Unit,
+    onStopClick: (Stop) -> Unit,
     viewModel: RouteDetailsViewModel = viewModel()
 ) {
 
@@ -104,7 +106,7 @@ fun RouteDetailsScreen(
     val favoritesViewModel: FavoritesViewModel = viewModel()
     val favorites by favoritesViewModel.favorites.collectAsState()
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(route.id) {
         viewModel.loadRoute(route)
     }
 
@@ -181,7 +183,7 @@ fun RouteDetailsScreen(
                             },
                             onClick = {
                                 expanded = false
-                                viewModel.loadShape(direction.shapeId, direction.routeId)
+                                viewModel.loadShape(direction.shapeId, route.id)
                             }
                         )
                     }
@@ -206,7 +208,7 @@ fun RouteDetailsScreen(
             }
 
             when (selectedTab) {
-                0 -> StopsTab(viewModel)
+                0 -> StopsTab(viewModel, onStopClick)
                 1 -> TimetableTab(viewModel)
             }
         }
@@ -236,7 +238,8 @@ fun RouteDetailsScreen(
 
 @Composable
 private fun StopsTab(
-    vm: RouteDetailsViewModel
+    vm: RouteDetailsViewModel,
+    onStopClick: (Stop) -> Unit
 ) {
 
     LazyColumn(
@@ -249,7 +252,10 @@ private fun StopsTab(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp),
+                    .padding(horizontal = 20.dp)
+                    .clickable {
+                        onStopClick(stop)
+                    },
                 verticalAlignment = Alignment.Top
             ) {
                 Column(
@@ -314,11 +320,12 @@ private fun TimetableTab(
                 modifier = Modifier.height(32.dp),
                 selected = day == vm.selectedDate,
                 onClick = {
-                    vm.loadShape(
-                        vm.selectedShape.value!!,
-                        vm.route.value!!.id,
-                        day
-                    )
+                    val shapeId = vm.selectedShape.value
+                    val route = vm.route.value
+
+                    if (shapeId != null && route != null) {
+                        vm.loadShape(shapeId, route.id, day)
+                    }
                 },
                 label = {
                     Text(
