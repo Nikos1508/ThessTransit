@@ -34,7 +34,8 @@ class StopDetailsViewModel : ViewModel() {
     val routes = MutableStateFlow<List<Route>>(emptyList())
     val arrivals = MutableStateFlow<List<StopArrivalUi>>(emptyList())
 
-    private val routeInfoCache = mutableMapOf<RouteId, DetailedRoute>()
+    private val routeInfoCache =
+        mutableMapOf<Pair<RouteId, ShapeId>, DetailedRoute>()
 
     fun load(stop: Stop) {
         viewModelScope.launch {
@@ -76,10 +77,10 @@ class StopDetailsViewModel : ViewModel() {
         routeId: RouteId,
         shapeId: ShapeId
     ): DetailedRoute? {
-        return routeInfoCache[routeId]
+        return routeInfoCache[routeId to shapeId]
             ?: api.getRouteInfo(routeId, shapeId)
             .getOrNull()
-            ?.also {routeInfoCache[routeId] =it}
+            ?.also { routeInfoCache[routeId to shapeId] = it }
     }
 
     @OptIn(ExperimentalTime::class)

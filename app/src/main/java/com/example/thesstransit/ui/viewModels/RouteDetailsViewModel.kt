@@ -1,5 +1,6 @@
 package com.example.thesstransit.ui.viewModels
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -33,6 +34,9 @@ class RouteDetailsViewModel : ViewModel() {
         private set
 
     var route = mutableStateOf<Route?>(null)
+        private set
+
+    var selectedRouteId = mutableStateOf<RouteId?>(null)
         private set
 
     @OptIn(ExperimentalTime::class)
@@ -75,11 +79,14 @@ class RouteDetailsViewModel : ViewModel() {
 
         selectedShape.value = shapeId
 
+        selectedRouteId.value = routeId
+
         viewModelScope.launch {
 
-            isLoading.value = true
-
             try {
+
+                isLoading.value = true
+
                 val routeInfo =
                     api.getRouteInfo(
                         routeId = routeId,
@@ -103,7 +110,12 @@ class RouteDetailsViewModel : ViewModel() {
                 timetable.getOrNull()?.let {
                     trips.addAll(it.trips)
                 }
+            } catch (e: Exception) {
+
+                Log.e("RouteDetails", e.toString())
+
             } finally {
+
                 isLoading.value = false
             }
         }

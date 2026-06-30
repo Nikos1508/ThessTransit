@@ -106,7 +106,11 @@ fun RouteDetailsScreen(
     val favoritesViewModel: FavoritesViewModel = viewModel()
     val favorites by favoritesViewModel.favorites.collectAsState()
 
-    LaunchedEffect(route.id) {
+    // LaunchedEffect(route.id) {
+    //     viewModel.loadRoute(route)
+    // }
+
+    LaunchedEffect(route) {
         viewModel.loadRoute(route)
     }
 
@@ -136,10 +140,7 @@ fun RouteDetailsScreen(
                     label = { Text("Κατεύθυνση") },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .menuAnchor(
-                            ExposedDropdownMenuAnchorType.PrimaryEditable,
-                            true
-                        )
+                        .menuAnchor()
                         .padding(horizontal = 16.dp),
                     trailingIcon = {
                         ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
@@ -324,7 +325,11 @@ private fun TimetableTab(
                     val route = vm.route.value
 
                     if (shapeId != null && route != null) {
-                        vm.loadShape(shapeId, route.id, day)
+                        vm.loadShape(
+                            vm.selectedShape.value!!,
+                            vm.selectedRouteId.value!!,
+                            day
+                        )
                     }
                 },
                 label = {
