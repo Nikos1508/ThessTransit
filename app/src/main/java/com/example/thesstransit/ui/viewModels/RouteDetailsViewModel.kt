@@ -30,6 +30,9 @@ class RouteDetailsViewModel : ViewModel() {
     var isLoading = mutableStateOf(false)
         private set
 
+    var errorMessage = mutableStateOf<String?>(null)
+        private set
+
     var selectedShape = mutableStateOf<ShapeId?>(null)
         private set
 
@@ -60,10 +63,12 @@ class RouteDetailsViewModel : ViewModel() {
         }
 
     fun loadRoute(route: Route) {
+        if (this.route.value?.id == route.id) return
+
         this.route.value = route
 
         route.tripHeadsigns.firstOrNull()?.let {
-            loadShape(it.shapeId, route.id)
+            loadShape(it.shapeId, it.routeId)
         }
     }
 
@@ -74,18 +79,18 @@ class RouteDetailsViewModel : ViewModel() {
         date: LocalDate = selectedDate
     ){
         selectedDate = date
-
         val midnight = date.atStartOfDayIn(TimeZone.currentSystemDefault())
 
         selectedShape.value = shapeId
-
         selectedRouteId.value = routeId
 
         viewModelScope.launch {
-
             try {
-
                 isLoading.value = true
+                errorMessage.value = null
+
+                stops.clear()
+                trips.clear()
 
                 val routeInfo =
                     api.getRouteInfo(
@@ -100,22 +105,24 @@ class RouteDetailsViewModel : ViewModel() {
                         midnight
                     )
 
-                stops.clear()
-                trips.clear()
+                val infoResult = routeInfo.getOrNull()
+                val timetableResult = timetable.getOrNull()
 
-                routeInfo.getOrNull()?.let {
-                    stops.addAll(it.stops)
-                }
+                if (infoResult == null && timetableResult == null) {
+                    errorMessage.value = "Δεν βρέθηκαν δεδομένα για αυτή την κατεύθυνση."
+                } else {
+                    infoResult?.let {
+                        stops.addAll(it.stops)
+                    }
 
-                timetable.getOrNull()?.let {
-                    trips.addAll(it.trips)
+                    timetableResult?.let {
+                        trips.addAll(it.trips)
+                    }
                 }
             } catch (e: Exception) {
-
-                Log.e("RouteDetails", e.toString())
-
+                Log.e("RouteDetails", "Error loading shape $shapeId for route $routeId: ${e.message}")
+                errorMessage.value = "Σφάλμα κατά τη φόρτωση των δεδομένων."
             } finally {
-
                 isLoading.value = false
             }
         }

@@ -203,7 +203,8 @@ class MainActivity : ComponentActivity() {
 
                             StopDetailsScreen(
                                 stop = stop,
-                                viewModel = vm
+                                viewModel = vm,
+                                onBackClick = { navController.popBackStack() }
                             )
                         }
                     }

@@ -43,9 +43,13 @@ class StopDetailsViewModel : ViewModel() {
             isLoading.value = true
 
             try {
-                val routesResult = api.getRoutes()
+                val routesResult = try {
+                    api.getRoutes()
+                } catch (e: Exception) {
+                    null
+                }
 
-                if (routesResult.isFailure) {
+                if (routesResult == null || routesResult.isFailure) {
                     routes.value = emptyList()
                     arrivals.value = emptyList()
                     return@launch
@@ -67,6 +71,8 @@ class StopDetailsViewModel : ViewModel() {
                 routes.value = matchingRoutes
                 computeArrivals(stop, matchingRoutes)
 
+            } catch (e: Exception) {
+                // Log or handle general error
             } finally {
                 isLoading.value = false
             }
@@ -78,9 +84,13 @@ class StopDetailsViewModel : ViewModel() {
         shapeId: ShapeId
     ): DetailedRoute? {
         return routeInfoCache[routeId to shapeId]
-            ?: api.getRouteInfo(routeId, shapeId)
-            .getOrNull()
-            ?.also { routeInfoCache[routeId to shapeId] = it }
+            ?: try {
+                api.getRouteInfo(routeId, shapeId)
+                    .getOrNull()
+                    ?.also { routeInfoCache[routeId to shapeId] = it }
+            } catch (e: Exception) {
+                null
+            }
     }
 
     @OptIn(ExperimentalTime::class)
@@ -95,10 +105,10 @@ class StopDetailsViewModel : ViewModel() {
         for (route in routes) {
             val shape = route.tripHeadsigns.firstOrNull() ?: continue
 
-            val timetable = api.getTimetableForToday(route.id, shape.shapeId)
-            val live = api.getRouteInfo(route.id, shape.shapeId)
+            val timetable = try { api.getTimetableForToday(route.id, shape.shapeId) } catch (e: Exception) { null }
+            val live = try { api.getRouteInfo(route.id, shape.shapeId) } catch (e: Exception) { null }
 
-            timetable.getOrNull()?.trips?.forEach { trip ->
+            timetable?.getOrNull()?.trips?.forEach { trip ->
                 val minutes = calculateMinutes(trip.departureTime, now)
 
                 if (minutes >= 0) {
@@ -114,7 +124,7 @@ class StopDetailsViewModel : ViewModel() {
                 }
             }
 
-            live.getOrNull()?.vehicles?.forEach {
+            live?.getOrNull()?.vehicles?.forEach {
                 result.add(
                     StopArrivalUi(
                         routeId = route.id,

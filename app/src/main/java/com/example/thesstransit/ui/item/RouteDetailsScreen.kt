@@ -58,6 +58,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -131,10 +132,12 @@ fun RouteDetailsScreen(
                 expanded = expanded,
                 onExpandedChange = { expanded = !expanded }
             ) {
+                val currentDirection = route.tripHeadsigns
+                    .find { it.shapeId == viewModel.selectedShape.value }
+                    ?.headsign ?: "Επιλέξτε κατεύθυνση"
+
                 OutlinedTextField(
-                    value = route.tripHeadsigns
-                        .find { it.shapeId == viewModel.selectedShape.value }
-                        ?.headsign ?: "",
+                    value = currentDirection,
                     onValueChange = {},
                     readOnly = true,
                     label = { Text("Κατεύθυνση") },
@@ -156,25 +159,9 @@ fun RouteDetailsScreen(
 
                 ExposedDropdownMenu(
                     expanded = expanded,
-                    onDismissRequest = { expanded = false },
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(
-                            MaterialTheme.colorScheme.surface.copy(alpha = 0.98f)
-                        )
-                        .border(
-                            width = 1.dp,
-                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-                            shape = RoundedCornerShape(20.dp)
-                        )
-                        .shadow(
-                            elevation = 10.dp,
-                            shape = RoundedCornerShape(20.dp),
-                            clip = false
-                        )
+                    onDismissRequest = { expanded = false }
                 ) {
                     route.tripHeadsigns.forEach { direction ->
-
                         DropdownMenuItem(
                             text = {
                                 Text(
@@ -183,8 +170,8 @@ fun RouteDetailsScreen(
                                 )
                             },
                             onClick = {
+                                viewModel.loadShape(direction.shapeId, direction.routeId)
                                 expanded = false
-                                viewModel.loadShape(direction.shapeId, route.id)
                             }
                         )
                     }
@@ -209,8 +196,24 @@ fun RouteDetailsScreen(
             }
 
             when (selectedTab) {
-                0 -> StopsTab(viewModel, onStopClick)
-                1 -> TimetableTab(viewModel)
+                0 -> {
+                    if (viewModel.errorMessage.value != null) {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text(viewModel.errorMessage.value!!, textAlign = TextAlign.Center, modifier = Modifier.padding(24.dp))
+                        }
+                    } else {
+                        StopsTab(viewModel, onStopClick)
+                    }
+                }
+                1 -> {
+                    if (viewModel.errorMessage.value != null) {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text(viewModel.errorMessage.value!!, textAlign = TextAlign.Center, modifier = Modifier.padding(24.dp))
+                        }
+                    } else {
+                        TimetableTab(viewModel)
+                    }
+                }
             }
         }
 

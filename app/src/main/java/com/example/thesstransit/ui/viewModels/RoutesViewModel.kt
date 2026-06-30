@@ -30,17 +30,20 @@ class RoutesViewModel : ViewModel() {
             isLoading = true
             errorMessage = null
 
-            Oseth()
-                .getRoutes()
-                .onSuccess { results ->
-
-                    routes = results.sortedBy {
-                        it.shortName
+            try {
+                Oseth()
+                    .getRoutes()
+                    .onSuccess { results ->
+                        routes = results.sortedBy {
+                            it.shortName
+                        }
                     }
-                }
-                .onFailure {
-                    errorMessage = it.message ?: "Unknown Error"
-                }
+                    .onFailure {
+                        errorMessage = it.message ?: "Unknown Error"
+                    }
+            } catch (e: Exception) {
+                errorMessage = e.message ?: "Error loading routes"
+            }
 
             isLoading = false
         }

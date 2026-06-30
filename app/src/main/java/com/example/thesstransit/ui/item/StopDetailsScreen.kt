@@ -1,11 +1,20 @@
 package com.example.thesstransit.ui.item
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
@@ -16,7 +25,9 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.thesstransit.ui.components.ScreenHeader
 import com.example.thesstransit.ui.viewModels.StopArrivalUi
@@ -71,13 +82,72 @@ fun StopDetailsScreen(
 @Composable
 private fun LiveArrivalsTab(arrivals: List<StopArrivalUi>) {
     LazyColumn(modifier = Modifier.fillMaxSize()) {
-
+        items(arrivals) { item ->
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 2.dp),
+                border = if (item.isLive) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null,
+                colors = CardDefaults.cardColors(
+                    containerColor = if (item.isLive) {
+                        MaterialTheme.colorScheme.primaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.surface
+                    }
+                )
+            ) {
+                ListItem(
+                    headlineContent = {
+                        Text(
+                            text = item.routeName,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp
+                        )
+                    },
+                    supportingContent = {
+                        Text(text = item.headsign)
+                    },
+                    trailingContent = {
+                        Text(
+                            text = if (item.isLive) "LIVE" else "${item.minutes} λεπτά",
+                            fontWeight = if (item.isLive) FontWeight.Bold else FontWeight.Normal,
+                            color = if (item.isLive) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            }
+                        )
+                    }
+                )
+            }
+            HorizontalDivider()
+        }
     }
 }
 
 @Composable
 private fun RoutesTab(routes: List<Route>) {
     LazyColumn(modifier = Modifier.fillMaxSize()) {
-
+        items(routes) {route ->
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 2.dp)
+            ){
+                ListItem(
+                    headlineContent = {
+                        Text(
+                            text = route.shortName,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp
+                        )
+                    },
+                    supportingContent = {
+                        Text(text = route.longName)
+                    }
+                )
+            }
+            HorizontalDivider()
+        }
     }
 }
