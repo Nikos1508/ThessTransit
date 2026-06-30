@@ -9,6 +9,9 @@ import io.gitlab.mitsiosm.oseth.data.Route
 import io.gitlab.mitsiosm.oseth.data.RouteId
 import io.gitlab.mitsiosm.oseth.data.ShapeId
 import io.gitlab.mitsiosm.oseth.data.Stop
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalTime
@@ -29,50 +32,45 @@ data class StopArrivalUi (
 class StopDetailsViewModel : ViewModel() {
 
     private val api = Oseth()
-
     val isLoading = mutableStateOf(false)
     val routes = MutableStateFlow<List<Route>>(emptyList())
     val arrivals = MutableStateFlow<List<StopArrivalUi>>(emptyList())
 
-    private val routeInfoCache =
-        mutableMapOf<Pair<RouteId, ShapeId>, DetailedRoute>()
+    companion object {
+        private var allRoutesCache: List<Route>? = null
+        private val routeInfoCache =
+            mutableMapOf<Pair<RouteId, ShapeId>, DetailedRoute>()
+    }
 
     fun load(stop: Stop) {
         viewModelScope.launch {
-
             isLoading.value = true
-
             try {
-                val routesResult = try {
-                    api.getRoutes()
-                } catch (e: Exception) {
-                    null
-                }
+                val allRoutes = allRoutesCache ?: try {
+                    api.getRoutes().getOrNull()?.also { allRoutesCache = it }
+                } catch (e: Exception) { null }
 
-                if (routesResult == null || routesResult.isFailure) {
+                if (allRoutes == null) {
                     routes.value = emptyList()
                     arrivals.value = emptyList()
                     return@launch
                 }
 
-                val allRoutes = routesResult.getOrThrow()
-
-                val matchingRoutes = mutableListOf<Route>()
-
-                for (route in allRoutes) {
-                    val shape = route.tripHeadsigns.firstOrNull() ?: continue
-                    val detailed = getRouteInfoCached(route.id, shape.shapeId)
-
-                    if (detailed?.stops?.any { it.id == stop.id } == true) {
-                        matchingRoutes.add(route)
-                    }
+                val matchingRoutes = coroutineScope {
+                    allRoutes.map { route ->
+                        async {
+                            val shape = route.tripHeadsigns.firstOrNull() ?: return@async null
+                            val detailed = getRouteInfoCached(route.id, shape.shapeId)
+                            if (detailed?.stops?.any { it.id == stop.id } == true) route else null
+                        }
+                    }.awaitAll().filterNotNull()
                 }
 
                 routes.value = matchingRoutes
                 computeArrivals(stop, matchingRoutes)
 
             } catch (e: Exception) {
-                // Log or handle general error
+                // Error handled by empty state or logging
             } finally {
                 isLoading.value = false
             }
@@ -83,64 +81,67 @@ class StopDetailsViewModel : ViewModel() {
         routeId: RouteId,
         shapeId: ShapeId
     ): DetailedRoute? {
-        return routeInfoCache[routeId to shapeId]
-            ?: try {
-                api.getRouteInfo(routeId, shapeId)
-                    .getOrNull()
-                    ?.also { routeInfoCache[routeId to shapeId] = it }
-            } catch (e: Exception) {
-                null
-            }
+        val cacheKey = routeId to shapeId
+        return routeInfoCache[cacheKey] ?: try {
+            api.getRouteInfo(routeId, shapeId)
+                .getOrNull()
+                ?.also { routeInfoCache[cacheKey] = it }
+        } catch (e: Exception) {
+            null
+        }
     }
 
     @OptIn(ExperimentalTime::class)
     private suspend fun computeArrivals(stop: Stop, routes: List<Route>) {
-
         val now = Clock.System.now()
             .toLocalDateTime(TimeZone.currentSystemDefault())
             .time
 
-        val result = mutableListOf<StopArrivalUi>()
+        val results = coroutineScope {
+            routes.map { route ->
+                async {
+                    val shape = route.tripHeadsigns.firstOrNull() ?: return@async emptyList<StopArrivalUi>()
+                    val routeResults = mutableListOf<StopArrivalUi>()
 
-        for (route in routes) {
-            val shape = route.tripHeadsigns.firstOrNull() ?: continue
+                    val timetable = try { api.getTimetableForToday(route.id, shape.shapeId) } catch (e: Exception) { null }
+                    val live = try { api.getRouteInfo(route.id, shape.shapeId) } catch (e: Exception) { null }
 
-            val timetable = try { api.getTimetableForToday(route.id, shape.shapeId) } catch (e: Exception) { null }
-            val live = try { api.getRouteInfo(route.id, shape.shapeId) } catch (e: Exception) { null }
+                    timetable?.getOrNull()?.trips?.forEach { trip ->
+                        val minutes = calculateMinutes(trip.departureTime, now)
+                        if (minutes >= 0) {
+                            routeResults.add(
+                                StopArrivalUi(
+                                    routeId = route.id,
+                                    routeName = route.shortName,
+                                    headsign = trip.headsign,
+                                    minutes = minutes,
+                                    isLive = false
+                                )
+                            )
+                        }
+                    }
 
-            timetable?.getOrNull()?.trips?.forEach { trip ->
-                val minutes = calculateMinutes(trip.departureTime, now)
-
-                if (minutes >= 0) {
-                    result.add(
-                        StopArrivalUi(
-                            routeId = route.id,
-                            routeName = route.shortName,
-                            headsign = trip.headsign,
-                            minutes = minutes,
-                            isLive = false
+                    live?.getOrNull()?.vehicles?.forEach {
+                        routeResults.add(
+                            StopArrivalUi(
+                                routeId = route.id,
+                                routeName = route.shortName,
+                                headsign = "LIVE",
+                                minutes = 0,
+                                isLive = true
+                            )
                         )
-                    )
+                    }
+                    routeResults
                 }
-            }
-
-            live?.getOrNull()?.vehicles?.forEach {
-                result.add(
-                    StopArrivalUi(
-                        routeId = route.id,
-                        routeName = route.shortName,
-                        headsign = "LIVE",
-                        minutes = 0,
-                        isLive = true
-                    )
-                )
-            }
+            }.awaitAll().flatten()
         }
-        arrivals.value = result
+
+        arrivals.value = results
             .sortedWith(
                 compareBy(
-                    {it.isLive.not()},
-                    {it.minutes ?: Int.MAX_VALUE}
+                    { it.isLive.not() },
+                    { it.minutes ?: Int.MAX_VALUE }
                 )
             )
     }
@@ -148,7 +149,6 @@ class StopDetailsViewModel : ViewModel() {
     private fun calculateMinutes(departure: LocalTime, now: LocalTime): Int {
         val dep = departure.hour * 60 + departure.minute
         val n = now.hour * 60 + now.minute
-
         val diff = dep - n
         return if (diff < 0) -1 else diff
     }

@@ -16,6 +16,7 @@ import io.gitlab.mitsiosm.oseth.data.TimetableTrip
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.plus
@@ -98,11 +99,23 @@ class RouteDetailsViewModel : ViewModel() {
                         shapeId = shapeId
                     )
 
+                val nextMidnight =
+                    date
+                        .plus(1, DateTimeUnit.DAY)
+                        .atStartOfDayIn(TimeZone.currentSystemDefault())
+
                 val timetable =
                     api.getTimetable(
                         routeId = routeId,
                         shapeId = shapeId,
                         midnight
+                    )
+
+                val nextDayTimetable =
+                    api.getTimetable(
+                        routeId = routeId,
+                        shapeId = shapeId,
+                        nextMidnight
                     )
 
                 val infoResult = routeInfo.getOrNull()
@@ -115,9 +128,31 @@ class RouteDetailsViewModel : ViewModel() {
                         stops.addAll(it.stops)
                     }
 
+                    val dayTrips = mutableListOf<TimetableTrip>()
+
                     timetableResult?.let {
-                        trips.addAll(it.trips)
+                        var prevTime: LocalTime? = null
+
+                        for (trip in it.trips) {
+                            if (prevTime != null && trip.departureTime < prevTime) {
+                                break
+                            }
+
+                            dayTrips.add(trip)
+                            prevTime = trip.departureTime
+                        }
                     }
+
+                    nextDayTimetable.getOrNull()?.let {
+                        dayTrips.addAll(
+                            it.trips.filter { trip ->
+                                trip.departureTime.hour == 0 &&
+                                        trip.departureTime.minute <= 30
+                            }
+                        )
+                    }
+
+                    trips.addAll(dayTrips)
                 }
             } catch (e: Exception) {
                 Log.e("RouteDetails", "Error loading shape $shapeId for route $routeId: ${e.message}")

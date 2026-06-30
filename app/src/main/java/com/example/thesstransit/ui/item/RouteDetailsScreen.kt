@@ -107,10 +107,6 @@ fun RouteDetailsScreen(
     val favoritesViewModel: FavoritesViewModel = viewModel()
     val favorites by favoritesViewModel.favorites.collectAsState()
 
-    // LaunchedEffect(route.id) {
-    //     viewModel.loadRoute(route)
-    // }
-
     LaunchedEffect(route) {
         viewModel.loadRoute(route)
     }
@@ -349,15 +345,33 @@ private fun TimetableTab(
 
     val listState = rememberLazyListState()
 
-    val now = Clock.System.now()
-        .toLocalDateTime(
-            TimeZone.currentSystemDefault()
-        )
-        .time
+    val nowDateTime = Clock.System.now()
+        .toLocalDateTime(TimeZone.currentSystemDefault())
+
+    val now = nowDateTime.time
+    val today = nowDateTime.date
+
+    val viewingToday = vm.selectedDate == today
 
     val nextTripIndex =
-        vm.trips.indexOfFirst {
-            it.departureTime > now /* TODO add a "=" */
+        if (!viewingToday) {
+            -1
+        } else {
+            vm.trips.indexOfFirst { trip ->
+                val effectiveMinutes =
+                    if (trip.departureTime.hour == 0 && trip.departureTime.minute <= 30)
+                        24 * 60 + trip.departureTime.hour * 60 + trip.departureTime.minute
+                    else
+                        trip.departureTime.hour * 60 + trip.departureTime.minute
+
+                val nowMinutes =
+                    if (now.hour == 0 && now.minute <= 30)
+                        24 * 60 + now.hour * 60 + now.minute
+                    else
+                        now.hour * 60 + now.minute
+
+                effectiveMinutes > nowMinutes
+            }
         }
 
     LaunchedEffect(vm.trips.size) {
@@ -370,7 +384,26 @@ private fun TimetableTab(
 
     LazyColumn(state = listState){
         itemsIndexed(vm.trips) { index, trip ->
-            val departed = trip.departureTime < now
+            val departed =
+                if (!viewingToday) {
+                    false
+                } else {
+                    val tripMinutes =
+                        if (trip.departureTime.hour == 0 && trip.departureTime.minute <= 30)
+                            24 * 60 + trip.departureTime.hour * 60 + trip.departureTime.minute
+                        else
+                            trip.departureTime.hour * 60 + trip.departureTime.minute
+
+                    val nowMinutes =
+                        if (now.hour == 0 && now.minute <= 30)
+                            24 * 60 + now.hour * 60 + now.minute
+                        else
+                            now.hour * 60 + now.minute
+
+                    tripMinutes < nowMinutes
+                }
+
+
             val isNextTrip = index == nextTripIndex
             Card(
                 modifier = Modifier

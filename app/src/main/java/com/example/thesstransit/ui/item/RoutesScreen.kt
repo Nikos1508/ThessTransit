@@ -34,7 +34,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.data.Group
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -45,6 +44,8 @@ import com.example.thesstransit.ui.viewModels.FavoritesViewModel
 import com.example.thesstransit.ui.viewModels.RoutesViewModel
 import io.gitlab.mitsiosm.oseth.data.Route
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.remember
 
 @Composable
 fun RoutesScreen(
@@ -54,11 +55,10 @@ fun RoutesScreen(
     viewModel: RoutesViewModel = viewModel()
 ) {
     val listState = rememberLazyListState()
-
     val scope = rememberCoroutineScope()
 
     var searchQuery by rememberSaveable { mutableStateOf("") }
-    var selectedTab by rememberSaveable{ mutableIntStateOf(0) }
+    var selectedTab by rememberSaveable { mutableIntStateOf(0) }
 
     val routes = viewModel.routes
     val loading = viewModel.isLoading
@@ -66,34 +66,52 @@ fun RoutesScreen(
 
     val favoritesViewModel: FavoritesViewModel = viewModel()
     val favorites by favoritesViewModel.favorites.collectAsState()
-
-    val filteredRoutes = routes.filter {
-        it.shortName.contains(searchQuery, true) ||
-                it.longName.contains(searchQuery, true)
-    }
-
-    val favoriteRoutes = filteredRoutes.filter {
-        favorites.contains(it.id.value)
-    }
-
     val favoriteGroups by favoritesViewModel.favoriteGroups.collectAsState()
 
-    val groupedRoutesData = routes
-        .groupRoutes()
-        .filter { it.routes.size > 1 }
 
-    val filteredFavoriteGroups = groupedRoutesData.filter {
-        favoriteGroups.contains(it.groupId) && it.groupId.contains(searchQuery, true)
+    val filteredRoutesData by remember(routes, searchQuery) {
+        derivedStateOf {
+            routes.filter {
+                it.shortName.contains(searchQuery, true) ||
+                        it.longName.contains(searchQuery, true)
+            }
+        }
     }
 
-    val searchedRoutes = routes.filter {
-        it.shortName.contains(searchQuery, true) ||
-                it.longName.contains(searchQuery, true)
+    val groupedRoutesData by remember(routes) {
+        derivedStateOf {
+            routes.groupRoutes().filter { it.routes.size > 1 }
+        }
     }
 
-    val shownRoutes = when (selectedTab) {
-        2 -> searchedRoutes.filter { favorites.contains(it.id.value) }
-        else -> searchedRoutes
+    val shownRoutesData by remember(filteredRoutesData, favorites, selectedTab) {
+        derivedStateOf {
+            if (selectedTab == 2) {
+                filteredRoutesData.filter { favorites.contains(it.id.value) }
+            } else {
+                filteredRoutesData
+            }
+        }
+    }
+
+    val finalGroupedRoutes by remember(shownRoutesData) {
+        derivedStateOf {
+            shownRoutesData.groupBy {
+                it.shortName.firstOrNull()?.toString() ?: "#"
+            }.entries.sortedBy { it.key }
+        }
+    }
+
+    val sectionIndexes by remember(finalGroupedRoutes) {
+        derivedStateOf {
+            val map = mutableMapOf<String, Int>()
+            var currentIndex = 0
+            finalGroupedRoutes.forEach { (letter, routes) ->
+                map[letter] = currentIndex
+                currentIndex += routes.size + 1 // +1 for the sticky header
+            }
+            map
+        }
     }
 
     Column {
@@ -168,14 +186,12 @@ fun RoutesScreen(
                         Box(
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
-                        ){
+                        ) {
                             CircularProgressIndicator()
                         }
                     }
 
-                    error != null -> {
-                        //Error code
-                    }
+                    error != null -> { /* Error UI */ }
 
                     else -> {
 
@@ -189,32 +205,7 @@ fun RoutesScreen(
                             return@Column
                         }
 
-                        Box(
-                            modifier = Modifier.fillMaxSize()
-                        ) {
-                            val sectionIndexes = mutableMapOf<String, Int>()
-
-                            var currentIndex = 0
-
-                            val shownRoutes = if (selectedTab == 2) {
-                                favoriteRoutes
-                            } else {
-                                filteredRoutes
-                            }
-
-                            val groupedRoutes = shownRoutes.groupBy {
-                                it.shortName.firstOrNull()?.toString() ?: "#"
-                            }
-
-                            groupedRoutes.forEach { (digit, routesInSection) ->
-
-                                sectionIndexes[digit] = currentIndex
-
-                                currentIndex++
-
-                                currentIndex += routesInSection.size
-                            }
-
+                        Box(modifier = Modifier.fillMaxSize()) {
                             LazyColumn(
                                 state = listState,
                                 modifier = Modifier
@@ -222,8 +213,8 @@ fun RoutesScreen(
                                     .padding(start = 16.dp, end = 56.dp),
                                 verticalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
-                                groupedRoutes.entries.sortedBy { it.key }.forEach { (letter, routes) ->
-                                    stickyHeader {
+                                finalGroupedRoutes.forEach { (letter, routes) ->
+                                    stickyHeader(key = "header_$letter") {
                                         Box(
                                             modifier = Modifier
                                                 .fillMaxWidth()
@@ -238,7 +229,7 @@ fun RoutesScreen(
                                             )
                                         }
                                     }
-                                    items(routes) { route ->
+                                    items(routes, key = { it.id.value }) { route ->
                                         BusRouteRowItem(
                                             route = route,
                                             isFavorite = favorites.contains(route.id.value),
@@ -250,7 +241,9 @@ fun RoutesScreen(
                             }
 
                             Column(
-                                modifier = Modifier.align(Alignment.CenterEnd).padding(end = 6.dp)
+                                modifier = Modifier
+                                    .align(Alignment.CenterEnd)
+                                    .padding(end = 6.dp)
                                     .background(
                                         MaterialTheme.colorScheme.surfaceContainer,
                                         RoundedCornerShape(20.dp)
@@ -258,22 +251,20 @@ fun RoutesScreen(
                                     .padding(vertical = 8.dp, horizontal = 4.dp),
                                 verticalArrangement = Arrangement.spacedBy(3.dp)
                             ) {
-                                groupedRoutes.keys.sorted().forEach { digit ->
+                                finalGroupedRoutes.forEach { (digit, _) ->
                                     Text(
                                         text = digit,
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.clickable {
-                                            scope.launch {
-                                                var targetIndex = 0
-                                                for ((key, list) in groupedRoutes.entries.sortedBy { it.key }) {
-                                                    if (key == digit) break
-                                                    targetIndex += list.size + 1
+                                        modifier = Modifier
+                                            .clickable {
+                                                scope.launch {
+                                                    val targetIndex = sectionIndexes[digit] ?: 0
+                                                    listState.animateScrollToItem(targetIndex)
                                                 }
-                                                listState.animateScrollToItem(targetIndex)
                                             }
-                                        }.padding(horizontal = 6.dp, vertical = 2.dp)
+                                            .padding(horizontal = 6.dp, vertical = 2.dp)
                                     )
                                 }
                             }
