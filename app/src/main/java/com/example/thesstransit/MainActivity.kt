@@ -36,7 +36,10 @@ import kotlinx.serialization.json.Json
 import kotlin.reflect.typeOf
 
 @Serializable object HomeRoute
-@Serializable object RoutesRoute
+@Serializable
+data class RoutesRoute(
+    val initialTab: String = "all"
+)
 @Serializable object TicketsRoute
 
 @Serializable object HowToGoRoute
@@ -108,13 +111,27 @@ class MainActivity : ComponentActivity() {
                                     /* TODO */
                                 },
                                 onLinesClick = {
-                                    navController.navigate(RoutesRoute)
+                                    navController.navigate(
+                                        RoutesRoute()
+                                    )
                                 },
                                 onNearbyStopsClick = {
                                     /*TODO*/
                                 },
                                 onLiveDeparturesClick = {
                                     /*TODO*/
+                                },
+                                onBuyTicketClick = {
+
+                                },
+                                onFavouritesClick = {
+                                    navController.navigate(RoutesRoute("favorites"))
+                                },
+                                onNotificationsClick = {
+
+                                },
+                                onSettingsClick = {
+
                                 }
                             )
                         }
@@ -127,8 +144,16 @@ class MainActivity : ComponentActivity() {
                             )
                         }
 
-                        composable<RoutesRoute> {
+                        composable<RoutesRoute> { entry ->
+
+                            val args = entry.toRoute<RoutesRoute>()
+
                             RoutesScreen(
+                                initialTab =
+                                    if (args.initialTab == "favorites")
+                                        2
+                                    else
+                                        0,
                                 onBackClick = {
                                     navController.popBackStack()
                                 },

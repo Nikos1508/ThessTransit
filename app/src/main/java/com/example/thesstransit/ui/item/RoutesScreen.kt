@@ -52,13 +52,14 @@ fun RoutesScreen(
     onBackClick: () -> Unit,
     onRouteSelected: (Route) -> Unit,
     onGroupSelected: (String) -> Unit,
-    viewModel: RoutesViewModel = viewModel()
+    viewModel: RoutesViewModel = viewModel(),
+    initialTab: Int = 0,
 ) {
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
 
     var searchQuery by rememberSaveable { mutableStateOf("") }
-    var selectedTab by rememberSaveable { mutableIntStateOf(0) }
+    var selectedTab by rememberSaveable { mutableIntStateOf(initialTab) }
 
     val routes = viewModel.routes
     val loading = viewModel.isLoading
@@ -81,6 +82,19 @@ fun RoutesScreen(
     val groupedRoutesData by remember(routes) {
         derivedStateOf {
             routes.groupRoutes().filter { it.routes.size > 1 }
+        }
+    }
+
+    val filteredGroups by remember(groupedRoutesData, searchQuery) {
+        derivedStateOf {
+            groupedRoutesData.filter { group ->
+                group.groupId.contains(searchQuery, true) ||
+
+                        group.routes.any {route ->
+                            route.shortName.contains(searchQuery, true) ||
+                                    route.longName.contains(searchQuery, true)
+                        }
+            }
         }
     }
 
@@ -108,7 +122,34 @@ fun RoutesScreen(
             var currentIndex = 0
             finalGroupedRoutes.forEach { (letter, routes) ->
                 map[letter] = currentIndex
-                currentIndex += routes.size + 1 // +1 for the sticky header
+                currentIndex += routes.size + 1
+            }
+            map
+        }
+    }
+
+    val groupedSections by remember(filteredGroups) {
+        derivedStateOf {
+            filteredGroups
+                .groupBy {
+                    it.groupId.firstOrNull()?.toString() ?: "#"
+                }
+                .entries
+                .sortedBy { it.key }
+        }
+    }
+
+    val groupedSectionIndexes by remember(groupedSections) {
+        derivedStateOf {
+
+            val map = mutableMapOf<String, Int>()
+            var current = 0
+
+            groupedSections.forEach { (letter, groups) ->
+
+                map[letter] = current
+                current += groups.size + 1
+
             }
             map
         }
@@ -196,12 +237,79 @@ fun RoutesScreen(
                     else -> {
 
                         if (selectedTab == 1) {
-                            GroupedRoutesScreen(
-                                groups = groupedRoutesData,
-                                favoriteGroups = favoriteGroups,
-                                onGroupClick = { onGroupSelected(it.groupId) },
-                                onFavoriteClick = { favoritesViewModel.toggleFavoriteGroup(it) }
-                            )
+
+                            Box(
+                                modifier = Modifier.fillMaxSize()
+                            ){
+                                LazyColumn(
+                                    state = listState,
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(start = 16.dp, end = 56.dp),
+                                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    groupedSections.forEach { (letter, groups) ->
+                                        stickyHeader {
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .background(
+                                                        MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
+                                                    )
+                                                    .padding(vertical = 8.dp)
+                                            ){
+                                                Text(
+                                                    text = letter,
+                                                    fontSize = 22.sp,
+                                                    fontWeight = FontWeight.ExtraBold
+                                                )
+                                            }
+                                        }
+
+                                        items(
+                                            groups,
+                                            key = { it.groupId }
+                                        ){ group ->
+                                            GroupCard(
+                                                group = group,
+                                                isFavorite = favoriteGroups.contains(group.groupId),
+                                                onClick = { onGroupSelected(group.groupId) },
+                                                onFavoriteClick = { favoritesViewModel.toggleFavoriteGroup(group.groupId) }
+                                            )
+                                        }
+                                    }
+                                }
+
+                                Column(
+                                    modifier = Modifier
+                                        .align(Alignment.CenterEnd)
+                                        .padding(end = 6.dp)
+                                        .background(
+                                            MaterialTheme.colorScheme.surfaceContainer,
+                                            RoundedCornerShape(20.dp)
+                                        )
+                                        .padding(vertical = 8.dp, horizontal = 4.dp),
+                                    verticalArrangement = Arrangement.spacedBy(3.dp)
+                                ){
+                                    groupedSections.forEach { (letter, _) ->
+                                        Text(
+                                            text = letter,
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier
+                                                .clickable {
+                                                    scope.launch {
+                                                        listState.animateScrollToItem(
+                                                            groupedSectionIndexes[letter] ?: 0
+                                                        )
+                                                    }
+                                                }
+                                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                                        )
+                                    }
+                                }
+                            }
                             return@Column
                         }
 
