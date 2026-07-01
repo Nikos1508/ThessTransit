@@ -1,6 +1,8 @@
 package com.example.thesstransit.ui.item
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Card
@@ -12,8 +14,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -41,29 +43,39 @@ fun GroupCard(
             .clickable(onClick= onClick),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        ),
+        border = BorderStroke(
+            1.dp,
+            MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
         )
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 10.dp),
+                .padding(horizontal = 14.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ){
             Box(
                 modifier = Modifier
-                    .size(width = 65.dp, height = 40.dp)
+                    .width(68.dp)
+                    .height(42.dp)
                     .background(
-                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f),
+                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f),
                         RoundedCornerShape(10.dp)
+                    )
+                    .border(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
+                        shape = RoundedCornerShape(10.dp)
                     ),
                 contentAlignment = Alignment.Center
             ){
                 Text(
                     group.groupId,
                     color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 17.sp
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 18.sp
                 )
             }
 
@@ -75,7 +87,9 @@ fun GroupCard(
                 Text(
                     "Ομάδα γραμμών ${group.groupId}",
                     fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.92f),
+                    maxLines = 1
                 )
 
                 Text(
@@ -85,16 +99,19 @@ fun GroupCard(
                 )
             }
 
-            IconButton(
-                onClick = onFavoriteClick
-            ) {
+            IconButton(onClick = onFavoriteClick) {
                 Icon (
                     imageVector =
                         if (isFavorite)
                             Icons.Default.Favorite
                         else
                             Icons.Outlined.FavoriteBorder,
-                    contentDescription = null
+                    contentDescription = null,
+                    tint =
+                        if (isFavorite)
+                            MaterialTheme.colorScheme.error
+                        else
+                            MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }

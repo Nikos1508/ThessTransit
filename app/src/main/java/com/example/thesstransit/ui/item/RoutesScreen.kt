@@ -85,6 +85,22 @@ fun RoutesScreen(
         }
     }
 
+    val favoriteGroupedRoutes by remember(groupedRoutesData, favoriteGroups, searchQuery) {
+        derivedStateOf {
+            groupedRoutesData.filter { group ->
+                favoriteGroups.contains(group.groupId) && (
+                        group.groupId.contains(searchQuery, true) ||
+
+                        group.routes.any {
+                            it.shortName.contains(searchQuery, true) ||
+                            it.longName.contains(searchQuery, true)
+                        }
+
+                )
+            }
+        }
+    }
+
     val filteredGroups by remember(groupedRoutesData, searchQuery) {
         derivedStateOf {
             groupedRoutesData.filter { group ->
@@ -321,6 +337,42 @@ fun RoutesScreen(
                                     .padding(start = 16.dp, end = 56.dp),
                                 verticalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
+
+                                if (selectedTab == 2 && favoriteGroupedRoutes.isNotEmpty()) {
+                                    item {
+                                        Text(
+                                            text = "Αγαπημένες ομάδες",
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 18.sp,
+                                            modifier = Modifier.padding(vertical = 8.dp)
+                                        )
+                                    }
+
+                                    items(
+                                        favoriteGroupedRoutes,
+                                        key = {it.groupId}
+                                    ) { group ->
+                                        GroupCard(
+                                            group = group,
+                                            isFavorite = true,
+                                            onClick = { onGroupSelected(group.groupId) },
+                                            onFavoriteClick = { favoritesViewModel.toggleFavoriteGroup(group.groupId) }
+                                        )
+                                    }
+
+                                    item {
+                                        Text(
+                                            text = "Αγαπημένες γραμμές",
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 18.sp,
+                                            modifier = Modifier.padding(
+                                                top = 20.dp,
+                                                bottom = 8.dp
+                                            )
+                                        )
+                                    }
+                                }
+
                                 finalGroupedRoutes.forEach { (letter, routes) ->
                                     stickyHeader(key = "header_$letter") {
                                         Box(
