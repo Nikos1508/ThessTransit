@@ -61,7 +61,7 @@ fun GroupCard(
                     .width(68.dp)
                     .height(42.dp)
                     .background(
-                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f),
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
                         RoundedCornerShape(10.dp)
                     )
                     .border(
