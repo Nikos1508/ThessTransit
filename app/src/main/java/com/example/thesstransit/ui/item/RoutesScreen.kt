@@ -195,7 +195,6 @@ fun RoutesScreen(
 
                 Column(
                     modifier = Modifier.padding(
-                        start = 20.dp,
                         end = 20.dp,
                         top = 18.dp,
                         bottom = 12.dp
@@ -277,7 +276,8 @@ fun RoutesScreen(
                                                 Text(
                                                     text = letter,
                                                     fontSize = 22.sp,
-                                                    fontWeight = FontWeight.ExtraBold
+                                                    fontWeight = FontWeight.ExtraBold,
+                                                    modifier = Modifier.padding(start = 4.dp)
                                                 )
                                             }
                                         }

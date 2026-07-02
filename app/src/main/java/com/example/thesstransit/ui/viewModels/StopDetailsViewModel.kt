@@ -108,7 +108,7 @@ class StopDetailsViewModel : ViewModel() {
 
                     timetable?.getOrNull()?.trips?.forEach { trip ->
                         val minutes = calculateMinutes(trip.departureTime, now)
-                        if (minutes >= 0) {
+                        if (minutes in 0..120) {
                             routeResults.add(
                                 StopArrivalUi(
                                     routeId = route.id,
@@ -121,7 +121,7 @@ class StopDetailsViewModel : ViewModel() {
                         }
                     }
 
-                    live?.getOrNull()?.vehicles?.forEach {
+                    live?.getOrNull()?.vehicles?.forEach { vehicle ->
                         routeResults.add(
                             StopArrivalUi(
                                 routeId = route.id,
@@ -138,12 +138,8 @@ class StopDetailsViewModel : ViewModel() {
         }
 
         arrivals.value = results
-            .sortedWith(
-                compareBy(
-                    { it.isLive.not() },
-                    { it.minutes ?: Int.MAX_VALUE }
-                )
-            )
+            .sortedWith(compareBy({ it.isLive.not() }, { it.minutes ?: Int.MAX_VALUE }))
+            .distinctBy { it.routeId.value + it.minutes.toString() }
     }
 
     private fun calculateMinutes(departure: LocalTime, now: LocalTime): Int {

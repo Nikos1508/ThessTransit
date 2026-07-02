@@ -126,36 +126,36 @@ fun RouteDetailsScreen(
 
             ExposedDropdownMenuBox(
                 expanded = expanded,
-                onExpandedChange = { expanded = !expanded }
+                onExpandedChange = { expanded = !expanded },
+                modifier = Modifier
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .fillMaxWidth()
             ) {
-                val currentDirection = route.tripHeadsigns
-                    .find { it.shapeId == viewModel.selectedShape.value }
-                    ?.headsign ?: "Επιλέξτε κατεύθυνση"
-
-                OutlinedTextField(
-                    value = currentDirection,
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text("Κατεύθυνση") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .menuAnchor()
-                        .padding(horizontal = 16.dp),
-                    trailingIcon = {
-                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-                    },
-                    shape = RoundedCornerShape(18.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
-                        focusedContainerColor = MaterialTheme.colorScheme.surface,
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "ΕΠΙΛΟΓΗ ΚΑΤΕΥΘΥΝΣΗΣ",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.primary,
+                        letterSpacing = 1.sp
                     )
-                )
+
+                    Text(
+                        text = currentDirection,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1
+                    )
+                }
+
 
                 ExposedDropdownMenu(
                     expanded = expanded,
-                    onDismissRequest = { expanded = false }
+                    onDismissRequest = { expanded = false },
+                    modifier = Modifier
+                        .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                        .clip(RoundedCornerShape(18.dp))
                 ) {
                     route.tripHeadsigns.forEach { direction ->
                         DropdownMenuItem(

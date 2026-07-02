@@ -25,6 +25,8 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -64,7 +66,6 @@ fun GroupRouteDetailsScreen(
     onBackClick: () -> Unit,
     favoritesViewModel: FavoritesViewModel = viewModel()
 ){
-    val favorites by favoritesViewModel.favorites.collectAsState()
     var selectedTab by remember { mutableIntStateOf(0) }
     var selectedDirection by remember { mutableIntStateOf(0) }
     val vm: GroupRouteDetailsViewModel = viewModel()
@@ -88,14 +89,16 @@ fun GroupRouteDetailsScreen(
             expanded = expanded,
             onExpandedChange = { expanded = !expanded },
             modifier = Modifier
-                .padding(horizontal = 16.dp)
+                .padding(horizontal = 16.dp, vertical = 8.dp)
                 .fillMaxWidth()
         ) {
             OutlinedTextField(
                 value = directions[selectedDirection],
                 onValueChange = {},
                 readOnly = true,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .menuAnchor(),
                 label = { Text("Κατεύθυνση") },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                 colors = OutlinedTextFieldDefaults.colors(
@@ -151,70 +154,69 @@ private fun GroupTimetableTab(
     trips: List<GroupRouteDetailsViewModel.GroupTrip>
 ){
 
-    val now = Clock.System.now()
-        .toLocalDateTime(TimeZone.currentSystemDefault())
-        .time
+    val listState = rememberLazyListState()
+    val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).time
 
     val sortedTrips = trips.sortedBy { it.trip.departureTime }
 
+    val nextTripIndex = sortedTrips.indexOfFirst { it.trip. departureTime > now }
+
+    LaunchedEffect(sortedTrips.size) {
+        if (nextTripIndex > 0) {
+            listState.animateScrollToItem(nextTripIndex)
+        }
+    }
+
     LazyColumn(
+        state = listState,
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(vertical = 8.dp)
     ) {
         itemsIndexed(sortedTrips) { index, item ->
-
             val isPast = item.trip.departureTime < now
-            val isNext = index == sortedTrips.indexOfFirst {
-                it.trip.departureTime > now
-            }
+            val isNext = index == nextTripIndex
 
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 4.dp),
-                border = if (isNext)
-                    BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
-                else null,
+                    .padding(horizontal = 8.dp, vertical = 2.dp),
+                border = if (isNext) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null,
                 colors = CardDefaults.cardColors(
-                    containerColor =
-                        if (isNext)
-                            MaterialTheme.colorScheme.primaryContainer
-                        else
-                            MaterialTheme.colorScheme.surface
+                    containerColor = if (isNext)
+                        MaterialTheme.colorScheme.primaryContainer
+                    else
+                        MaterialTheme.colorScheme.surface
                 )
             ) {
-                Column(
-                    modifier = Modifier
-                        .alpha(if (isPast) 0.4f else 1f)
-                        .padding(12.dp)
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = item.trip.departureTime.toString().substring(0, 5),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp
-                        )
-
-                        Spacer( Modifier.width(8.dp) )
-
-                        Text(
-                            text = "(${item.routeShortName})",
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp
-                        )
+                ListItem(
+                    modifier = Modifier.alpha(if (isPast) 0.45f else 1f),
+                    headlineContent = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = item.trip.departureTime.toString().substring(0, 5),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 18.sp
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = "(${item.routeShortName})",
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp
+                            )
+                        }
+                    },
+                    supportingContent = {
+                        if (item.trip.headsign.isNotEmpty()) {
+                            Text(text = item.trip.headsign)
+                        }
                     }
-
-                    if (item.trip.headsign.isNotEmpty()) {
-                        Text(
-                            text = item.trip.headsign,
-                            fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1
-                        )
-                    }
-                }
+                )
             }
+            HorizontalDivider(
+                modifier = Modifier.padding(horizontal = 16.dp),
+                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f)
+            )
         }
     }
 }

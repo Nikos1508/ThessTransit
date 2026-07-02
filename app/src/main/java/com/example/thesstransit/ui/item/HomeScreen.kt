@@ -3,10 +3,8 @@ package com.example.thesstransit.ui.item
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -52,6 +50,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -76,8 +75,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.thesstransit.R
 import com.example.thesstransit.ui.components.RouteFiltersDialog
+import com.example.thesstransit.ui.viewModels.FavoritesViewModel
 
 @Composable
 fun HomeScreen(
@@ -90,7 +91,8 @@ fun HomeScreen(
     onBuyTicketClick: () -> Unit = {},
     onFavouritesClick: () -> Unit = {},
     onNotificationsClick: () -> Unit = {},
-    onSettingsClick: () -> Unit = {}
+    onSettingsClick: () -> Unit = {},
+    favoritesViewModel: FavoritesViewModel = viewModel()
 ){
 
     val tiles = listOf(
@@ -103,6 +105,10 @@ fun HomeScreen(
     )
 
     var showFilters by remember { mutableStateOf(false) }
+
+    val favoriteRoutes by favoritesViewModel.favorites.collectAsState()
+    val favoriteGroups by favoritesViewModel.favoriteGroups.collectAsState()
+    val totalFavorites = favoriteRoutes.size + favoriteGroups.size
 
     Box(
         modifier = Modifier
@@ -129,7 +135,10 @@ fun HomeScreen(
             }
             item {
                 Spacer(modifier = Modifier.height(16.dp))
-                QuickAccessRow()
+                QuickAccessRow(
+                    favoriteCount = totalFavorites,
+                    onFavouritesClick = onFavouritesClick
+                )
             }
             item {
                 Spacer(modifier = Modifier.height(18.dp))
@@ -381,7 +390,7 @@ fun SearchBarSection(
                         color = MaterialTheme.colorScheme.surfaceContainerHighest,
                         shape = RoundedCornerShape(12.dp)
                     )
-                    .bounceClick{ onFilterClick() },
+                    .bounceClick { onFilterClick() },
                 contentAlignment = Alignment.Center
             ){
                 Icon(
@@ -395,84 +404,54 @@ fun SearchBarSection(
     }
 }
 
-data class QuickCard(
-    val title: String,
-    val subtitle: String,
-    val icon: ImageVector,
-    val iconColor: Color
-)
-
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun QuickAccessRow() {
-
-    val items = listOf(
-        QuickCard("Οικία", "25ης Μαρτίου, 17, Επανομή", Icons.Outlined.Home, Color.White),
-        QuickCard("Εργασία", "Καθόρισε", Icons.Outlined.Work, MaterialTheme.colorScheme.primary),
-        QuickCard("Αγαπημένα", "0 Διαδρομές", Icons.Outlined.Star, Color(0xFFFFD700))
-    )
-
+fun QuickAccessRow(
+    favoriteCount: Int,
+    onFavouritesClick: () -> Unit
+) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 12.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        items.forEach { item ->
-            Surface(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(76.dp)
-                    .bounceClick { },
-                shape = RoundedCornerShape(14.dp),
-                color = MaterialTheme.colorScheme.surfaceContainer,
-                border = BorderStroke(
-                    1.dp,
-                    MaterialTheme.colorScheme.outline.copy(alpha = 0.15f)
-                )
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 8.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = item.icon,
-                            contentDescription = null,
-                            tint = item.iconColor,
-                            modifier = Modifier.size(18.dp)
-                        )
+        QuickAccessItem(
+            title = "Οικία",
+            subtitle = "25ης Μαρτίου, 17, Επανομή",
+            icon = Icons.Outlined.Home,
+            iconColor = Color.White,
+            onClick = { /* Μελλοντική χρήση */ },
+            modifier = Modifier.weight(1f)
+        )
 
-                        Spacer(modifier = Modifier.width(6.dp))
+        QuickAccessItem(
+            title = "Εργασία",
+            subtitle = "Καθόρισε",
+            icon = Icons.Outlined.Work,
+            iconColor = MaterialTheme.colorScheme.primary,
+            onClick = { /* Μελλοντική χρήση */ },
+            modifier = Modifier.weight(1f)
+        )
 
-                        Text(
-                            text = item.title,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            maxLines = 1
-                        )
-                    }
-
-                    Text(
-                        text = item.subtitle,
-                        fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .basicMarquee(iterations = Int.MAX_VALUE)
-                    )
-
-                }
-            }
-        }
+        QuickAccessItem(
+            title = "Αγαπημένα",
+            subtitle = "$favoriteCount διαδρομές",
+            icon = Icons.Outlined.Star,
+            iconColor = Color(0xFFFFD700),
+            onClick = onFavouritesClick,
+            modifier = Modifier.weight(1f)
+        )
     }
+}
+
+@Composable
+fun QuickAccessItem(
+    title: String,
+    subtitle: String,
+    icon: ImageVector,
+    iconColor: Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+
 }
 
 @Composable

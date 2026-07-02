@@ -1,6 +1,5 @@
 package com.example.thesstransit.ui.viewModels
 
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -13,7 +12,6 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
-import androidx.compose.runtime.State
 
 class GroupRouteDetailsViewModel(
     private val repository: RouteRepository = RouteRepository()
@@ -31,7 +29,6 @@ class GroupRouteDetailsViewModel(
 
     val stops = mutableStateListOf<GroupStop>()
     val trips = mutableStateListOf<GroupTrip>()
-
     val isLoaded = mutableStateOf(false)
 
     @OptIn(ExperimentalTime::class)
@@ -43,20 +40,16 @@ class GroupRouteDetailsViewModel(
             trips.clear()
 
             val date = Clock.System.todayIn(TimeZone.currentSystemDefault())
-
             val newStops = mutableListOf<GroupStop>()
             val newTrips = mutableListOf<GroupTrip>()
 
-            val results = group.routes.mapNotNull { route ->
-                val primaryShape = route.tripHeadsigns.firstOrNull()?.shapeId ?: return@mapNotNull null
-
-                repository.loadRoute(route.id, primaryShape, date)
-            }
-
             group.routes.forEach { route ->
 
-                val shapeId = route.tripHeadsigns.getOrNull(direction)?.shapeId ?: return@forEach
-                val (routeStops, routeTrips) = repository.loadRoute(route.id, shapeId, date)
+                val headsignInfo = route.tripHeadsigns.getOrNull(direction) ?: return@forEach
+                val targetRouteId = headsignInfo.routeId
+                val targetShapeId = headsignInfo.shapeId
+
+                val (routeStops, routeTrips) = repository.loadRoute(targetRouteId, targetShapeId, date)
 
                 newStops += routeStops
                     .distinctBy { it.code }

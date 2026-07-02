@@ -27,21 +27,11 @@ import kotlin.time.ExperimentalTime
 class RouteDetailsViewModel : ViewModel() {
 
     private val api = Oseth()
-
     var isLoading = mutableStateOf(false)
-        private set
-
     var errorMessage = mutableStateOf<String?>(null)
-        private set
-
     var selectedShape = mutableStateOf<ShapeId?>(null)
-        private set
-
     var route = mutableStateOf<Route?>(null)
-        private set
-
     var selectedRouteId = mutableStateOf<RouteId?>(null)
-        private set
 
     @OptIn(ExperimentalTime::class)
     var selectedDate by mutableStateOf(
@@ -50,7 +40,6 @@ class RouteDetailsViewModel : ViewModel() {
         private set
 
     val stops = mutableStateListOf<Stop>()
-
     val trips = mutableStateListOf<TimetableTrip>()
 
     @OptIn(ExperimentalTime::class)
@@ -99,11 +88,6 @@ class RouteDetailsViewModel : ViewModel() {
                         shapeId = shapeId
                     )
 
-                val nextMidnight =
-                    date
-                        .plus(1, DateTimeUnit.DAY)
-                        .atStartOfDayIn(TimeZone.currentSystemDefault())
-
                 val timetable =
                     api.getTimetable(
                         routeId = routeId,
@@ -111,15 +95,20 @@ class RouteDetailsViewModel : ViewModel() {
                         midnight
                     )
 
+                val infoResult = routeInfo.getOrNull()
+                val timetableResult = timetable.getOrNull()
+
+                val nextMidnight =
+                    date
+                        .plus(1, DateTimeUnit.DAY)
+                        .atStartOfDayIn(TimeZone.currentSystemDefault())
+
                 val nextDayTimetable =
                     api.getTimetable(
                         routeId = routeId,
                         shapeId = shapeId,
                         nextMidnight
                     )
-
-                val infoResult = routeInfo.getOrNull()
-                val timetableResult = timetable.getOrNull()
 
                 if (infoResult == null && timetableResult == null) {
                     errorMessage.value = "Δεν βρέθηκαν δεδομένα για αυτή την κατεύθυνση."
