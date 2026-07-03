@@ -69,8 +69,8 @@ dependencies {
     implementation("androidx.datastore:datastore-preferences:1.1.1")
 
     //Maps
-    implementation("com.google.android.gms:play-services-maps:19.2.0")
-    implementation("com.google.maps.android:maps-compose:6.1.0")
+    implementation("org.osmdroid:osmdroid-android:6.1.20")
+    implementation("org.osmdroid:osmdroid-wms:6.1.20")
 
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.androidx.navigation.compose)

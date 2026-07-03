@@ -1,5 +1,7 @@
 package com.example.thesstransit.ui.item
 
+import android.content.Context
+import android.view.ViewGroup
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -54,21 +56,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.focusModifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.thesstransit.ui.components.ScreenHeader
 import com.example.thesstransit.ui.viewModels.FavoritesViewModel
 import com.example.thesstransit.ui.viewModels.LanguageViewModel
 import com.example.thesstransit.ui.viewModels.RouteDetailsViewModel
-import com.google.android.gms.maps.model.CameraPosition
-import com.google.maps.android.compose.GoogleMap
-import com.google.maps.android.compose.Marker
-import com.google.maps.android.compose.MarkerState
-import com.google.maps.android.compose.Polyline
-import com.google.maps.android.compose.rememberCameraPositionState
 import io.gitlab.mitsiosm.oseth.data.Language
 import io.gitlab.mitsiosm.oseth.data.Route
 import io.gitlab.mitsiosm.oseth.data.Stop
@@ -76,6 +74,13 @@ import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import org.osmdroid.config.Configuration
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory
+import org.osmdroid.tileprovider.tilesource.TileSourcePolicy
+import org.osmdroid.util.GeoPoint
+import org.osmdroid.views.MapView
+import org.osmdroid.views.overlay.Marker
+import org.osmdroid.views.overlay.Polyline
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -244,6 +249,13 @@ fun RouteDetailsScreen(
                     onClick = { selectedTab = 1 },
                     text = { Text("Δρομολόγια") }
                 )
+
+                Tab(
+                    selected = selectedTab == 2,
+                    onClick = {selectedTab = 2},
+                    text = { Text("Χάρτης") }
+                )
+
             }
 
             when (selectedTab) {
@@ -263,6 +275,19 @@ fun RouteDetailsScreen(
                         }
                     } else {
                         TimetableTab(viewModel)
+                    }
+                }
+                2 -> {
+                    if (viewModel.errorMessage.value != null) {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text(
+                                viewModel.errorMessage.value!!,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(24.dp)
+                            )
+                        }
+                    } else {
+                        RouteMapTab(viewModel)
                     }
                 }
             }
@@ -364,38 +389,58 @@ private fun StopsTab(
 private fun RouteMapTab(
     vm: RouteDetailsViewModel
 ) {
-    if (vm.routePolyline.isEmpty())
-        return
+    val context = LocalContext.current
 
-    val cameraPositionState =
-        rememberCameraPositionState {
-            position =
-                CameraPosition.fromLatLngZoom(
-                    vm.routePolyline.first(),
-                    13f
-                )
-        }
-
-    GoogleMap(
+    AndroidView(
         modifier = Modifier.fillMaxSize(),
-        cameraPositionState = cameraPositionState
-    ) {
-
-        Polyline(
-            points = vm.routePolyline
-        )
-
-        vm.stops.forEachIndexed { index, stop ->
-            Marker(
-                state = MarkerState(
-                    position =
-                        vm.routePolyline.getOrNull(index)
-                            ?: vm.routePolyline.first()
-                ),
-                title = stop.name
+        factory = {
+            Configuration.getInstance().load(
+                context,
+                context.getSharedPreferences(
+                    "osmdroid",
+                    Context.MODE_PRIVATE
+                )
             )
+
+            MapView(context).apply {
+                setTileSource(
+                    TileSourceFactory.MAPNIK
+                )
+
+                setMultiTouchControls(true)
+
+                layoutParams =
+                    ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT
+                    )
+            }
+        },
+        update = { map ->
+
+            map.overlays.clear()
+
+            val polyline = Polyline().apply {
+                setPoints(
+                    vm.routePolyline.map {
+                        GeoPoint(it.latitude, it.longitude)
+                    }
+                )
+            }
+
+            map.overlays.add(polyline)
+
+            vm.stops.forEach { stop ->
+                val marker = Marker(map).apply {
+                    position = GeoPoint(stop.latitude, stop.longitude)
+                    title = stop.name
+                }
+                map.overlays.add(marker)
+            }
+
+            map.invalidate()
         }
-    }
+    )
 }
 
 @OptIn(ExperimentalTime::class)

@@ -10,7 +10,6 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.thesstransit.ui.data.LanguagePreferences
-import com.google.android.gms.maps.model.LatLng
 import io.gitlab.mitsiosm.oseth.Oseth
 import io.gitlab.mitsiosm.oseth.data.DetailedRoute
 import io.gitlab.mitsiosm.oseth.data.Language
@@ -27,6 +26,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.plus
 import kotlinx.datetime.todayIn
+import org.osmdroid.util.GeoPoint
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -66,7 +66,8 @@ class RouteDetailsViewModel(
     val trips = mutableStateListOf<TimetableTrip>()
 
     val detailedRoute = mutableStateOf<DetailedRoute?>(null)
-    val routePolyline = mutableStateListOf<LatLng>()
+    val routePolyline =
+        mutableStateListOf<GeoPoint>()
 
     @OptIn(ExperimentalTime::class)
     val weekDays: List<LocalDate>
@@ -79,13 +80,16 @@ class RouteDetailsViewModel(
         }
 
     fun loadRoute(route: Route) {
-        if (this.route.value?.id == route.id && selectedShape.value != null) return
 
         this.route.value = route
+        val first = route.tripHeadsigns.firstOrNull()
 
-        route.tripHeadsigns.firstOrNull()?.let {
-            loadShape(it.shapeId, it.routeId)
+        if (first == null) {
+            errorMessage.value = "No route directions found"
+            return
         }
+
+        loadShape(first.shapeId, first.routeId)
     }
 
     @OptIn(ExperimentalTime::class)
@@ -94,6 +98,10 @@ class RouteDetailsViewModel(
         routeId: RouteId,
         date: LocalDate = selectedDate
     ){
+        Log.d("RouteDetails", "Loading shape $shapeId route $routeId")
+        Log.d("RouteDetails", "Stops: ${stops.size}")
+        Log.d("RouteDetails", "Trips: ${trips.size}")
+
         selectedDate = date
         val midnight = date.atStartOfDayIn(TimeZone.currentSystemDefault())
 
@@ -194,11 +202,9 @@ class RouteDetailsViewModel(
         )
     }
 
-    private fun decodePolyline(
-        encoded: String
-    ): List<LatLng> {
+    private fun decodePolyline(encoded: String): List<GeoPoint> {
 
-        val poly = mutableListOf<LatLng>()
+        val poly = mutableListOf<GeoPoint>()
 
         var index = 0
         val len = encoded.length
@@ -221,14 +227,12 @@ class RouteDetailsViewModel(
             val dlat =
                 if ((result and 1) != 0)
                     (result shr 1).inv()
-                else
-                    result shr 1
+                else result shr 1
 
             lat += dlat
 
             shift = 0
             result = 0
-
 
             do {
                 b = encoded[index++].code - 63
@@ -239,18 +243,18 @@ class RouteDetailsViewModel(
             val dlng =
                 if ((result and 1) != 0)
                     (result shr 1).inv()
-                else
-                    result shr 1
+                else result shr 1
 
             lng += dlng
 
             poly.add(
-                LatLng(
+                GeoPoint(
                     lat / 1E5,
                     lng / 1E5
                 )
             )
         }
+
         return poly
     }
 
