@@ -451,7 +451,36 @@ fun QuickAccessItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    Surface(
+        modifier = modifier.height(82.dp).bounceClick { onClick() },
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.15f))
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize().padding(10.dp),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(imageVector = icon, contentDescription = null, tint = iconColor, modifier = Modifier.size(18.dp))
 
+                Spacer(modifier = Modifier.width(6.dp))
+
+                Text(
+                    text = title,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Text(
+                text = subtitle,
+                fontSize = 10.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1
+            )
+        }
+    }
 }
 
 @Composable
@@ -693,6 +722,7 @@ fun FeatureTilesGrid(tilesList: List<FeatureTile>) {
         }
     }
 }
+
 @Composable
 fun SmallFeatureTile(
     modifier: Modifier = Modifier,
@@ -788,10 +818,4 @@ fun Modifier.bounceClick(
                 onTap = { onClick() }
             )
         }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun HomeScreenPreview() {
-    TODO()
 }

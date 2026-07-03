@@ -2,7 +2,6 @@ package com.example.thesstransit.ui.item
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -39,8 +38,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
@@ -56,7 +53,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -64,7 +60,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.thesstransit.ui.components.ScreenHeader
 import com.example.thesstransit.ui.viewModels.FavoritesViewModel
+import com.example.thesstransit.ui.viewModels.LanguageViewModel
 import com.example.thesstransit.ui.viewModels.RouteDetailsViewModel
+import io.gitlab.mitsiosm.oseth.data.Language
 import io.gitlab.mitsiosm.oseth.data.Route
 import io.gitlab.mitsiosm.oseth.data.Stop
 import kotlinx.datetime.DayOfWeek
@@ -107,8 +105,21 @@ fun RouteDetailsScreen(
     val favoritesViewModel: FavoritesViewModel = viewModel()
     val favorites by favoritesViewModel.favorites.collectAsState()
 
+    val languageViewModel: LanguageViewModel = viewModel()
+    val language by languageViewModel.language.collectAsState()
+
+    val currentDirection = route.tripHeadsigns.find {
+        it.shapeId == viewModel.selectedShape.value
+    }?.headsign ?: "Επιλέξτε κατεύθυνση"
+
     LaunchedEffect(route) {
         viewModel.loadRoute(route)
+    }
+
+    LaunchedEffect(language) {
+        if (viewModel.route.value != null) {
+            viewModel.reloadCurrentRoute()
+        }
     }
 
     Box(
@@ -116,13 +127,44 @@ fun RouteDetailsScreen(
     ) {
         Column {
 
-            ScreenHeader(
-                title = route.shortName,
-                onBackClick = onBackClick,
-                onProfileClick = {}
-            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                ScreenHeader(
+                    title = route.shortName,
+                    onBackClick = onBackClick,
+                    onProfileClick = {}
+                )
+            }
 
             Spacer(Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.End
+            ) {
+
+                FilterChip(
+                    selected = language == Language.ENGLISH,
+                    onClick = {
+                        languageViewModel.toggleLanguage()
+                        viewModel.reloadCurrentRoute()
+                    },
+                    label = {
+                        Text(
+                            if (language == Language.GREEK)
+                                "Ελληνικά"
+                            else
+                                "English"
+                        )
+                    }
+                )
+            }
 
             ExposedDropdownMenuBox(
                 expanded = expanded,
@@ -131,22 +173,31 @@ fun RouteDetailsScreen(
                     .padding(horizontal = 16.dp, vertical = 12.dp)
                     .fillMaxWidth()
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "ΕΠΙΛΟΓΗ ΚΑΤΕΥΘΥΝΣΗΣ",
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = MaterialTheme.colorScheme.primary,
-                        letterSpacing = 1.sp
-                    )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Επιλογή Κατεύθυνσης",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = MaterialTheme.colorScheme.primary,
+                            letterSpacing = 1.sp
+                        )
 
-                    Text(
-                        text = currentDirection,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        maxLines = 1
-                    )
+                        Text(
+                            text = currentDirection,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1
+                        )
+                    }
+
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
                 }
 
 

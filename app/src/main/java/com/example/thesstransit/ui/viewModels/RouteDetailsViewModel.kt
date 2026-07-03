@@ -1,13 +1,17 @@
 package com.example.thesstransit.ui.viewModels
 
+import android.app.Application
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.thesstransit.ui.data.LanguagePreferences
 import io.gitlab.mitsiosm.oseth.Oseth
+import io.gitlab.mitsiosm.oseth.data.Language
 import io.gitlab.mitsiosm.oseth.data.Route
 import io.gitlab.mitsiosm.oseth.data.RouteId
 import io.gitlab.mitsiosm.oseth.data.ShapeId
@@ -24,14 +28,31 @@ import kotlinx.datetime.todayIn
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-class RouteDetailsViewModel : ViewModel() {
+class RouteDetailsViewModel(
+    application: Application
+) : AndroidViewModel(application) {
 
     private val api = Oseth()
+
+    private val preferences =
+        LanguagePreferences(application)
+
+    private var language =
+        Language.GREEK
+
     var isLoading = mutableStateOf(false)
     var errorMessage = mutableStateOf<String?>(null)
     var selectedShape = mutableStateOf<ShapeId?>(null)
     var route = mutableStateOf<Route?>(null)
     var selectedRouteId = mutableStateOf<RouteId?>(null)
+
+    init {
+        viewModelScope.launch {
+            preferences.language.collect {
+                language = it
+            }
+        }
+    }
 
     @OptIn(ExperimentalTime::class)
     var selectedDate by mutableStateOf(
@@ -53,7 +74,7 @@ class RouteDetailsViewModel : ViewModel() {
         }
 
     fun loadRoute(route: Route) {
-        if (this.route.value?.id == route.id) return
+        if (this.route.value?.id == route.id && selectedShape.value != null) return
 
         this.route.value = route
 
@@ -84,49 +105,42 @@ class RouteDetailsViewModel : ViewModel() {
 
                 val routeInfo =
                     api.getRouteInfo(
-                        routeId = routeId,
-                        shapeId = shapeId
+                        routeId,
+                        shapeId,
+                        language
                     )
 
                 val timetable =
                     api.getTimetable(
-                        routeId = routeId,
-                        shapeId = shapeId,
-                        midnight
+                        routeId,
+                        shapeId,
+                        midnight,
+                        language
                     )
 
                 val infoResult = routeInfo.getOrNull()
                 val timetableResult = timetable.getOrNull()
 
-                val nextMidnight =
-                    date
-                        .plus(1, DateTimeUnit.DAY)
-                        .atStartOfDayIn(TimeZone.currentSystemDefault())
+                val nextMidnight = date.plus(1, DateTimeUnit.DAY).atStartOfDayIn(TimeZone.currentSystemDefault())
 
                 val nextDayTimetable =
                     api.getTimetable(
-                        routeId = routeId,
-                        shapeId = shapeId,
-                        nextMidnight
+                        routeId,
+                        shapeId,
+                        nextMidnight,
+                        language
                     )
 
                 if (infoResult == null && timetableResult == null) {
                     errorMessage.value = "Δεν βρέθηκαν δεδομένα για αυτή την κατεύθυνση."
                 } else {
-                    infoResult?.let {
-                        stops.addAll(it.stops)
-                    }
+                    infoResult?.let { stops.addAll(it.stops) }
 
                     val dayTrips = mutableListOf<TimetableTrip>()
-
                     timetableResult?.let {
                         var prevTime: LocalTime? = null
-
                         for (trip in it.trips) {
-                            if (prevTime != null && trip.departureTime < prevTime) {
-                                break
-                            }
-
+                            if (prevTime != null && trip.departureTime < prevTime) break
                             dayTrips.add(trip)
                             prevTime = trip.departureTime
                         }
@@ -135,8 +149,7 @@ class RouteDetailsViewModel : ViewModel() {
                     nextDayTimetable.getOrNull()?.let {
                         dayTrips.addAll(
                             it.trips.filter { trip ->
-                                trip.departureTime.hour == 0 &&
-                                        trip.departureTime.minute <= 30
+                                trip.departureTime.hour == 0 && trip.departureTime.minute <= 30
                             }
                         )
                     }
@@ -144,13 +157,26 @@ class RouteDetailsViewModel : ViewModel() {
                     trips.addAll(dayTrips)
                 }
             } catch (e: Exception) {
-                Log.e("RouteDetails", "Error loading shape $shapeId for route $routeId: ${e.message}")
+                Log.e("RouteDetails", "Error loading shape $shapeId: ${e.message}")
                 errorMessage.value = "Σφάλμα κατά τη φόρτωση των δεδομένων."
             } finally {
                 isLoading.value = false
             }
         }
     }
+
+    fun reloadCurrentRoute() {
+
+        val shape = selectedShape.value ?: return
+        val routeId = selectedRouteId.value ?: return
+
+        loadShape(
+            shape,
+            routeId,
+            selectedDate
+        )
+    }
+
 }
 
 class RouteRepository {

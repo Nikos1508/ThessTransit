@@ -1,6 +1,7 @@
 package com.example.thesstransit.ui.item
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -19,6 +20,7 @@ import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -39,10 +41,15 @@ import io.gitlab.mitsiosm.oseth.data.Stop
 fun StopDetailsScreen(
     stop: Stop,
     viewModel: StopDetailsViewModel = viewModel(),
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onRouteClick: (Route) -> Unit
 ) {
     val arrivals by viewModel.arrivals.collectAsState()
     val routes by viewModel.routes.collectAsState()
+
+    LaunchedEffect(stop) {
+        viewModel.load(stop)
+    }
 
     var selectedTab by remember { mutableIntStateOf(0) }
 
@@ -56,6 +63,7 @@ fun StopDetailsScreen(
                 onBackClick = onBackClick,
                 onProfileClick = onBackClick
             )
+
             Spacer(Modifier.height(12.dp))
 
             PrimaryTabRow(selectedTabIndex = selectedTab) {
@@ -73,7 +81,7 @@ fun StopDetailsScreen(
 
             when (selectedTab) {
                 0 -> LiveArrivalsTab(arrivals = arrivals)
-                1 -> RoutesTab(routes = routes)
+                1 -> RoutesTab(routes = routes, onRouteClick = onRouteClick)
             }
         }
     }
@@ -126,13 +134,17 @@ private fun LiveArrivalsTab(arrivals: List<StopArrivalUi>) {
 }
 
 @Composable
-private fun RoutesTab(routes: List<Route>) {
+private fun RoutesTab(
+    routes: List<Route>,
+    onRouteClick: (Route) -> Unit
+) {
     LazyColumn(modifier = Modifier.fillMaxSize()) {
         items(routes) {route ->
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 8.dp, vertical = 2.dp)
+                    .clickable { onRouteClick(route) }
             ){
                 ListItem(
                     headlineContent = {

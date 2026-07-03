@@ -229,7 +229,10 @@ class MainActivity : ComponentActivity() {
                             StopDetailsScreen(
                                 stop = stop,
                                 viewModel = vm,
-                                onBackClick = { navController.popBackStack() }
+                                onBackClick = { navController.popBackStack() },
+                                onRouteClick = { route ->
+                                    navController.navigate(RouteDetailsRoute(route))
+                                }
                             )
                         }
                     }
