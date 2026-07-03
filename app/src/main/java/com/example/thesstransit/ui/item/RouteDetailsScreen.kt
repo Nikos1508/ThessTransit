@@ -53,6 +53,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.focusModifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -62,6 +63,12 @@ import com.example.thesstransit.ui.components.ScreenHeader
 import com.example.thesstransit.ui.viewModels.FavoritesViewModel
 import com.example.thesstransit.ui.viewModels.LanguageViewModel
 import com.example.thesstransit.ui.viewModels.RouteDetailsViewModel
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerState
+import com.google.maps.android.compose.Polyline
+import com.google.maps.android.compose.rememberCameraPositionState
 import io.gitlab.mitsiosm.oseth.data.Language
 import io.gitlab.mitsiosm.oseth.data.Route
 import io.gitlab.mitsiosm.oseth.data.Stop
@@ -117,9 +124,7 @@ fun RouteDetailsScreen(
     }
 
     LaunchedEffect(language) {
-        if (viewModel.route.value != null) {
-            viewModel.reloadCurrentRoute()
-        }
+        viewModel.reloadCurrentRoute()
     }
 
     Box(
@@ -153,7 +158,6 @@ fun RouteDetailsScreen(
                     selected = language == Language.ENGLISH,
                     onClick = {
                         languageViewModel.toggleLanguage()
-                        viewModel.reloadCurrentRoute()
                     },
                     label = {
                         Text(
@@ -352,6 +356,44 @@ private fun StopsTab(
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun RouteMapTab(
+    vm: RouteDetailsViewModel
+) {
+    if (vm.routePolyline.isEmpty())
+        return
+
+    val cameraPositionState =
+        rememberCameraPositionState {
+            position =
+                CameraPosition.fromLatLngZoom(
+                    vm.routePolyline.first(),
+                    13f
+                )
+        }
+
+    GoogleMap(
+        modifier = Modifier.fillMaxSize(),
+        cameraPositionState = cameraPositionState
+    ) {
+
+        Polyline(
+            points = vm.routePolyline
+        )
+
+        vm.stops.forEachIndexed { index, stop ->
+            Marker(
+                state = MarkerState(
+                    position =
+                        vm.routePolyline.getOrNull(index)
+                            ?: vm.routePolyline.first()
+                ),
+                title = stop.name
+            )
         }
     }
 }

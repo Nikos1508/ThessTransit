@@ -2,15 +2,17 @@ package com.example.thesstransit.ui.viewModels
 
 import android.app.Application
 import android.util.Log
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.thesstransit.ui.data.LanguagePreferences
+import com.google.android.gms.maps.model.LatLng
 import io.gitlab.mitsiosm.oseth.Oseth
+import io.gitlab.mitsiosm.oseth.data.DetailedRoute
 import io.gitlab.mitsiosm.oseth.data.Language
 import io.gitlab.mitsiosm.oseth.data.Route
 import io.gitlab.mitsiosm.oseth.data.RouteId
@@ -37,8 +39,8 @@ class RouteDetailsViewModel(
     private val preferences =
         LanguagePreferences(application)
 
-    private var language =
-        Language.GREEK
+    private val _language = mutableStateOf(Language.GREEK)
+    val language: State<Language> get() = _language
 
     var isLoading = mutableStateOf(false)
     var errorMessage = mutableStateOf<String?>(null)
@@ -49,7 +51,7 @@ class RouteDetailsViewModel(
     init {
         viewModelScope.launch {
             preferences.language.collect {
-                language = it
+                _language.value = it
             }
         }
     }
@@ -62,6 +64,9 @@ class RouteDetailsViewModel(
 
     val stops = mutableStateListOf<Stop>()
     val trips = mutableStateListOf<TimetableTrip>()
+
+    val detailedRoute = mutableStateOf<DetailedRoute?>(null)
+    val routePolyline = mutableStateListOf<LatLng>()
 
     @OptIn(ExperimentalTime::class)
     val weekDays: List<LocalDate>
@@ -102,12 +107,13 @@ class RouteDetailsViewModel(
 
                 stops.clear()
                 trips.clear()
+                routePolyline.clear()
 
                 val routeInfo =
                     api.getRouteInfo(
                         routeId,
                         shapeId,
-                        language
+                        _language.value
                     )
 
                 val timetable =
@@ -115,7 +121,7 @@ class RouteDetailsViewModel(
                         routeId,
                         shapeId,
                         midnight,
-                        language
+                        _language.value
                     )
 
                 val infoResult = routeInfo.getOrNull()
@@ -128,13 +134,24 @@ class RouteDetailsViewModel(
                         routeId,
                         shapeId,
                         nextMidnight,
-                        language
+                        _language.value
                     )
 
                 if (infoResult == null && timetableResult == null) {
                     errorMessage.value = "Δεν βρέθηκαν δεδομένα για αυτή την κατεύθυνση."
                 } else {
-                    infoResult?.let { stops.addAll(it.stops) }
+                    infoResult?.let {
+
+                        detailedRoute.value = it
+
+                        stops.addAll(it.stops)
+
+                        routePolyline.addAll(
+                            decodePolyline(
+                                it.shape.lineString
+                            )
+                        )
+                    }
 
                     val dayTrips = mutableListOf<TimetableTrip>()
                     timetableResult?.let {
@@ -175,6 +192,66 @@ class RouteDetailsViewModel(
             routeId,
             selectedDate
         )
+    }
+
+    private fun decodePolyline(
+        encoded: String
+    ): List<LatLng> {
+
+        val poly = mutableListOf<LatLng>()
+
+        var index = 0
+        val len = encoded.length
+
+        var lat = 0
+        var lng = 0
+
+        while (index < len) {
+
+            var b: Int
+            var shift = 0
+            var result = 0
+
+            do {
+                b = encoded[index++].code - 63
+                result = result or ((b and 0x1f) shl shift)
+                shift += 5
+            } while (b >= 0x20)
+
+            val dlat =
+                if ((result and 1) != 0)
+                    (result shr 1).inv()
+                else
+                    result shr 1
+
+            lat += dlat
+
+            shift = 0
+            result = 0
+
+
+            do {
+                b = encoded[index++].code - 63
+                result = result or ((b and 0x1f) shl shift)
+                shift += 5
+            } while (b >= 0x20)
+
+            val dlng =
+                if ((result and 1) != 0)
+                    (result shr 1).inv()
+                else
+                    result shr 1
+
+            lng += dlng
+
+            poly.add(
+                LatLng(
+                    lat / 1E5,
+                    lng / 1E5
+                )
+            )
+        }
+        return poly
     }
 
 }

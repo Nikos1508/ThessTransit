@@ -68,6 +68,10 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
     implementation("androidx.datastore:datastore-preferences:1.1.1")
 
+    //Maps
+    implementation("com.google.android.gms:play-services-maps:19.2.0")
+    implementation("com.google.maps.android:maps-compose:6.1.0")
+
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.androidx.navigation.compose)
 
