@@ -11,6 +11,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.thesstransit.ui.data.LanguagePreferences
 import io.gitlab.mitsiosm.oseth.Oseth
+import io.gitlab.mitsiosm.oseth.OsethTrackVehicle
+import io.gitlab.mitsiosm.oseth.data.Coordinates
 import io.gitlab.mitsiosm.oseth.data.DetailedRoute
 import io.gitlab.mitsiosm.oseth.data.Language
 import io.gitlab.mitsiosm.oseth.data.Route
@@ -18,6 +20,7 @@ import io.gitlab.mitsiosm.oseth.data.RouteId
 import io.gitlab.mitsiosm.oseth.data.ShapeId
 import io.gitlab.mitsiosm.oseth.data.Stop
 import io.gitlab.mitsiosm.oseth.data.TimetableTrip
+import io.gitlab.mitsiosm.oseth.data.Vehicle
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
@@ -66,8 +69,14 @@ class RouteDetailsViewModel(
     val trips = mutableStateListOf<TimetableTrip>()
 
     val detailedRoute = mutableStateOf<DetailedRoute?>(null)
+
     val routePolyline =
         mutableStateListOf<GeoPoint>()
+
+    val vehicles = mutableStateListOf<Vehicle>()
+
+    val currentVehicles = mutableStateListOf<Coordinates>()
+    private var tracker: OsethTrackVehicle? = null
 
     @OptIn(ExperimentalTime::class)
     val weekDays: List<LocalDate>
@@ -92,6 +101,28 @@ class RouteDetailsViewModel(
         loadShape(first.shapeId, first.routeId)
     }
 
+    private fun startVehicleTracking(
+        routeId: RouteId,
+        shapeId: ShapeId
+    ) {
+        tracker?.stop()
+
+        tracker = OsethTrackVehicle(
+            routeId = routeId,
+            shapeId = shapeId
+        )
+
+        viewModelScope.launch {
+            for (vehicles in tracker!!.channel) {
+                currentVehicles.clear()
+
+                currentVehicles.addAll(
+                    vehicles
+                )
+            }
+        }
+    }
+
     @OptIn(ExperimentalTime::class)
     fun loadShape(
         shapeId: ShapeId,
@@ -108,6 +139,11 @@ class RouteDetailsViewModel(
         selectedShape.value = shapeId
         selectedRouteId.value = routeId
 
+        startVehicleTracking(
+            routeId,
+            shapeId
+        )
+
         viewModelScope.launch {
             try {
                 isLoading.value = true
@@ -116,6 +152,7 @@ class RouteDetailsViewModel(
                 stops.clear()
                 trips.clear()
                 routePolyline.clear()
+                currentVehicles.clear()
 
                 val routeInfo =
                     api.getRouteInfo(
@@ -154,11 +191,35 @@ class RouteDetailsViewModel(
 
                         stops.addAll(it.stops)
 
-                        routePolyline.addAll(
-                            decodePolyline(
-                                it.shape.lineString
-                            )
+                        vehicles.addAll(it.vehicles)
+
+                        currentVehicles.clear()
+
+                        currentVehicles.addAll(
+                            it.vehicles.map { vehicle ->
+                                Coordinates(
+                                    vehicle.latitude,
+                                    vehicle.longitude
+                                )
+                            }
                         )
+
+                        Log.d(
+                            "RouteDetails",
+                            "Shape string starts with: ${it.shape.lineString.take(80)}"
+                        )
+
+                        try {
+                            routePolyline.addAll(
+                                decodePolyline(it.shape.lineString)
+                            )
+                        } catch (e: Exception) {
+                            Log.e(
+                                "Polyline",
+                                "Cannot decode polyline",
+                                e
+                            )
+                        }
                     }
 
                     val dayTrips = mutableListOf<TimetableTrip>()
@@ -256,6 +317,11 @@ class RouteDetailsViewModel(
         }
 
         return poly
+    }
+
+    override fun onCleared() {
+        tracker?.stop()
+        super.onCleared()
     }
 
 }

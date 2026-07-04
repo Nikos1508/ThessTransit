@@ -438,6 +438,25 @@ private fun RouteMapTab(
                 map.overlays.add(marker)
             }
 
+            vm.vehicles.forEach { vehicle ->
+                val marker = Marker(map).apply {
+
+                    position = GeoPoint(
+                        vehicle.latitude,
+                        vehicle.longitude
+                    )
+
+                    title = "Λεωφορείο ${vehicle.id.id}"
+
+                    setAnchor(
+                        Marker.ANCHOR_CENTER,
+                        Marker.ANCHOR_CENTER
+                    )
+                }
+
+                map.overlays.add(marker)
+            }
+
             map.invalidate()
         }
     )
