@@ -1,6 +1,11 @@
 package com.example.thesstransit.ui.item
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
 import android.view.ViewGroup
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -27,6 +32,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
@@ -56,13 +62,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.focusModifier
+import androidx.compose.ui.graphics.Paint
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.thesstransit.R
 import com.example.thesstransit.ui.components.ScreenHeader
 import com.example.thesstransit.ui.viewModels.FavoritesViewModel
 import com.example.thesstransit.ui.viewModels.LanguageViewModel
@@ -77,6 +88,7 @@ import kotlinx.datetime.toLocalDateTime
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.tileprovider.tilesource.TileSourcePolicy
+import org.osmdroid.util.BoundingBox
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
@@ -385,11 +397,33 @@ private fun StopsTab(
     }
 }
 
+private fun drawable(context: Context, id: Int): Drawable? {
+    return ContextCompat.getDrawable(context, id)
+}
+
+private fun vectorToDrawable(
+    context: Context,
+    imageVector: ImageVector,
+    tintColor: Int
+): Drawable {
+
+    val sizePx = (36 * context.resources.displayMetrics.density).toInt()
+    val bitmap = Bitmap.createBitmap(sizePx,sizePx, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+
+    val drawable = ContextCompat.getDrawable(context, R.drawable.ic_launcher_foreground)
+
+
+    return BitmapDrawable(context.resources, bitmap)
+}
+
 @Composable
 private fun RouteMapTab(
     vm: RouteDetailsViewModel
 ) {
     val context = LocalContext.current
+
+    val density = LocalDensity.current
 
     AndroidView(
         modifier = Modifier.fillMaxSize(),
@@ -426,6 +460,8 @@ private fun RouteMapTab(
                         GeoPoint(it.latitude, it.longitude)
                     }
                 )
+                width = 10f
+                color = Color.parseColor("#2E7D32")
             }
 
             map.overlays.add(polyline)
@@ -434,19 +470,11 @@ private fun RouteMapTab(
                 val marker = Marker(map).apply {
                     position = GeoPoint(stop.latitude, stop.longitude)
                     title = stop.name
-                }
-                map.overlays.add(marker)
-            }
 
-            vm.vehicles.forEach { vehicle ->
-                val marker = Marker(map).apply {
-
-                    position = GeoPoint(
-                        vehicle.latitude,
-                        vehicle.longitude
+                    icon = drawable(
+                        context,
+                        R.drawable.bus_stop
                     )
-
-                    title = "Λεωφορείο ${vehicle.id.id}"
 
                     setAnchor(
                         Marker.ANCHOR_CENTER,
@@ -455,6 +483,49 @@ private fun RouteMapTab(
                 }
 
                 map.overlays.add(marker)
+            }
+
+            vm.currentVehicles.forEach { vehicle ->
+
+                val marker = Marker(map).apply {
+
+                    position = GeoPoint(
+                        vehicle.latitude,
+                        vehicle.longitude
+                    )
+
+                    title = "Λεωφορείο"
+
+                    icon = drawable(
+                        context,
+                        R.drawable.bus
+                    )
+
+                    setAnchor(
+                        Marker.ANCHOR_CENTER,
+                        Marker.ANCHOR_CENTER
+                    )
+                }
+
+                map.overlays.add(marker)
+            }
+
+            val points = mutableListOf<GeoPoint>()
+
+            vm.stops.forEach {
+                points.add(GeoPoint(it.latitude, it.longitude))
+            }
+
+            vm.currentVehicles.forEach {
+                points.add(GeoPoint(it.latitude, it.longitude))
+            }
+
+            if (points.isNotEmpty()) {
+                map.zoomToBoundingBox(
+                    BoundingBox.fromGeoPoints(points),
+                    true,
+                    120
+                )
             }
 
             map.invalidate()
