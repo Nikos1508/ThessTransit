@@ -1,10 +1,7 @@
 package com.example.thesstransit.ui.item
 
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.view.ViewGroup
 import androidx.compose.foundation.BorderStroke
@@ -32,7 +29,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
@@ -61,11 +57,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.focusModifier
-import androidx.compose.ui.graphics.Paint
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -87,7 +79,6 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
-import org.osmdroid.tileprovider.tilesource.TileSourcePolicy
 import org.osmdroid.util.BoundingBox
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
@@ -401,29 +392,15 @@ private fun drawable(context: Context, id: Int): Drawable? {
     return ContextCompat.getDrawable(context, id)
 }
 
-private fun vectorToDrawable(
-    context: Context,
-    imageVector: ImageVector,
-    tintColor: Int
-): Drawable {
-
-    val sizePx = (36 * context.resources.displayMetrics.density).toInt()
-    val bitmap = Bitmap.createBitmap(sizePx,sizePx, Bitmap.Config.ARGB_8888)
-    val canvas = Canvas(bitmap)
-
-    val drawable = ContextCompat.getDrawable(context, R.drawable.ic_launcher_foreground)
-
-
-    return BitmapDrawable(context.resources, bitmap)
-}
-
 @Composable
 private fun RouteMapTab(
     vm: RouteDetailsViewModel
 ) {
     val context = LocalContext.current
 
-    val density = LocalDensity.current
+    var firstZoomDone by remember {
+        mutableStateOf(false)
+    }
 
     AndroidView(
         modifier = Modifier.fillMaxSize(),
@@ -437,11 +414,21 @@ private fun RouteMapTab(
             )
 
             MapView(context).apply {
-                setTileSource(
-                    TileSourceFactory.MAPNIK
-                )
 
+                setTileSource(TileSourceFactory.MAPNIK)
                 setMultiTouchControls(true)
+
+                minZoomLevel = 7.0
+                maxZoomLevel = 19.0
+
+                setScrollableAreaLimitDouble(
+                    BoundingBox(
+                        41.9,
+                        29.8,
+                        34.5,
+                        19.2
+                    )
+                )
 
                 layoutParams =
                     ViewGroup.LayoutParams(
@@ -452,16 +439,42 @@ private fun RouteMapTab(
         },
         update = { map ->
 
+            if (!firstZoomDone) {
+
+                val points = mutableListOf<GeoPoint>()
+
+                vm.stops.forEach {
+                    points.add(
+                        GeoPoint(it.latitude, it.longitude)
+                    )
+                }
+
+                if (points.isNotEmpty()) {
+                    map.zoomToBoundingBox(
+                        BoundingBox.fromGeoPoints(points),
+                        true,
+                        120
+                    )
+
+                    firstZoomDone = true
+                }
+            }
+
             map.overlays.clear()
 
             val polyline = Polyline().apply {
                 setPoints(
-                    vm.routePolyline.map {
-                        GeoPoint(it.latitude, it.longitude)
-                    }
+                    vm.routePolyline
                 )
-                width = 10f
-                color = Color.parseColor("#2E7D32")
+
+                outlinePaint.apply {
+                    strokeWidth = 8f
+
+                    color = Color.parseColor(
+                        "#${vm.detailedRoute.value?.color ?: "1976D2"}"
+                    )
+                }
+
             }
 
             map.overlays.add(polyline)

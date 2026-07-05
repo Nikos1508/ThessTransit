@@ -123,6 +123,24 @@ class RouteDetailsViewModel(
         }
     }
 
+    private fun parseLineString(lineString: String):List<GeoPoint> {
+        return lineString
+            .removePrefix("LINESTRING (")
+            .removeSuffix(")")
+            .split(",")
+            .mapNotNull { point ->
+                val coords = point.trim().split(" ")
+
+                if (coords.size != 2)
+                    null
+                else
+                    GeoPoint(
+                        coords[1].toDouble(),
+                        coords[0].toDouble()
+                    )
+            }
+    }
+
     @OptIn(ExperimentalTime::class)
     fun loadShape(
         shapeId: ShapeId,
@@ -151,6 +169,7 @@ class RouteDetailsViewModel(
 
                 stops.clear()
                 trips.clear()
+                vehicles.clear()
                 routePolyline.clear()
                 currentVehicles.clear()
 
@@ -211,7 +230,7 @@ class RouteDetailsViewModel(
 
                         try {
                             routePolyline.addAll(
-                                decodePolyline(it.shape.lineString)
+                                parseLineString(it.shape.lineString)
                             )
                         } catch (e: Exception) {
                             Log.e(
@@ -261,62 +280,6 @@ class RouteDetailsViewModel(
             routeId,
             selectedDate
         )
-    }
-
-    private fun decodePolyline(encoded: String): List<GeoPoint> {
-
-        val poly = mutableListOf<GeoPoint>()
-
-        var index = 0
-        val len = encoded.length
-
-        var lat = 0
-        var lng = 0
-
-        while (index < len) {
-
-            var b: Int
-            var shift = 0
-            var result = 0
-
-            do {
-                b = encoded[index++].code - 63
-                result = result or ((b and 0x1f) shl shift)
-                shift += 5
-            } while (b >= 0x20)
-
-            val dlat =
-                if ((result and 1) != 0)
-                    (result shr 1).inv()
-                else result shr 1
-
-            lat += dlat
-
-            shift = 0
-            result = 0
-
-            do {
-                b = encoded[index++].code - 63
-                result = result or ((b and 0x1f) shl shift)
-                shift += 5
-            } while (b >= 0x20)
-
-            val dlng =
-                if ((result and 1) != 0)
-                    (result shr 1).inv()
-                else result shr 1
-
-            lng += dlng
-
-            poly.add(
-                GeoPoint(
-                    lat / 1E5,
-                    lng / 1E5
-                )
-            )
-        }
-
-        return poly
     }
 
     override fun onCleared() {
