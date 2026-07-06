@@ -112,13 +112,12 @@ class RouteDetailsViewModel(
             shapeId = shapeId
         )
 
-        viewModelScope.launch {
-            for (vehicles in tracker!!.channel) {
-                currentVehicles.clear()
+        val tracker = tracker ?: return
 
-                currentVehicles.addAll(
-                    vehicles
-                )
+        viewModelScope.launch {
+            for (vehicles in tracker.channel) {
+                currentVehicles.clear()
+                currentVehicles.addAll(vehicles)
             }
         }
     }

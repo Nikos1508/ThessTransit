@@ -3,7 +3,6 @@ package com.example.thesstransit.ui.item
 import android.content.Context
 import android.graphics.Color
 import android.graphics.drawable.Drawable
-import android.view.ViewGroup
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -132,7 +131,9 @@ fun RouteDetailsScreen(
     }
 
     LaunchedEffect(language) {
-        viewModel.reloadCurrentRoute()
+        if (viewModel.selectedShape.value != null) {
+            viewModel.reloadCurrentRoute()
+        }
     }
 
     Box(
@@ -398,23 +399,26 @@ private fun RouteMapTab(
 ) {
     val context = LocalContext.current
 
-    var firstZoomDone by remember {
-        mutableStateOf(false)
-    }
+    val mapViewRef = remember { mutableStateOf<MapView?>(null) }
+    val stopMarker = remember { mutableListOf<Marker>() }
+    val vehicleMarkers = remember { mutableMapOf<String, Marker>() }
+    val polylineRef = remember { mutableStateOf<Polyline?>(null) }
+    var zoomDone by remember { mutableStateOf(false) }
+
+    // var firstZoomDone by remember {
+    //     mutableStateOf(false)
+    // }
 
     AndroidView(
         modifier = Modifier.fillMaxSize(),
         factory = {
+
             Configuration.getInstance().load(
                 context,
-                context.getSharedPreferences(
-                    "osmdroid",
-                    Context.MODE_PRIVATE
-                )
+                context.getSharedPreferences("osmdroid", Context.MODE_PRIVATE)
             )
 
             MapView(context).apply {
-
                 setTileSource(TileSourceFactory.MAPNIK)
                 setMultiTouchControls(true)
 
@@ -430,115 +434,71 @@ private fun RouteMapTab(
                     )
                 )
 
-                layoutParams =
-                    ViewGroup.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT
-                    )
+                mapViewRef.value = this
             }
         },
         update = { map ->
 
-            if (!firstZoomDone) {
+            if (polylineRef.value == null && vm.routePolyline.isNotEmpty()) {
 
-                val points = mutableListOf<GeoPoint>()
+                val polyline = Polyline().apply {
+                    val routeColor = vm.detailedRoute.value?.color?.removePrefix("#")?: "1976D2"
 
-                vm.stops.forEach {
-                    points.add(
-                        GeoPoint(it.latitude, it.longitude)
-                    )
+                    setPoints(vm.routePolyline)
+                    outlinePaint.strokeWidth = 8f
+                    outlinePaint.color = Color.parseColor("#$routeColor")
                 }
 
-                if (points.isNotEmpty()) {
-                    map.zoomToBoundingBox(
-                        BoundingBox.fromGeoPoints(points),
-                        true,
-                        120
-                    )
+                map.overlays.add(polyline)
+                polylineRef.value = polyline
+            }
 
-                    firstZoomDone = true
+            if(stopMarker.isEmpty() && vm.stops.isNotEmpty()) {
+                vm.stops.forEach { stop ->
+                    val marker = Marker(map).apply {
+                        position = GeoPoint(stop.latitude, stop.longitude)
+                        title = stop.name
+                        icon = drawable(context, R.drawable.bus_stop)
+                        setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
+                    }
+
+                    stopMarker.add(marker)
+                    map.overlays.add(marker)
                 }
             }
 
-            map.overlays.clear()
-
-            val polyline = Polyline().apply {
-                setPoints(
-                    vm.routePolyline
-                )
-
-                outlinePaint.apply {
-                    strokeWidth = 8f
-
-                    color = Color.parseColor(
-                        "#${vm.detailedRoute.value?.color ?: "1976D2"}"
-                    )
+            if(!zoomDone && vm.stops.isNotEmpty()) {
+                val points = vm.stops.map {
+                    GeoPoint(it.latitude, it.longitude)
                 }
 
-            }
-
-            map.overlays.add(polyline)
-
-            vm.stops.forEach { stop ->
-                val marker = Marker(map).apply {
-                    position = GeoPoint(stop.latitude, stop.longitude)
-                    title = stop.name
-
-                    icon = drawable(
-                        context,
-                        R.drawable.bus_stop
-                    )
-
-                    setAnchor(
-                        Marker.ANCHOR_CENTER,
-                        Marker.ANCHOR_CENTER
-                    )
-                }
-
-                map.overlays.add(marker)
-            }
-
-            vm.currentVehicles.forEach { vehicle ->
-
-                val marker = Marker(map).apply {
-
-                    position = GeoPoint(
-                        vehicle.latitude,
-                        vehicle.longitude
-                    )
-
-                    title = "Λεωφορείο"
-
-                    icon = drawable(
-                        context,
-                        R.drawable.bus
-                    )
-
-                    setAnchor(
-                        Marker.ANCHOR_CENTER,
-                        Marker.ANCHOR_CENTER
-                    )
-                }
-
-                map.overlays.add(marker)
-            }
-
-            val points = mutableListOf<GeoPoint>()
-
-            vm.stops.forEach {
-                points.add(GeoPoint(it.latitude, it.longitude))
-            }
-
-            vm.currentVehicles.forEach {
-                points.add(GeoPoint(it.latitude, it.longitude))
-            }
-
-            if (points.isNotEmpty()) {
                 map.zoomToBoundingBox(
                     BoundingBox.fromGeoPoints(points),
                     true,
                     120
                 )
+
+                zoomDone = true
+            }
+
+            vm.currentVehicles.forEachIndexed { index, vehicle ->
+                val key = "${vehicle.latitude} - ${vehicle.longitude} - $index"
+
+                val marker = vehicleMarkers[key]
+
+                if(marker == null) {
+                    val newMarker = Marker(map).apply {
+                        position = GeoPoint(vehicle.latitude, vehicle.longitude)
+                        title = "Λεωφορείο"
+                        icon = drawable(context, R.drawable.bus)
+                        setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
+                    }
+
+                    vehicleMarkers[key] = newMarker
+                    map.overlays.add(newMarker)
+                } else {
+                    marker.position = GeoPoint(vehicle.latitude, vehicle.longitude)
+                }
             }
 
             map.invalidate()
