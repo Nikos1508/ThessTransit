@@ -2,7 +2,6 @@ package com.example.thesstransit.ui.viewModels
 
 import android.app.Application
 import android.util.Log
-import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -21,6 +20,7 @@ import io.gitlab.mitsiosm.oseth.data.ShapeId
 import io.gitlab.mitsiosm.oseth.data.Stop
 import io.gitlab.mitsiosm.oseth.data.TimetableTrip
 import io.gitlab.mitsiosm.oseth.data.Vehicle
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
@@ -43,13 +43,14 @@ class RouteDetailsViewModel(
         LanguagePreferences(application)
 
     private val _language = mutableStateOf(Language.GREEK)
-    val language: State<Language> get() = _language
 
     var isLoading = mutableStateOf(false)
     var errorMessage = mutableStateOf<String?>(null)
     var selectedShape = mutableStateOf<ShapeId?>(null)
     var route = mutableStateOf<Route?>(null)
     var selectedRouteId = mutableStateOf<RouteId?>(null)
+
+    private var initialLoadDone = false
 
     init {
         viewModelScope.launch {
@@ -77,6 +78,7 @@ class RouteDetailsViewModel(
 
     val currentVehicles = mutableStateListOf<Coordinates>()
     private var tracker: OsethTrackVehicle? = null
+    private var trackingJob: Job? = null
 
     @OptIn(ExperimentalTime::class)
     val weekDays: List<LocalDate>
@@ -90,7 +92,13 @@ class RouteDetailsViewModel(
 
     fun loadRoute(route: Route) {
 
+        if (initialLoadDone)
+            return
+
+        initialLoadDone = true
+
         this.route.value = route
+
         val first = route.tripHeadsigns.firstOrNull()
 
         if (first == null) {
@@ -106,6 +114,7 @@ class RouteDetailsViewModel(
         shapeId: ShapeId
     ) {
         tracker?.stop()
+        trackingJob?.cancel()
 
         tracker = OsethTrackVehicle(
             routeId = routeId,
@@ -114,12 +123,48 @@ class RouteDetailsViewModel(
 
         val tracker = tracker ?: return
 
-        viewModelScope.launch {
+        trackingJob = viewModelScope.launch {
+            var lastUpdate = 0L
+
             for (vehicles in tracker.channel) {
+
+                val now = System.currentTimeMillis()
+
+                if (now - lastUpdate < 5000)
+                    continue
+
+                lastUpdate = now
+
                 currentVehicles.clear()
                 currentVehicles.addAll(vehicles)
+
+                Log.d(
+                    "VehicleTracking",
+                    "Updated ${vehicles.size} vehicles"
+                )
+
+                Log.d(
+                    "VehicleTracking",
+                    "Received ${vehicles.size} vehicles"
+                )
+
+                vehicles.forEachIndexed { index, vehicle ->
+                    Log.d(
+                        "VehicleTracking",
+                        "[$index] ${vehicle.latitude}, ${vehicle.longitude}"
+                    )
+                }
             }
         }
+    }
+
+    private fun stopVehicleTracking() {
+        trackingJob?.cancel()
+        trackingJob = null
+
+        tracker?.stop()
+        tracker = null
+
     }
 
     private fun parseLineString(lineString: String):List<GeoPoint> {
@@ -156,12 +201,12 @@ class RouteDetailsViewModel(
         selectedShape.value = shapeId
         selectedRouteId.value = routeId
 
-        startVehicleTracking(
-            routeId,
-            shapeId
-        )
+        var loadingJob: Job? = null
 
-        viewModelScope.launch {
+        loadingJob?.cancel()
+
+        loadingJob = viewModelScope.launch {
+
             try {
                 isLoading.value = true
                 errorMessage.value = null
@@ -170,7 +215,6 @@ class RouteDetailsViewModel(
                 trips.clear()
                 vehicles.clear()
                 routePolyline.clear()
-                currentVehicles.clear()
 
                 val routeInfo =
                     api.getRouteInfo(
@@ -209,18 +253,12 @@ class RouteDetailsViewModel(
 
                         stops.addAll(it.stops)
 
-                        vehicles.addAll(it.vehicles)
-
-                        currentVehicles.clear()
-
-                        currentVehicles.addAll(
-                            it.vehicles.map { vehicle ->
-                                Coordinates(
-                                    vehicle.latitude,
-                                    vehicle.longitude
-                                )
-                            }
+                        Log.d(
+                            "RouteDetails",
+                            "Loaded ${stops.size} stops"
                         )
+
+                        vehicles.addAll(it.vehicles)
 
                         Log.d(
                             "RouteDetails",
@@ -238,6 +276,18 @@ class RouteDetailsViewModel(
                                 e
                             )
                         }
+
+                        Log.d(
+                            "RouteDetails",
+                            "Polyline points: ${routePolyline.size}"
+                        )
+
+
+
+                        startVehicleTracking(
+                            routeId,
+                            shapeId
+                        )
                     }
 
                     val dayTrips = mutableListOf<TimetableTrip>()
@@ -266,6 +316,11 @@ class RouteDetailsViewModel(
             } finally {
                 isLoading.value = false
             }
+
+            Log.d(
+                "RouteDetails",
+                "Trips loaded: ${trips.size}"
+            )
         }
     }
 
@@ -282,7 +337,7 @@ class RouteDetailsViewModel(
     }
 
     override fun onCleared() {
-        tracker?.stop()
+        stopVehicleTracking()
         super.onCleared()
     }
 
