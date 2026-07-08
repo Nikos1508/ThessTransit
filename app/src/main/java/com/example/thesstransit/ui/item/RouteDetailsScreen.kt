@@ -2,7 +2,12 @@ package com.example.thesstransit.ui.item
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
+import android.util.TypedValue
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -393,16 +398,34 @@ private fun StopsTab(
     }
 }
 
-private fun drawable(
+private fun bitmapIcon(
     context: Context,
-    id: Int,
-    size: Int
-): Drawable? {
-    return ContextCompat
-        .getDrawable(context, id)
-        ?.apply {
-            setBounds(0, 0, size, size)
-        }
+    @DrawableRes id: Int,
+    sizeDp: Int
+): BitmapDrawable {
+
+    val bmp = BitmapFactory.decodeResource(
+        context.resources,
+        id
+    )
+
+    val px = TypedValue.applyDimension(
+        TypedValue.COMPLEX_UNIT_DIP,
+        sizeDp.toFloat(),
+        context.resources.displayMetrics
+    ).toInt()
+
+    val scaled = Bitmap.createScaledBitmap(
+        bmp,
+        px,
+        px,
+        true
+    )
+
+    return BitmapDrawable(
+        context.resources,
+        scaled
+    )
 }
 
 @SuppressLint("UseKtx")
@@ -497,10 +520,10 @@ private fun RouteMapTab(
 
                 title = stop.name
 
-                icon = drawable(
+                icon = bitmapIcon(
                     context,
                     R.drawable.bus_stop,
-                    48
+                    18
                 )
 
                 setAnchor(
@@ -588,10 +611,10 @@ private fun RouteMapTab(
 
                             title = "Λεωφορείο"
 
-                            icon = drawable(
+                            icon = bitmapIcon(
                                 context,
                                 R.drawable.bus,
-                                56
+                                14
                             )
 
                             setAnchor(

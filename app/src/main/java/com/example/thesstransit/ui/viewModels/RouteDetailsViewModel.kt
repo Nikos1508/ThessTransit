@@ -167,21 +167,28 @@ class RouteDetailsViewModel(
 
     }
 
-    private fun parseLineString(lineString: String):List<GeoPoint> {
+    private fun parseLineString(lineString: String): List<GeoPoint> {
+
         return lineString
+            .removePrefix("LINESTRING(")
             .removePrefix("LINESTRING (")
             .removeSuffix(")")
             .split(",")
             .mapNotNull { point ->
-                val coords = point.trim().split(" ")
+
+                val coords = point
+                    .trim()
+                    .split(Regex("\\s+"))
 
                 if (coords.size != 2)
-                    null
-                else
+                    return@mapNotNull null
+
+                runCatching {
                     GeoPoint(
                         coords[1].toDouble(),
                         coords[0].toDouble()
                     )
+                }.getOrNull()
             }
     }
 
@@ -262,27 +269,38 @@ class RouteDetailsViewModel(
 
                         Log.d(
                             "RouteDetails",
-                            "Shape string starts with: ${it.shape.lineString.take(80)}"
+                            "Drawing route from ${it.stops.size} stops"
                         )
 
-                        try {
-                            routePolyline.addAll(
-                                parseLineString(it.shape.lineString)
-                            )
-                        } catch (e: Exception) {
-                            Log.e(
-                                "Polyline",
-                                "Cannot decode polyline",
-                                e
-                            )
-                        }
+                        routePolyline.addAll(
+                            it.stops.map { stop ->
+                                GeoPoint(
+                                    stop.latitude,
+                                    stop.longitude
+                                )
+                            }
+                        )
 
                         Log.d(
                             "RouteDetails",
                             "Polyline points: ${routePolyline.size}"
                         )
 
+                        Log.d(
+                            "Polyline",
+                            it.shape.lineString
+                        )
 
+                        val parsed = parseLineString(it.shape.lineString)
+
+                        Log.d("Polyline", "Points = ${parsed.size}")
+
+                        parsed.forEachIndexed { index, p ->
+                            Log.d(
+                                "Polyline",
+                                "$index -> ${p.latitude}, ${p.longitude}"
+                            )
+                        }
 
                         startVehicleTracking(
                             routeId,
