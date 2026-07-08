@@ -5,7 +5,6 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.drawable.BitmapDrawable
-import android.graphics.drawable.Drawable
 import android.util.TypedValue
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.BorderStroke
@@ -69,14 +68,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.content.ContextCompat
+import androidx.core.graphics.toColorInt
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.thesstransit.R
 import com.example.thesstransit.ui.components.ScreenHeader
 import com.example.thesstransit.ui.viewModels.FavoritesViewModel
 import com.example.thesstransit.ui.viewModels.LanguageViewModel
 import com.example.thesstransit.ui.viewModels.RouteDetailsViewModel
-import io.gitlab.mitsiosm.oseth.data.Language
 import io.gitlab.mitsiosm.oseth.data.Route
 import io.gitlab.mitsiosm.oseth.data.Stop
 import kotlinx.coroutines.flow.collectLatest
@@ -93,7 +91,6 @@ import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.Polyline
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
-import androidx.core.graphics.toColorInt
 
 private fun formatDay(day: LocalDate): String {
     return when(day.dayOfWeek) {
@@ -140,9 +137,7 @@ fun RouteDetailsScreen(
     }
 
     LaunchedEffect(language) {
-        if (viewModel.selectedShape.value != null) {
-            viewModel.reloadCurrentRoute()
-        }
+        viewModel.reloadCurrentRoute()
     }
 
     Box(
@@ -164,29 +159,6 @@ fun RouteDetailsScreen(
             }
 
             Spacer(Modifier.height(12.dp))
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.End
-            ) {
-
-                FilterChip(
-                    selected = language == Language.ENGLISH,
-                    onClick = {
-                        languageViewModel.toggleLanguage()
-                    },
-                    label = {
-                        Text(
-                            if (language == Language.GREEK)
-                                "Ελληνικά"
-                            else
-                                "English"
-                        )
-                    }
-                )
-            }
 
             ExposedDropdownMenuBox(
                 expanded = expanded,
@@ -300,7 +272,10 @@ fun RouteDetailsScreen(
                             )
                         }
                     } else {
-                        RouteMapTab(viewModel)
+                        RouteMapTab(
+                            vm = viewModel,
+                            onStopClick = onStopClick
+                        )
                     }
                 }
             }
@@ -431,7 +406,8 @@ private fun bitmapIcon(
 @SuppressLint("UseKtx")
 @Composable
 private fun RouteMapTab(
-    vm: RouteDetailsViewModel
+    vm: RouteDetailsViewModel,
+    onStopClick: (Stop) -> Unit
 ) {
     val context = LocalContext.current
 
@@ -465,7 +441,9 @@ private fun RouteMapTab(
     }
 
     AndroidView(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(350.dp),
         factory = {
 
             Configuration.getInstance().load(
@@ -485,7 +463,7 @@ private fun RouteMapTab(
                 setMultiTouchControls(true)
 
                 minZoomLevel = 7.0
-                maxZoomLevel = 18.0
+                maxZoomLevel = 24.0
 
                 setScrollableAreaLimitDouble(
                     BoundingBox(
@@ -530,6 +508,11 @@ private fun RouteMapTab(
                     Marker.ANCHOR_CENTER,
                     Marker.ANCHOR_CENTER
                 )
+
+                setOnMarkerClickListener { _, _ ->
+                    onStopClick(stop)
+                    true
+                }
             }
             stopMarkers.add(marker)
             map.overlays.add(marker)
@@ -583,7 +566,7 @@ private fun RouteMapTab(
         map.zoomToBoundingBox(
             BoundingBox.fromGeoPoints(points),
             true,
-            120
+            250
         )
     }
 
@@ -616,6 +599,7 @@ private fun RouteMapTab(
                                 R.drawable.bus,
                                 14
                             )
+
 
                             setAnchor(
                                 Marker.ANCHOR_CENTER,

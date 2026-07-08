@@ -50,8 +50,6 @@ class RouteDetailsViewModel(
     var route = mutableStateOf<Route?>(null)
     var selectedRouteId = mutableStateOf<RouteId?>(null)
 
-    private var initialLoadDone = false
-
     init {
         viewModelScope.launch {
             preferences.language.collect {
@@ -92,21 +90,21 @@ class RouteDetailsViewModel(
 
     fun loadRoute(route: Route) {
 
-        if (initialLoadDone)
-            return
-
-        initialLoadDone = true
+        if (this.route.value?.id == route.id &&
+            selectedShape.value != null
+            ) return
 
         this.route.value = route
 
-        val first = route.tripHeadsigns.firstOrNull()
-
-        if (first == null) {
-            errorMessage.value = "No route directions found"
+        val first = route.tripHeadsigns.firstOrNull() ?: run {
+            errorMessage.value = "Δεν βρέθηκε κατεύθυνση διαδρομής."
             return
         }
 
-        loadShape(first.shapeId, first.routeId)
+        loadShape(
+            first.shapeId,
+            first.routeId
+        )
     }
 
     private fun startVehicleTracking(

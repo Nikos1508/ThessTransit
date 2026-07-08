@@ -1,5 +1,6 @@
 package com.example.thesstransit.ui.components
 
+import android.annotation.SuppressLint
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
@@ -52,10 +53,11 @@ fun ScreenHeader(
     title: String,
     subtitle: String? = null,
     onProfileClick: () -> Unit,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    @SuppressLint("ModifierParameter") modifier: Modifier = Modifier
 ){
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
