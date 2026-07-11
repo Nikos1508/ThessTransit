@@ -66,18 +66,19 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.thesstransit.R
 import com.example.thesstransit.ui.components.RouteFiltersDialog
+import com.example.thesstransit.ui.data.SavedLocations
 import com.example.thesstransit.ui.viewModels.FavoritesViewModel
 
 @Composable
@@ -112,6 +113,20 @@ fun HomeScreen(
     val favoriteGroups by favoritesViewModel.favoriteGroups.collectAsState()
     val totalFavorites = favoriteRoutes.size + favoriteGroups.size
 
+    val context = LocalContext.current
+
+    val savedLocations = remember(context) {
+        SavedLocations(context)
+    }
+
+    val home by savedLocations.home.collectAsState(
+        initial = Triple(null, null, null)
+    )
+
+    val work by savedLocations.work.collectAsState(
+        initial = Triple(null, null, null)
+    )
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -141,7 +156,9 @@ fun HomeScreen(
                     favoriteCount = totalFavorites,
                     onHomeClick = onHomeClick,
                     onWorkClick = onWorkClick,
-                    onFavouritesClick = onFavouritesClick
+                    onFavouritesClick = onFavouritesClick,
+                    homeSubtitle = home.first ?: "Καθόρισε",
+                    workSubtitle = work.first ?: "Καθόρισε"
                 )
             }
             item {
@@ -413,7 +430,9 @@ fun QuickAccessRow(
     favoriteCount: Int,
     onHomeClick: () -> Unit,
     onWorkClick: () -> Unit,
-    onFavouritesClick: () -> Unit
+    onFavouritesClick: () -> Unit,
+    homeSubtitle: String,
+    workSubtitle: String
 ) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
@@ -421,7 +440,7 @@ fun QuickAccessRow(
     ) {
         QuickAccessItem(
             title = "Οικία",
-            subtitle = "25ης Μαρτίου, 17, Επανομή",
+            subtitle = homeSubtitle,
             icon = Icons.Outlined.Home,
             iconColor = Color.White,
             onClick = onHomeClick,
@@ -430,7 +449,7 @@ fun QuickAccessRow(
 
         QuickAccessItem(
             title = "Εργασία",
-            subtitle = "Καθόρισε",
+            subtitle = workSubtitle,
             icon = Icons.Outlined.Work,
             iconColor = MaterialTheme.colorScheme.primary,
             onClick = onWorkClick,

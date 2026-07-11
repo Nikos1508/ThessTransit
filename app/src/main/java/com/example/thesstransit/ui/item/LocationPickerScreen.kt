@@ -18,8 +18,11 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -36,6 +39,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.example.thesstransit.ui.components.ScreenHeader
+import com.example.thesstransit.ui.data.SavedLocations
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -177,8 +181,19 @@ fun LocationPickerScreen(
                             val item = results[index]
 
                             ListItem(
+                                leadingContent = {
+                                    Icon(
+                                        Icons.Outlined.LocationOn,
+                                        null
+                                    )
+                                },
+
                                 headlineContent = {
-                                    Text(item.title)
+                                    Text( item.title.substringBefore(","))
+                                },
+
+                                supportingContent = {
+                                    Text( item.title.substringAfter(",", "") )
                                 },
 
                                 modifier = Modifier.clickable {
@@ -326,7 +341,37 @@ fun LocationPickerScreen(
                 .align(Alignment.BottomCenter)
                 .padding(16.dp)
                 .fillMaxWidth(),
-            onClick = { /* TODO */ },
+            onClick = {
+                val savedLocation = remember {
+                    SavedLocations(context)
+                }
+
+                scope.launch {
+                    val point = selectedPoint ?: return@launch
+
+                    val title =
+                        if (query.isNotBlank())
+                            query
+                        else
+                            "${point.latitude}, ${point.longitude}"
+
+                    if (type == "home") {
+                        savedLocation.saveHome(
+                            title,
+                            point.latitude,
+                            point.longitude
+                        )
+                    } else {
+                        savedLocation.saveWork(
+                            title,
+                            point.latitude,
+                            point.longitude
+                        )
+                    }
+
+                    onBackClick()
+                }
+            },
             enabled = selectedPoint != null,
         ) {
             Text(
