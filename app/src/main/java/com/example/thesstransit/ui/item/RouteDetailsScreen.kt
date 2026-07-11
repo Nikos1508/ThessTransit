@@ -62,6 +62,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import android.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -92,6 +93,7 @@ import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.Polyline
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
+import android.view.ViewGroup.LayoutParams
 
 private fun formatDay(day: LocalDate): String {
     return when(day.dayOfWeek) {
@@ -274,7 +276,11 @@ fun RouteDetailsScreen(
                         }
                     } else {
                         Box(
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxWidth()
+                                .padding(12.dp)
+                                .clip(RoundedCornerShape(20.dp))
                         ) {
                             RouteMapTab(
                                 vm = viewModel,
@@ -469,203 +475,221 @@ private fun RouteMapTab(
     }
 
 
-    DisposableEffect(Unit) {
-        onDispose {
-            mapView.value?.onDetach()
-            mapView.value = null
-        }
-    }
-
-    AndroidView(
+    Box (
         modifier = Modifier
-            .fillMaxSize(),
-        factory = {
+            .fillMaxSize()
+            .clip(RoundedCornerShape(20.dp))
+    ) {
+        DisposableEffect(Unit) {
+            onDispose {
+                mapView.value?.onDetach()
+                mapView.value = null
+            }
+        }
 
-            Configuration.getInstance().load(
-                context,
-                context.getSharedPreferences(
-                    "osmdroid",
-                    Context.MODE_PRIVATE
-                )
-            )
+        AndroidView(
+            modifier = Modifier
+                .fillMaxSize()
+                .clip(RoundedCornerShape(20.dp)),
+            factory = {
 
-            MapView(context).apply {
-
-                setTileSource(
-                    TileSourceFactory.MAPNIK
-                )
-
-                setMultiTouchControls(true)
-
-                minZoomLevel = 7.0
-                maxZoomLevel = 24.0
-
-                setScrollableAreaLimitDouble(
-                    BoundingBox(
-                        41.9,
-                        29.8,
-                        34.5,
-                        19.2
+                Configuration.getInstance().load(
+                    context,
+                    context.getSharedPreferences(
+                        "osmdroid",
+                        Context.MODE_PRIVATE
                     )
                 )
 
-                mapView.value = this
-                mapReady.value = true
-            }
-        }
-    )
+                MapView(context).apply {
 
-    LaunchedEffect(vm.stops) {
-        val map = mapView.value ?: return@LaunchedEffect
+                    setTileSource(
+                        TileSourceFactory.MAPNIK
+                    )
 
-        stopMarkers.forEach {
-            map.overlays.remove(it)
-        }
+                    setMultiTouchControls(true)
 
-        stopMarkers.clear()
+                    minZoomLevel = 7.0
+                    maxZoomLevel = 24.0
 
-        vm.stops.forEach { stop ->
-            val marker = Marker(map).apply {
-                position = GeoPoint(
-                    stop.latitude,
-                    stop.longitude
-                )
+                    setScrollableAreaLimitDouble(
+                        BoundingBox(
+                            41.9,
+                            29.8,
+                            34.5,
+                            19.2
+                        )
+                    )
 
-                title = stop.name
+                    setBackgroundColor(
+                        Color.TRANSPARENT
+                    )
 
-                icon = bitmapIcon(
-                    context,
-                    R.drawable.bus_stop,
-                    18
-                )
+                    layoutParams =
+                        LayoutParams(
+                            LayoutParams.MATCH_PARENT,
+                            LayoutParams.MATCH_PARENT
+                        )
 
-                setAnchor(
-                    Marker.ANCHOR_CENTER,
-                    Marker.ANCHOR_CENTER
-                )
 
-                setOnMarkerClickListener { _, _ ->
-                    onStopClick(stop)
-                    true
+                    mapView.value = this
+                    mapReady.value = true
                 }
             }
-            stopMarkers.add(marker)
-            map.overlays.add(marker)
-        }
-        map.invalidate()
-    }
+        )
 
-    LaunchedEffect(vm.routePolyline.size) {
-        val map = mapView.value ?: return@LaunchedEffect
+        LaunchedEffect(vm.stops) {
+            val map = mapView.value ?: return@LaunchedEffect
 
-        polylineRef.value?.let {
-            map.overlays.remove(it)
-        }
-
-        if (vm.routePolyline.isEmpty())
-            return@LaunchedEffect
-
-        val line = Polyline()
-
-        line.setPoints(vm.routePolyline)
-
-        line.outlinePaint.strokeWidth = 8f
-
-        val color = vm.detailedRoute.value
-            ?.color
-            ?.removePrefix("#")
-            ?: "1976D2"
-
-        line.outlinePaint.color =
-            "#$color".toColorInt()
-
-        map.overlays.add(line)
-
-        polylineRef.value = line
-
-        map.invalidate()
-    }
-
-    LaunchedEffect(vm.stops.size) {
-
-        val map = mapView.value ?: return@LaunchedEffect
-
-        if (vm.stops.isEmpty())
-            return@LaunchedEffect
-
-        val points =
-            vm.stops.map {
-                GeoPoint(it.latitude, it.longitude)
+            stopMarkers.forEach {
+                map.overlays.remove(it)
             }
 
-        map.zoomToBoundingBox(
-            BoundingBox.fromGeoPoints(points),
-            true,
-            250
-        )
-    }
+            stopMarkers.clear()
 
-    LaunchedEffect(mapReady.value) {
-        if (!mapReady.value)
-            return@LaunchedEffect
+            vm.stops.forEach { stop ->
+                val marker = Marker(map).apply {
+                    position = GeoPoint(
+                        stop.latitude,
+                        stop.longitude
+                    )
 
-        snapshotFlow {
-            vm.currentVehicles.toList()
+                    title = stop.name
+
+                    icon = bitmapIcon(
+                        context,
+                        R.drawable.bus_stop,
+                        18
+                    )
+
+                    setAnchor(
+                        Marker.ANCHOR_CENTER,
+                        Marker.ANCHOR_CENTER
+                    )
+
+                    setOnMarkerClickListener { _, _ ->
+                        onStopClick(stop)
+                        true
+                    }
+                }
+                stopMarkers.add(marker)
+                map.overlays.add(marker)
+            }
+            map.invalidate()
         }
-            .collectLatest { vehicles ->
-                val map =  mapView.value ?: return@collectLatest
 
-                vehicles.forEachIndexed { index, vehicle ->
+        LaunchedEffect(vm.routePolyline.size) {
+            val map = mapView.value ?: return@LaunchedEffect
 
-                    val marker = vehicleMarkers[index]
+            polylineRef.value?.let {
+                map.overlays.remove(it)
+            }
 
-                    if(marker == null) {
+            if (vm.routePolyline.isEmpty())
+                return@LaunchedEffect
 
-                        val newMarker = Marker(map).apply {
-                            position = GeoPoint(
+            val line = Polyline()
+
+            line.setPoints(vm.routePolyline)
+
+            line.outlinePaint.strokeWidth = 8f
+
+            val color = vm.detailedRoute.value
+                ?.color
+                ?.removePrefix("#")
+                ?: "1976D2"
+
+            line.outlinePaint.color =
+                "#$color".toColorInt()
+
+            map.overlays.add(line)
+
+            polylineRef.value = line
+
+            map.invalidate()
+        }
+
+        LaunchedEffect(vm.stops.size) {
+
+            val map = mapView.value ?: return@LaunchedEffect
+
+            if (vm.stops.isEmpty())
+                return@LaunchedEffect
+
+            val points =
+                vm.stops.map {
+                    GeoPoint(it.latitude, it.longitude)
+                }
+
+            map.zoomToBoundingBox(
+                BoundingBox.fromGeoPoints(points),
+                true,
+                250
+            )
+        }
+
+        LaunchedEffect(mapReady.value) {
+            if (!mapReady.value)
+                return@LaunchedEffect
+
+            snapshotFlow {
+                vm.currentVehicles.toList()
+            }
+                .collectLatest { vehicles ->
+                    val map = mapView.value ?: return@collectLatest
+
+                    vehicles.forEachIndexed { index, vehicle ->
+
+                        val marker = vehicleMarkers[index]
+
+                        if (marker == null) {
+
+                            val newMarker = Marker(map).apply {
+                                position = GeoPoint(
+                                    vehicle.latitude,
+                                    vehicle.longitude
+                                )
+
+                                title = "Λεωφορείο"
+
+                                icon = bitmapIcon(
+                                    context,
+                                    R.drawable.bus,
+                                    14
+                                )
+
+
+                                setAnchor(
+                                    Marker.ANCHOR_CENTER,
+                                    Marker.ANCHOR_CENTER
+                                )
+                            }
+
+                            vehicleMarkers[index] = newMarker
+
+                            map.overlays.add(
+                                newMarker
+                            )
+                        } else {
+
+                            marker.position = GeoPoint(
                                 vehicle.latitude,
                                 vehicle.longitude
                             )
-
-                            title = "Λεωφορείο"
-
-                            icon = bitmapIcon(
-                                context,
-                                R.drawable.bus,
-                                14
-                            )
-
-
-                            setAnchor(
-                                Marker.ANCHOR_CENTER,
-                                Marker.ANCHOR_CENTER
-                            )
                         }
-
-                        vehicleMarkers[index] = newMarker
-
-                        map.overlays.add(
-                            newMarker
-                        )
-                    } else {
-
-                        marker.position = GeoPoint(
-                            vehicle.latitude,
-                            vehicle.longitude
-                        )
                     }
+
+                    vehicleMarkers.keys
+                        .filter { it >= vehicles.size }
+                        .forEach { key ->
+                            vehicleMarkers[key]?.let { marker ->
+                                map.overlays.remove(marker)
+                            }
+                            vehicleMarkers.remove(key)
+                        }
+                    map.invalidate()
                 }
-
-                vehicleMarkers.keys
-                    .filter {it >= vehicles.size}
-                    .forEach { key ->
-                        vehicleMarkers[key]?.let { marker ->
-                            map.overlays.remove(marker)
-                        }
-                        vehicleMarkers.remove(key)
-                    }
-                map.invalidate()
-            }
+        }
     }
 }
 

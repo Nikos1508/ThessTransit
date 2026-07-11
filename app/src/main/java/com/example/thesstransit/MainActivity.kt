@@ -20,6 +20,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.example.thesstransit.ui.item.GroupRouteDetailsScreen
 import com.example.thesstransit.ui.item.HomeScreen
+import com.example.thesstransit.ui.item.LocationPickerScreen
 import com.example.thesstransit.ui.item.RouteDetailsScreen
 import com.example.thesstransit.ui.item.RoutesScreen
 import com.example.thesstransit.ui.item.StopDetailsScreen
@@ -46,6 +47,11 @@ data class RoutesRoute(
 @Serializable object LinesRoute
 @Serializable object NearbyStopsRoute
 @Serializable object LiveDeparturesRoute
+
+@Serializable
+data class LocationPickerRoute(
+    val type: String
+)
 
 @Serializable
 data class RouteDetailsRoute(
@@ -124,6 +130,20 @@ class MainActivity : ComponentActivity() {
                                 onBuyTicketClick = {
 
                                 },
+                                onHomeClick = {
+                                    navController.navigate(
+                                        LocationPickerRoute(
+                                            type = "home"
+                                        )
+                                    )
+                                },
+                                onWorkClick = {
+                                    navController.navigate(
+                                        LocationPickerRoute(
+                                            type = "work"
+                                        )
+                                    )
+                                },
                                 onFavouritesClick = {
                                     navController.navigate(RoutesRoute("favorites"))
                                 },
@@ -132,6 +152,17 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onSettingsClick = {
 
+                                }
+                            )
+                        }
+
+                        composable<LocationPickerRoute> {
+                            val args = it.toRoute<LocationPickerRoute>()
+
+                            LocationPickerScreen(
+                                type = args.type,
+                                onBackClick = {
+                                    navController.popBackStack()
                                 }
                             )
                         }

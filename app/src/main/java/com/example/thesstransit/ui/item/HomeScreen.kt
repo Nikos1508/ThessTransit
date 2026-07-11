@@ -92,6 +92,8 @@ fun HomeScreen(
     onFavouritesClick: () -> Unit = {},
     onNotificationsClick: () -> Unit = {},
     onSettingsClick: () -> Unit = {},
+    onHomeClick: () -> Unit = {},
+    onWorkClick: () -> Unit = {},
     favoritesViewModel: FavoritesViewModel = viewModel()
 ){
 
@@ -137,6 +139,8 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(16.dp))
                 QuickAccessRow(
                     favoriteCount = totalFavorites,
+                    onHomeClick = onHomeClick,
+                    onWorkClick = onWorkClick,
                     onFavouritesClick = onFavouritesClick
                 )
             }
@@ -407,6 +411,8 @@ fun SearchBarSection(
 @Composable
 fun QuickAccessRow(
     favoriteCount: Int,
+    onHomeClick: () -> Unit,
+    onWorkClick: () -> Unit,
     onFavouritesClick: () -> Unit
 ) {
     Row(
@@ -418,7 +424,7 @@ fun QuickAccessRow(
             subtitle = "25ης Μαρτίου, 17, Επανομή",
             icon = Icons.Outlined.Home,
             iconColor = Color.White,
-            onClick = { /* Μελλοντική χρήση */ },
+            onClick = onHomeClick,
             modifier = Modifier.weight(1f)
         )
 
@@ -427,7 +433,7 @@ fun QuickAccessRow(
             subtitle = "Καθόρισε",
             icon = Icons.Outlined.Work,
             iconColor = MaterialTheme.colorScheme.primary,
-            onClick = { /* Μελλοντική χρήση */ },
+            onClick = onWorkClick,
             modifier = Modifier.weight(1f)
         )
 
