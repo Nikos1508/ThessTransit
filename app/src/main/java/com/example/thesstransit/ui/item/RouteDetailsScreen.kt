@@ -1,6 +1,5 @@
 package com.example.thesstransit.ui.item
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -19,6 +18,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -69,6 +69,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.graphics.toColorInt
+import androidx.core.graphics.drawable.toDrawable
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.thesstransit.R
 import com.example.thesstransit.ui.components.ScreenHeader
@@ -272,10 +273,14 @@ fun RouteDetailsScreen(
                             )
                         }
                     } else {
-                        RouteMapTab(
-                            vm = viewModel,
-                            onStopClick = onStopClick
-                        )
+                        Box(
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            RouteMapTab(
+                                vm = viewModel,
+                                onStopClick = onStopClick
+                            )
+                        }
                     }
                 }
             }
@@ -329,24 +334,59 @@ private fun StopsTab(
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+
                     Box(
                         modifier = Modifier
-                            .size(14.dp)
-                            .background(
-                                MaterialTheme.colorScheme.primary,
-                                CircleShape
+                            .width(24.dp)
+                            .height(
+                                if (index != vm.stops.lastIndex)
+                                    86.dp
+                                else
+                                    14.dp
+                            ),
+                        contentAlignment = Alignment.TopCenter
+                    ) {
+                        if (index != vm.stops.lastIndex) {
+                            Box(
+                                modifier = Modifier
+                                    .width(2.dp)
+                                    .height(72.dp)
+                                    .align(Alignment.TopCenter)
+                                    .offset(y = 14.dp)
+                                    .background(
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.35f)
+                                    )
                             )
-                    )
+                        }
 
-                    if (index != vm.stops.lastIndex) {
                         Box(
                             modifier = Modifier
-                                .width(2.dp)
-                                .height(72.dp)
+                                .size(14.dp)
                                 .background(
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.35f)
+                                    MaterialTheme.colorScheme.primary,
+                                    CircleShape
                                 )
                         )
+
+                        vm.vehiclePositions.forEach { position ->
+
+                            val stopIndex = position.first
+                            val progress = position.second
+
+                            if (stopIndex == index) {
+                                Box(
+                                    modifier = Modifier
+                                        .offset(
+                                            y = 14.dp + (72.dp * progress)
+                                        )
+                                        .size(16.dp)
+                                        .background(
+                                            MaterialTheme.colorScheme.onPrimary,
+                                            CircleShape
+                                        )
+                                )
+                            }
+                        }
                     }
                 }
 
@@ -397,13 +437,9 @@ private fun bitmapIcon(
         true
     )
 
-    return BitmapDrawable(
-        context.resources,
-        scaled
-    )
+    return scaled.toDrawable(context.resources)
 }
 
-@SuppressLint("UseKtx")
 @Composable
 private fun RouteMapTab(
     vm: RouteDetailsViewModel,
@@ -442,8 +478,7 @@ private fun RouteMapTab(
 
     AndroidView(
         modifier = Modifier
-            .fillMaxWidth()
-            .height(350.dp),
+            .fillMaxSize(),
         factory = {
 
             Configuration.getInstance().load(
