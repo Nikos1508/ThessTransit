@@ -2,9 +2,6 @@ package com.example.thesstransit.ui.item
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.location.Address
-import android.location.Geocoder
-import android.os.Build
 import android.view.GestureDetector
 import android.view.MotionEvent
 import androidx.compose.foundation.clickable
@@ -28,6 +25,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -38,20 +36,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.thesstransit.ui.components.ScreenHeader
 import com.example.thesstransit.ui.data.SavedLocations
-import kotlinx.coroutines.Dispatchers
+import com.example.thesstransit.ui.viewModels.LocationSearchViewModel
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.withContext
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.Overlay
-import java.util.Locale
-import kotlin.coroutines.resume
 
 data class SearchResult(
     val title: String,
@@ -83,14 +79,39 @@ fun LocationPickerScreen(
 
     val scope = rememberCoroutineScope()
 
-    val geocoder = remember {
-        Geocoder(context, Locale("el"))
+    val savedLocations = remember {
+        SavedLocations(context)
     }
 
     var results by remember {
         mutableStateOf<List<SearchResult>>(emptyList())
     }
 
+    val searchViewModel: LocationSearchViewModel =
+        viewModel()
+
+    LaunchedEffect(Unit) {
+
+        val savedTriple =
+            if (type == "home") {
+                savedLocations.home.first()
+            } else {
+                savedLocations.work.first()
+            }
+
+        val (name, latitude, longitude) = savedTriple
+
+        if (name != null && latitude != null && longitude != null) {
+            val point = GeoPoint(latitude, longitude)
+
+            selectedPoint = point
+            query = name
+
+            mapView.value?.controller?.setCenter(point)
+            mapView.value?.controller?.setZoom(16.0)
+        }
+
+    }
 
     DisposableEffect(Unit) {
         onDispose {
@@ -119,40 +140,8 @@ fun LocationPickerScreen(
                 onValueChange = {
                     query = it
 
-                    if (it.length < 3) {
-                        results = emptyList()
-                        return@OutlinedTextField
-                    }
-
-                    scope.launch {
-
-                        val addresses = withContext(Dispatchers.IO) {
-                            runCatching {
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                    suspendCancellableCoroutine { continuation ->
-                                        geocoder.getFromLocationName(it, 5, object : Geocoder.GeocodeListener {
-                                            override fun onGeocode(addresses: List<Address>) {
-                                                continuation.resume(addresses)
-                                            }
-                                            override fun onError(errorMessage: String?) {
-                                                continuation.resume(null)
-                                            }
-                                        })
-                                    }
-                                } else {
-                                    @Suppress("DEPRECATION")
-                                    geocoder.getFromLocationName(it, 5)
-                                }
-                            }.getOrNull()
-                        }
-
-                        results = addresses?.map { address ->
-                            SearchResult(
-                                title = address.getAddressLine(0) ?: "",
-                                latitude = address.latitude,
-                                longitude = address.longitude
-                            )
-                        } ?: emptyList()
+                    searchViewModel.search(it) { newResults ->
+                        results = newResults
                     }
                 },
 
@@ -218,7 +207,7 @@ fun LocationPickerScreen(
                                         currentMap.invalidate()
 
                                         currentMap.controller.animateTo(selectedPoint)
-                                        currentMap.controller.setZoom(16.0)
+                                        currentMap.controller.setZoom(17.0)
                                     }
                                 }
                             )
@@ -275,7 +264,19 @@ fun LocationPickerScreen(
 
                                             val geoPoint = GeoPoint(projection.latitude, projection.longitude)
 
+                                            if (
+                                                geoPoint.latitude !in 34.0..42.5 ||
+                                                geoPoint.longitude !in 19.0..30.5
+                                            ) return
+
                                             selectedPoint = geoPoint
+
+                                            searchViewModel.reverse(
+                                                geoPoint.latitude,
+                                                geoPoint.longitude
+                                            ) { address ->
+                                                query = address
+                                            }
 
                                             marker.value?.let {
                                                 overlays.remove(it)
@@ -290,7 +291,11 @@ fun LocationPickerScreen(
                                                         Marker.ANCHOR_BOTTOM
                                                     )
 
-                                                    title = "Επιλογή τοποθεσίας"
+                                                    title =
+                                                        if (type == "home")
+                                                            "Οικία"
+                                                        else
+                                                            "Εργασία"
                                                 }
 
                                             marker.value = newMarker
@@ -328,6 +333,26 @@ fun LocationPickerScreen(
                             )
 
                             mapView.value = this
+
+                            selectedPoint?.let {
+                                val existingMarker =
+                                    Marker(this).apply {
+                                        position = it
+
+                                         setAnchor(
+                                             Marker.ANCHOR_CENTER,
+                                             Marker.ANCHOR_BOTTOM
+                                         )
+                                    }
+
+                                marker.value = existingMarker
+
+                                overlays.add(existingMarker)
+
+                                controller.setCenter(it)
+
+                                controller.setZoom(16.0)
+                            }
                         }
                     }
 
@@ -342,27 +367,19 @@ fun LocationPickerScreen(
                 .padding(16.dp)
                 .fillMaxWidth(),
             onClick = {
-                val savedLocation = remember {
-                    SavedLocations(context)
-                }
-
                 scope.launch {
                     val point = selectedPoint ?: return@launch
 
-                    val title =
-                        if (query.isNotBlank())
-                            query
-                        else
-                            "${point.latitude}, ${point.longitude}"
+                    val title = query.ifBlank { "${point.latitude}, ${point.longitude}" }
 
                     if (type == "home") {
-                        savedLocation.saveHome(
+                        savedLocations.saveHome(
                             title,
                             point.latitude,
                             point.longitude
                         )
                     } else {
-                        savedLocation.saveWork(
+                        savedLocations.saveWork(
                             title,
                             point.latitude,
                             point.longitude

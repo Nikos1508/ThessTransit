@@ -94,6 +94,8 @@ import org.osmdroid.views.overlay.Polyline
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import android.view.ViewGroup.LayoutParams
+import com.example.thesstransit.ui.data.SavedLocations
+import kotlinx.coroutines.flow.first
 
 private fun formatDay(day: LocalDate): String {
     return when(day.dayOfWeek) {
@@ -453,6 +455,10 @@ private fun RouteMapTab(
 ) {
     val context = LocalContext.current
 
+    val savedLocations = remember {
+        SavedLocations(context)
+    }
+
     val polylineRef = remember {
         mutableStateOf<Polyline?>(null)
     }
@@ -465,9 +471,16 @@ private fun RouteMapTab(
         mutableListOf<Marker>()
     }
 
-
     val vehicleMarkers = remember {
         mutableMapOf<Int, Marker>()
+    }
+
+    val homeMarker = remember {
+        mutableStateOf<Marker?>(null)
+    }
+
+    val workMarker = remember {
+        mutableStateOf<Marker?>(null)
     }
 
     val mapReady = remember {
@@ -606,6 +619,65 @@ private fun RouteMapTab(
 
             polylineRef.value = line
 
+            map.invalidate()
+        }
+
+        LaunchedEffect(Unit) {
+            val map = mapView.value ?: return@LaunchedEffect
+
+            val homeData = savedLocations.home.first()
+            val (homeTitle, homeLat, homeLon) = homeData
+
+            if (homeTitle != null && homeLat != null && homeLon != null) {
+
+                homeMarker.value?.let {
+                    map.overlays.remove(it)
+                }
+
+                homeMarker.value = Marker(map).apply {
+
+                    position = GeoPoint(homeLat, homeLon)
+                    this.title = "Οικία\n$title"
+
+                    icon = bitmapIcon(
+                        context,
+                        R.drawable.home,
+                         28
+                    )
+
+                    setAnchor(
+                        Marker.ANCHOR_CENTER,
+                        Marker.ANCHOR_BOTTOM
+                    )
+                }
+                map.overlays.add(homeMarker.value)
+            }
+
+            val workData = savedLocations.work.first()
+            val (workTitle, workLat, workLon) = workData
+
+            if (workTitle != null && workLat != null && workLon != null) {
+                workMarker.value?.let {
+                    map.overlays.remove(it)
+                }
+
+                workMarker.value = Marker(map).apply {
+                    position = GeoPoint(workLat, workLon)
+                    this.title = "Εργασία\n$workTitle"
+
+                    icon = bitmapIcon(
+                        context,
+                        R.drawable.work,
+                        28
+                    )
+
+                    setAnchor(
+                        Marker.ANCHOR_CENTER,
+                        Marker.ANCHOR_BOTTOM
+                    )
+                }
+                map.overlays.add(workMarker.value)
+            }
             map.invalidate()
         }
 
