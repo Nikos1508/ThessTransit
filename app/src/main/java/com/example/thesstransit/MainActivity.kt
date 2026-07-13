@@ -5,6 +5,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -12,12 +13,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.core.os.LocaleListCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.example.thesstransit.ui.data.AppLanguagePreferences
 import com.example.thesstransit.ui.item.GroupRouteDetailsScreen
 import com.example.thesstransit.ui.item.HomeScreen
 import com.example.thesstransit.ui.item.LocationPickerScreen
@@ -32,6 +36,8 @@ import com.example.thesstransit.ui.viewModels.StopDetailsViewModel
 import io.gitlab.mitsiosm.oseth.data.Route
 import io.gitlab.mitsiosm.oseth.data.Stop
 import io.gitlab.mitsiosm.oseth.data.StopId
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlin.reflect.typeOf
@@ -91,6 +97,17 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        val prefs = AppLanguagePreferences(this)
+
+        lifecycleScope.launch {
+            val language = prefs.language.first()
+
+            AppCompatDelegate.setApplicationLocales(
+                LocaleListCompat.forLanguageTags(language)
+            )
+        }
+
         setContent {
             ThessTransitTheme(darkTheme = true) {
 

@@ -1,8 +1,11 @@
 package com.example.thesstransit.ui.viewModels
 
 import android.app.Application
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.thesstransit.ui.data.AppLanguagePreferences
 import com.example.thesstransit.ui.data.LanguagePreferences
 import io.gitlab.mitsiosm.oseth.data.Language
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,8 +16,11 @@ class LanguageViewModel(
     application: Application
 ): AndroidViewModel(application) {
 
-    private val preferences =
+    private val apiPreferences =
         LanguagePreferences(application)
+
+    private val appPreferences =
+        AppLanguagePreferences(application)
 
     private val _language =
         MutableStateFlow(Language.GREEK)
@@ -24,8 +30,18 @@ class LanguageViewModel(
 
     init {
         viewModelScope.launch {
-            preferences.language.collect {
+            apiPreferences.language.collect {
                 _language.value = it
+
+                val locale =
+                    if (it == Language.ENGLISH)
+                        "en"
+                    else
+                        "el"
+
+                AppCompatDelegate.setApplicationLocales(
+                    LocaleListCompat.forLanguageTags(locale)
+                )
             }
         }
     }
@@ -38,7 +54,23 @@ class LanguageViewModel(
                 else
                     Language.GREEK
 
-            preferences.save(newLanguage)
+            apiPreferences.save(newLanguage)
+
+            appPreferences.save(
+                if (newLanguage == Language.ENGLISH)
+                    "en"
+                else
+                    "el"
+            )
+
+            AppCompatDelegate.setApplicationLocales(
+                LocaleListCompat.forLanguageTags(
+                    if (newLanguage == Language.ENGLISH)
+                        "en"
+                    else
+                        "el"
+                )
+            )
         }
     }
 
