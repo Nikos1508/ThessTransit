@@ -4,10 +4,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.gitlab.mitsiosm.oseth.Oseth
-import io.gitlab.mitsiosm.oseth.data.DetailedRoute
 import io.gitlab.mitsiosm.oseth.data.Route
 import io.gitlab.mitsiosm.oseth.data.RouteId
-import io.gitlab.mitsiosm.oseth.data.ShapeId
 import io.gitlab.mitsiosm.oseth.data.Stop
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -26,7 +24,8 @@ data class StopArrivalUi (
     val routeName: String,
     val headsign: String,
     val minutes: Int?,
-    val isLive: Boolean
+    val isLive: Boolean,
+    val departureTime: LocalTime
 )
 
 class StopDetailsViewModel : ViewModel() {
@@ -38,30 +37,25 @@ class StopDetailsViewModel : ViewModel() {
 
     companion object {
         private var allRoutesCache: List<Route>? = null
-        private val routeInfoCache =
-            mutableMapOf<Pair<RouteId, ShapeId>, DetailedRoute>()
+        //private val routeInfoCache =
+        //    mutableMapOf<Pair<RouteId, ShapeId>, DetailedRoute>()
     }
 
     fun load(stop: Stop) {
         viewModelScope.launch {
             isLoading.value = true
-            try {
-                val allRoutes = allRoutesCache ?: try {
-                    api.getRoutes().getOrNull()?.also { allRoutesCache = it }
-                } catch (e: Exception) { null }
 
-                if (allRoutes == null) {
-                    routes.value = emptyList()
-                    arrivals.value = emptyList()
-                    return@launch
-                }
+            try {
+                val allRoutes = allRoutesCache ?: api.getRoutes().getOrNull()?.also { allRoutesCache = it }
+
+                if (allRoutes == null) return@launch
 
                 val matchingRoutes = coroutineScope {
                     allRoutes.map { route ->
                         async {
                             val shape = route.tripHeadsigns.firstOrNull() ?: return@async null
-                            val detailed = getRouteInfoCached(route.id, shape.shapeId)
-                            if (detailed?.stops?.any { it.id == stop.id } == true) route else null
+                            val info = api.getRouteInfo(route.id, shape.shapeId).getOrNull()
+                            if (info?.stops?.any { it.id == stop.id } == true) route else null
                         }
                     }.awaitAll().filterNotNull()
                 }
@@ -70,82 +64,69 @@ class StopDetailsViewModel : ViewModel() {
                 computeArrivals(stop, matchingRoutes)
 
             } catch (e: Exception) {
-                // Error handled by empty state or logging
+                e.printStackTrace()
             } finally {
                 isLoading.value = false
             }
         }
     }
 
-    private suspend fun getRouteInfoCached(
-        routeId: RouteId,
-        shapeId: ShapeId
-    ): DetailedRoute? {
-        val cacheKey = routeId to shapeId
-        return routeInfoCache[cacheKey] ?: try {
-            api.getRouteInfo(routeId, shapeId)
-                .getOrNull()
-                ?.also { routeInfoCache[cacheKey] = it }
-        } catch (e: Exception) {
-            null
-        }
-    }
-
     @OptIn(ExperimentalTime::class)
-    private suspend fun computeArrivals(stop: Stop, routes: List<Route>) {
+    private suspend fun computeArrivals(stop: Stop, matchingRoutes: List<Route>) {
         val now = Clock.System.now()
             .toLocalDateTime(TimeZone.currentSystemDefault())
             .time
+        val allResults = mutableListOf<StopArrivalUi>()
 
-        val results = coroutineScope {
-            routes.map { route ->
+        coroutineScope {
+            matchingRoutes.map { route ->
                 async {
-                    val shape = route.tripHeadsigns.firstOrNull() ?: return@async emptyList<StopArrivalUi>()
-                    val routeResults = mutableListOf<StopArrivalUi>()
+                    val shape = route.tripHeadsigns.first() ?: return@async
 
-                    val timetable = try { api.getTimetableForToday(route.id, shape.shapeId) } catch (e: Exception) { null }
-                    val live = try { api.getRouteInfo(route.id, shape.shapeId) } catch (e: Exception) { null }
+                    val timetable = api.getTimetableForToday(route.id, shape.shapeId).getOrNull()
+                    val liveInfo = api.getRouteInfo(route.id, shape.shapeId).getOrNull()
 
-                    timetable?.getOrNull()?.trips?.forEach { trip ->
-                        val minutes = calculateMinutes(trip.departureTime, now)
-                        if (minutes in 0..120) {
-                            routeResults.add(
+                    timetable?.trips?.forEach { trip ->
+                        val diff = calculateMinutes(trip.departureTime, now)
+                        if (diff in 0..120) {
+                            allResults.add(
                                 StopArrivalUi(
-                                    routeId = route.id,
+                                    route.id,
                                     routeName = route.shortName,
                                     headsign = trip.headsign,
-                                    minutes = minutes,
-                                    isLive = false
+                                    minutes = diff,
+                                    isLive = false,
+                                    departureTime = trip.departureTime
                                 )
                             )
                         }
                     }
 
-                    live?.getOrNull()?.vehicles?.forEach { vehicle ->
-                        routeResults.add(
+                    liveInfo?.vehicles?.forEach { vehicle ->
+                        allResults.add(
                             StopArrivalUi(
                                 routeId = route.id,
                                 routeName = route.shortName,
-                                headsign = "LIVE",
+                                headsign = "LIVE - Προς ${route.tripHeadsigns.firstOrNull()?.headsign}",
                                 minutes = 0,
-                                isLive = true
+                                isLive = true,
+                                departureTime = now
                             )
                         )
                     }
-                    routeResults
                 }
-            }.awaitAll().flatten()
+            }.awaitAll()
         }
 
-        arrivals.value = results
-            .sortedWith(compareBy({ it.isLive.not() }, { it.minutes ?: Int.MAX_VALUE }))
-            .distinctBy { it.routeId.value + it.minutes.toString() }
+        arrivals.value = allResults
+            .distinctBy { "${it.routeId.value}-${it.departureTime}" }
+            .sortedBy { it.minutes }
     }
 
     private fun calculateMinutes(departure: LocalTime, now: LocalTime): Int {
-        val dep = departure.hour * 60 + departure.minute
-        val n = now.hour * 60 + now.minute
-        val diff = dep - n
-        return if (diff < 0) -1 else diff
+        val depTotal= departure.hour * 60 + departure.minute
+        val nowTotal = now.hour * 60 + now.minute
+
+        return depTotal - nowTotal
     }
 }

@@ -4,19 +4,29 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DirectionsBus
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,7 +36,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -46,25 +58,24 @@ fun StopDetailsScreen(
 ) {
     val arrivals by viewModel.arrivals.collectAsState()
     val routes by viewModel.routes.collectAsState()
+    val isLoading by viewModel.isLoading
+    var selectedTab by remember { mutableIntStateOf(0) }
 
     LaunchedEffect(stop) {
         viewModel.load(stop)
     }
 
-    var selectedTab by remember { mutableIntStateOf(0) }
-
-    Box(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        Column {
-
+    Scaffold (
+        topBar = {
             ScreenHeader(
                 title = stop.name,
                 onBackClick = onBackClick,
-                onProfileClick = onBackClick
+                onProfileClick = {}
             )
+        }
+    ) { padding ->
 
-            Spacer(Modifier.height(12.dp))
+        Column(modifier = Modifier.padding(padding)) {
 
             PrimaryTabRow(selectedTabIndex = selectedTab) {
                 Tab(
@@ -79,87 +90,155 @@ fun StopDetailsScreen(
                 )
             }
 
-            when (selectedTab) {
-                0 -> LiveArrivalsTab(arrivals = arrivals)
-                1 -> RoutesTab(routes = routes, onRouteClick = onRouteClick)
+            if (isLoading) {
+                Box (Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            } else {
+                when (selectedTab) {
+                    0 -> ArrivalsTab(arrivals)
+                    1 -> PassingRoutesTab(routes, onRouteClick)
+                }
             }
         }
     }
 }
 
 @Composable
-private fun LiveArrivalsTab(arrivals: List<StopArrivalUi>) {
-    LazyColumn(modifier = Modifier.fillMaxSize()) {
-        items(arrivals) { item ->
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 2.dp),
-                border = if (item.isLive) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null,
-                colors = CardDefaults.cardColors(
-                    containerColor = if (item.isLive) {
-                        MaterialTheme.colorScheme.primaryContainer
-                    } else {
-                        MaterialTheme.colorScheme.surface
-                    }
-                )
+private fun ArrivalsTab(arrivals: List<StopArrivalUi>) {
+    if ( arrivals.isEmpty() ) {
+        EmptyState(message = "Δεν βρέθηκαν προγραμματισμένες αφίξεις για τις επόμενες 2 ώρες.")
+    } else {
+        LazyColumn( Modifier.fillMaxSize() ) {
+            items(arrivals) { arrival ->
+                ArrivalItem(arrival)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ArrivalItem(arrival: StopArrivalUi) {
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 6.dp),
+        border = if (arrival.isLive) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null,
+        colors = CardDefaults.cardColors(
+            containerColor = if (arrival.isLive) {
+                MaterialTheme.colorScheme.primaryContainer
+            } else {
+                MaterialTheme.colorScheme.surface
+            }
+        )
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                color = MaterialTheme.colorScheme.primary,
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier.size(45.dp)
             ) {
-                ListItem(
-                    headlineContent = {
-                        Text(
-                            text = item.routeName,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp
-                        )
-                    },
-                    supportingContent = {
-                        Text(text = item.headsign)
-                    },
-                    trailingContent = {
-                        Text(
-                            text = if (item.isLive) "LIVE" else "${item.minutes} λεπτά",
-                            fontWeight = if (item.isLive) FontWeight.Bold else FontWeight.Normal,
-                            color = if (item.isLive) {
-                                MaterialTheme.colorScheme.primary
-                            } else {
-                                MaterialTheme.colorScheme.onSurfaceVariant
-                            }
-                        )
-                    }
+                Box(contentAlignment = Alignment.Center)  {
+                    Text(
+                        arrival.routeName,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            Spacer( Modifier.width(16.dp) )
+
+            Column( Modifier.weight(1f) ) {
+                Text(
+                    arrival.headsign,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    maxLines = 1
+                )
+                Text(
+                    text = arrival.departureTime.toString().substring(0, 5),
+                    style = MaterialTheme.typography.bodySmall
                 )
             }
-            HorizontalDivider()
+
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = if (arrival.isLive) "LIVE" else "${arrival.minutes}'",
+                    color = if (arrival.isLive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 18.sp
+                )
+                if (arrival.isLive) {
+                    Icon(
+                        Icons.Default.Timer,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
         }
     }
 }
 
 @Composable
-private fun RoutesTab(
+private fun PassingRoutesTab(
     routes: List<Route>,
     onRouteClick: (Route) -> Unit
 ) {
     LazyColumn(modifier = Modifier.fillMaxSize()) {
         items(routes) {route ->
-            Card(
+            ListItem(
                 modifier = Modifier
-                    .fillMaxWidth()
                     .padding(horizontal = 8.dp, vertical = 2.dp)
-                    .clickable { onRouteClick(route) }
-            ){
-                ListItem(
-                    headlineContent = {
-                        Text(
-                            text = route.shortName,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp
-                        )
-                    },
-                    supportingContent = {
-                        Text(text = route.longName)
-                    }
-                )
-            }
-            HorizontalDivider()
+                    .clickable { onRouteClick(route) },
+                headlineContent = {
+                    Text(
+                        route.shortName,
+                        fontWeight = FontWeight.Bold
+                    )
+                },
+                supportingContent = {
+                    Text(
+                        route.longName
+                    )
+                },
+                leadingContent = {
+                    Icon(
+                        Icons.Default.DirectionsBus,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                },
+                trailingContent = {
+                    Text(
+                        ">",
+                        color = Color.Gray
+                    )
+                }
+            )
+            HorizontalDivider( modifier = Modifier.padding(horizontal = 16.dp) )
         }
+    }
+}
+
+@Composable
+private fun EmptyState(message: String) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            message,
+            style = MaterialTheme.typography.bodyLarge,
+            color = Color.Gray
+        )
     }
 }

@@ -254,11 +254,11 @@ class RouteDetailsViewModel(
 
         val a =
             sin(dLat / 2) *
-            sin(dLat / 2) +
-            cos(Math.toRadians(lat1)) *
-            cos(Math.toRadians(lat2)) *
-            sin(dLon / 2) *
-            sin(dLon / 2)
+                    sin(dLat / 2) +
+                    cos(Math.toRadians(lat1)) *
+                    cos(Math.toRadians(lat2)) *
+                    sin(dLon / 2) *
+                    sin(dLon / 2)
 
         val c =
             2 * atan2(
@@ -465,7 +465,7 @@ class RouteDetailsViewModel(
                         dayTrips.addAll(
                             it.trips.filter { trip ->
                                 trip.departureTime.hour == 0 &&
-                                trip.departureTime.minute <= 30
+                                        trip.departureTime.minute <= 30
                             }
                         )
                     }
