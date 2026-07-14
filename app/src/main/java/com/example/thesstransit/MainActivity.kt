@@ -27,6 +27,7 @@ import com.example.thesstransit.ui.item.HomeScreen
 import com.example.thesstransit.ui.item.LocationPickerScreen
 import com.example.thesstransit.ui.item.RouteDetailsScreen
 import com.example.thesstransit.ui.item.RoutesScreen
+import com.example.thesstransit.ui.item.SettingsScreen
 import com.example.thesstransit.ui.item.StopDetailsScreen
 import com.example.thesstransit.ui.item.TicketsScreen
 import com.example.thesstransit.ui.theme.ThessTransitTheme
@@ -68,6 +69,9 @@ data class RouteDetailsRoute(
 data class GroupDetailsRoute(
     val groupId: String
 )
+
+@Serializable
+object SettingsRoute
 
 @Serializable
 data class StopDetailsRoute(
@@ -168,7 +172,7 @@ class MainActivity : ComponentActivity() {
 
                                 },
                                 onSettingsClick = {
-
+                                    navController.navigate(SettingsRoute)
                                 }
                             )
                         }
@@ -186,6 +190,14 @@ class MainActivity : ComponentActivity() {
 
                         composable<TicketsRoute> {
                             TicketsScreen(
+                                onBackClick = {
+                                    navController.popBackStack()
+                                }
+                            )
+                        }
+
+                        composable<SettingsRoute> {
+                            SettingsScreen(
                                 onBackClick = {
                                     navController.popBackStack()
                                 }
