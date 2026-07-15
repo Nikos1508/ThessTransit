@@ -1,5 +1,6 @@
 package com.example.thesstransit.ui.item
 
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
@@ -80,10 +81,12 @@ import com.example.thesstransit.R
 import com.example.thesstransit.ui.components.RouteFiltersDialog
 import com.example.thesstransit.ui.data.SavedLocations
 import com.example.thesstransit.ui.viewModels.FavoritesViewModel
-
+import com.example.thesstransit.ui.components.AnimatedSearchBar
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun HomeScreen(
     onLoginClick: () -> Unit = {},
+    onSearchClick: () -> Unit = {},
     onHowToGoClick: () -> Unit = {},
     onTicketsClick: () -> Unit = {},
     onLinesClick: () -> Unit = {},
@@ -148,7 +151,11 @@ fun HomeScreen(
             }
             item {
                 Spacer(modifier = Modifier.height(8.dp))
-                SearchBarSection(onFilterClick = { showFilters = true })
+                AnimatedSearchBar(
+                    onClick = onSearchClick,
+                    modifier = Modifier.padding(horizontal = 12.dp),
+                    onFilteredClick = { showFilters = true }
+                )
             }
             item {
                 Spacer(modifier = Modifier.height(16.dp))
@@ -332,7 +339,8 @@ fun HeaderSection(
 
 @Composable
 fun SearchBarSection(
-    onFilterClick: () -> Unit
+    onFilterClick: () -> Unit,
+    onSearchClick: () -> Unit
 ) {
 
     var searchQuery by remember {mutableStateOf("")}
@@ -341,7 +349,8 @@ fun SearchBarSection(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 12.dp)
-            .height(58.dp),
+            .height(58.dp)
+            .bounceClick( onClick = onSearchClick ),
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surfaceContainer,
         border = BorderStroke(

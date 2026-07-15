@@ -18,7 +18,6 @@ import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-
 data class StopArrivalUi (
     val routeId: RouteId,
     val routeName: String,
