@@ -6,13 +6,17 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -22,6 +26,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.example.thesstransit.ui.data.AppLanguagePreferences
+import com.example.thesstransit.ui.data.AppThemePreferences
 import com.example.thesstransit.ui.item.GroupRouteDetailsScreen
 import com.example.thesstransit.ui.item.HomeScreen
 import com.example.thesstransit.ui.item.LocationPickerScreen
@@ -32,6 +37,7 @@ import com.example.thesstransit.ui.item.StopDetailsScreen
 import com.example.thesstransit.ui.item.TicketsScreen
 import com.example.thesstransit.ui.theme.ThessTransitTheme
 import com.example.thesstransit.ui.utils.groupRoutes
+import com.example.thesstransit.ui.viewModels.AppTheme
 import com.example.thesstransit.ui.viewModels.RoutesViewModel
 import com.example.thesstransit.ui.viewModels.StopDetailsViewModel
 import io.gitlab.mitsiosm.oseth.data.Route
@@ -50,7 +56,6 @@ data class RoutesRoute(
 )
 @Serializable object TicketsRoute
 
-@Serializable object HowToGoRoute
 @Serializable object LinesRoute
 @Serializable object NearbyStopsRoute
 @Serializable object LiveDeparturesRoute
@@ -113,7 +118,23 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            ThessTransitTheme(darkTheme = true) {
+            val context = LocalContext.current
+
+            val themePreferences = remember {
+                AppThemePreferences(context)
+            }
+
+            val appTheme by themePreferences
+                .theme
+                .collectAsState(initial = AppTheme.SYSTEM)
+
+            ThessTransitTheme(
+                darkTheme = when (appTheme) {
+                    AppTheme.LIGHT -> false
+                    AppTheme.DARK -> true
+                    AppTheme.SYSTEM -> isSystemInDarkTheme()
+                }
+            ) {
 
                 val navController = rememberNavController()
 
