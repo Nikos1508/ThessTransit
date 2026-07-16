@@ -1,8 +1,11 @@
 package com.example.thesstransit.ui.item
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -16,41 +19,45 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.thesstransit.ui.components.SearchField
-import com.example.thesstransit.ui.viewModels.TransitSearchViewModel
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.MyLocation
 import androidx.compose.material.icons.outlined.SwapVerticalCircle
+import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import com.example.thesstransit.ui.data.RecentSearch
-import kotlinx.coroutines.delay
-import kotlin.time.Duration.Companion.milliseconds
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.thesstransit.ui.components.SearchField
+import com.example.thesstransit.ui.data.Place
+import com.example.thesstransit.ui.data.PlaceType
 import com.example.thesstransit.ui.data.RecentSearchStorage
+import com.example.thesstransit.ui.data.SavedLocations
+import com.example.thesstransit.ui.location.LocationProvider
+import com.example.thesstransit.ui.location.ReverseGeocoder
+import com.example.thesstransit.ui.viewModels.TransitSearchViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
+import androidx.compose.animation.scaleIn
 
 @Composable
 fun SearchScreen(
@@ -58,16 +65,45 @@ fun SearchScreen(
     viewModel: TransitSearchViewModel = viewModel()
 ) {
 
+    val context = LocalContext.current
+
     var fromQuery by remember {
         mutableStateOf("Η τοποθεσία μου")
     }
 
     var fromPlace by remember {
-        mutableStateOf<SearchResult?>(null)
+        mutableStateOf<Place?>(
+            Place(
+                name = "Η τοποθεσία μου",
+                latitude = 0.0,
+                longitude = 0.0,
+                type = PlaceType.CURRENT_LOCATION
+            )
+        )
     }
 
+    val locationProvider = remember {
+        LocationProvider(context)
+    }
+
+    val reverseGeocoder = remember {
+        ReverseGeocoder(context)
+    }
+
+    val savedLocations = remember {
+        SavedLocations(context)
+    }
+
+    val home by savedLocations.home.collectAsState(
+        initial = Triple(null, null, null)
+    )
+
+    val work by savedLocations.work.collectAsState(
+        initial = Triple(null, null, null)
+    )
+
     var toPlace by remember {
-        mutableStateOf<SearchResult?>(null)
+        mutableStateOf<Place?>(null)
     }
 
     var destinationQuery by remember {
@@ -83,10 +119,8 @@ fun SearchScreen(
     val keyboard = LocalSoftwareKeyboardController.current
 
     var results by remember {
-        mutableStateOf<List<SearchResult>>(emptyList())
+        mutableStateOf<List<Place>>( emptyList() )
     }
-
-    val context = LocalContext.current
 
     val storage = remember { RecentSearchStorage(context) }
 
@@ -94,216 +128,265 @@ fun SearchScreen(
         initial = emptyList()
     )
 
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
+    var showContent by remember {
+        mutableStateOf(false)
+    }
+
+    LaunchedEffect(Unit) {
+        showContent = true
+    }
+
+    AnimatedVisibility(
+        visible = showContent,
+        enter = fadeIn( animationSpec = tween(220) ) +
+        slideInVertically( initialOffsetY = {it/8}, animationSpec = tween(260) )
     ) {
-
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
         ) {
-            AnimatedVisibility(
-                visible = true,
-                enter = fadeIn() + slideInVertically()
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
             ) {
-                Column{
-                    SearchField(
-                        "Από",
-                        value = fromQuery,
-                        onValueChange = {
-                            fromQuery = it
-                        }
-                    )
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    SearchField(
-                        title = "Προς",
-                        focusRequester = destinationFocus,
-                        value = destinationQuery,
-                        onValueChange = {
-                            destinationQuery = it
-
-                            viewModel.search(it) {
-                                results = it
+                AnimatedVisibility(
+                    visible = true,
+                    enter = fadeIn() + slideInVertically()
+                ) {
+                    Column {
+                        SearchField(
+                            "Από",
+                            value = fromQuery,
+                            onValueChange = {
+                                fromQuery = it
                             }
-                        }
-                    )
+                        )
 
-                    Spacer( modifier = Modifier.height(12.dp) )
+                        Spacer(modifier = Modifier.height(10.dp))
 
-                    Row {
-                        Surface(
-                            shape = RoundedCornerShape(14.dp)
-                        ) {
-                            IconButton(
-                                onClick = {
-                                    val tempQuery = fromQuery
-                                    fromQuery = destinationQuery
-                                    destinationQuery = tempQuery
+                        SearchField(
+                            title = "Προς",
+                            focusRequester = destinationFocus,
+                            value = destinationQuery,
+                            onValueChange = {
+                                destinationQuery = it
 
-                                    val tempPlace = fromPlace
-                                    fromPlace = toPlace
-                                    toPlace = tempPlace
+                                viewModel.search(it) { searchResults ->
+                                    results = searchResults.map {
+                                        Place(
+                                            name = it.title,
+                                            latitude = it.latitude,
+                                            longitude = it.longitude,
+                                            type = PlaceType.SEARCH
+                                        )
+                                    }
                                 }
+                            }
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Row {
+                            Surface(
+                                shape = RoundedCornerShape(14.dp)
                             ) {
-                                Icon(
-                                    Icons.Outlined.SwapVerticalCircle,
-                                    null
-                                )
-                            }
-                        }
+                                IconButton(
+                                    onClick = {
+                                        val tempQuery = fromQuery
+                                        fromQuery = destinationQuery
+                                        destinationQuery = tempQuery
 
-                        Spacer( modifier = Modifier.width(10.dp) )
-
-                        Surface(
-                            shape = RoundedCornerShape(14.dp),
-                            modifier = Modifier.clickable {
-                                fromQuery = "Η τοποθεσία μου"
+                                        val tempPlace = fromPlace
+                                        fromPlace = toPlace
+                                        toPlace = tempPlace
+                                    }
+                                ) {
+                                    Icon(
+                                        Icons.Outlined.SwapVerticalCircle,
+                                        null
+                                    )
+                                }
                             }
-                        ) {
-                            IconButton(
-                                onClick = {
+
+                            Spacer(modifier = Modifier.width(10.dp))
+
+                            Surface(
+                                shape = RoundedCornerShape(14.dp),
+                                modifier = Modifier.clickable {
                                     fromQuery = "Η τοποθεσία μου"
                                 }
                             ) {
-                                Icon(
-                                    Icons.Outlined.MyLocation,
-                                    null
-                                )
-                            }
-                        }
+                                IconButton(
+                                    onClick = {
+                                        scope.launch {
+                                            val location = locationProvider.getCurrentLocation()
 
-                    }
+                                            location?.let {
+                                                val name =
+                                                    reverseGeocoder.getName(
+                                                        it.latitude,
+                                                        it.longitude
+                                                    )
+                                                        ?: "Τρέχουσα τοποθεσία"
 
-                    LaunchedEffect(destinationQuery) {
+                                                fromPlace =
+                                                    Place(
+                                                        name = name,
+                                                        latitude = it.latitude,
+                                                        longitude = it.longitude,
+                                                        type = PlaceType.CURRENT_LOCATION
+                                                    )
 
-                        if (destinationQuery.isBlank()) {
-                            results = emptyList()
-                        }
-
-                    }
-
-                    LaunchedEffect(Unit) {
-                        delay(400.milliseconds) //Μπορεί και 250-300
-                        destinationFocus.requestFocus()
-                        keyboard?.show()
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            SectionTitle(
-                title = "Πρόσφατες αναζητήσεις"
-            )
-
-            AnimatedVisibility(
-                visible = results.isEmpty(),
-                enter = fadeIn()
-            ) {
-                Column {
-                    recentSearches.forEach {
-                        Surface(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 4.dp),
-                            shape = RoundedCornerShape(16.dp),
-                            tonalElevation = 2.dp
-                        ) {
-                            ListItem(
-                                headlineContent = {
-                                    Text(it.title)
-                                },
-                                supportingContent = {
-                                    Text("Πρόσφατη αναζήτηση")
-                                },
-                                leadingContent = {
+                                                fromQuery = name
+                                            }
+                                        }
+                                    }
+                                ) {
                                     Icon(
-                                        Icons.Outlined.LocationOn,
+                                        Icons.Outlined.MyLocation,
                                         null
                                     )
-                                },
-                                modifier = Modifier.clickable {
-                                    destinationQuery = it.title
-                                    viewModel.search(it.title) {
-                                        results = it
-                                    }
                                 }
-                            )
+                            }
+
                         }
 
+                        LaunchedEffect(destinationQuery) {
+
+                            if (destinationQuery.isBlank()) {
+                                results = emptyList()
+                            }
+
+                        }
+
+                        LaunchedEffect(Unit) {
+                            delay(400.milliseconds) //Μπορεί και 250-300
+                            destinationFocus.requestFocus()
+                            keyboard?.show()
+                        }
                     }
                 }
-            }
 
-            AnimatedVisibility(
-                visible = results.isNotEmpty(),
-                enter = fadeIn() + slideInVertically()
-            ) {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 14.dp),
-                    shape = RoundedCornerShape(20.dp)
+                Spacer(modifier = Modifier.height(24.dp))
+
+                SectionTitle(
+                    title = "Πρόσφατες αναζητήσεις"
+                )
+
+                AnimatedVisibility(
+                    visible = results.isEmpty(),
+                    enter = fadeIn()
                 ) {
-                    LazyColumn( modifier = Modifier.heightIn(max = 320.dp) ) {
-
-                        itemsIndexed(results) { index, item ->
-                            AnimatedVisibility(
-                                visible = true,
-                                enter = fadeIn(
-                                    animationSpec = tween(
-                                        durationMillis = 300,
-                                        delayMillis = index * 45
-                                    )
-                                ) + slideInVertically (
-                                    animationSpec = tween(
-                                        durationMillis = 300,
-                                        delayMillis = index * 45
-                                    )
-                                )
+                    Column {
+                        recentSearches.forEach {
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp),
+                                shape = RoundedCornerShape(16.dp),
+                                tonalElevation = 2.dp
                             ) {
-
                                 ListItem(
+                                    headlineContent = {
+                                        Text(it.title)
+                                    },
+                                    supportingContent = {
+                                        Text("Πρόσφατη αναζήτηση")
+                                    },
                                     leadingContent = {
                                         Icon(
                                             Icons.Outlined.LocationOn,
                                             null
                                         )
                                     },
-
-                                    headlineContent = {
-                                        Text(
-                                            item.title.substringBefore(",")
-                                        )
-                                    },
-
-                                    supportingContent = {
-                                        Text(
-                                            item.title.substringAfter(",", "")
-                                        )
-                                    },
-
                                     modifier = Modifier.clickable {
-                                        destinationQuery = item.title
-                                        toPlace = item
-                                        results = emptyList()
-
-                                        scope.launch {
-
-                                            storage.saveSearch(
-                                                title = item.title,
-                                                latitude = item.latitude,
-                                                longitude = item.longitude
-                                            )
-
+                                        destinationQuery = it.title
+                                        viewModel.search(it.title) {
+                                            results = it
                                         }
                                     }
                                 )
+                            }
 
+                        }
+                    }
+                }
+
+                AnimatedVisibility(
+                    visible = results.isNotEmpty(),
+                    enter = fadeIn() + scaleIn(initialScale = 0.95f) + slideInVertically(),
+                    exit = fadeOut()
+                ) {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 14.dp)
+                            .animateContentSize(),
+                        shape = RoundedCornerShape(20.dp)
+                    ) {
+                        LazyColumn(modifier = Modifier.heightIn(max = 320.dp)) {
+
+                            itemsIndexed(results) { index, item ->
+                                AnimatedVisibility(
+                                    visible = true,
+                                    enter = fadeIn(
+                                        animationSpec = tween(
+                                            durationMillis = 300,
+                                            delayMillis = index * 45
+                                        )
+                                    ) + slideInVertically(
+                                        animationSpec = tween(
+                                            durationMillis = 300,
+                                            delayMillis = index * 45
+                                        )
+                                    )
+                                ) {
+
+                                    ListItem(
+                                        leadingContent = {
+                                            Icon(
+                                                Icons.Outlined.LocationOn,
+                                                null
+                                            )
+                                        },
+
+                                        headlineContent = {
+                                            Text(
+                                                item.name.substringBefore(",")
+                                            )
+                                        },
+
+                                        supportingContent = {
+                                            Text(
+                                                item.name.substringAfter(",", "")
+                                            )
+                                        },
+
+                                        modifier = Modifier.clickable {
+                                            destinationQuery = item.name
+                                            toPlace = Place(
+                                                name = item.name,
+                                                latitude = item.latitude,
+                                                longitude = item.longitude,
+                                                type = PlaceType.SEARCH
+                                            )
+                                            results = emptyList()
+
+                                            scope.launch {
+
+                                                storage.saveSearch(
+                                                    title = item.name,
+                                                    latitude = item.latitude,
+                                                    longitude = item.longitude
+                                                )
+
+                                            }
+                                        }
+                                    )
+
+                                }
                             }
                         }
                     }

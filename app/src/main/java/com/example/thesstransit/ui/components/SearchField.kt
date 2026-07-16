@@ -1,6 +1,7 @@
 package com.example.thesstransit.ui.components
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -69,7 +70,9 @@ fun SearchField(
                 BasicTextField(
                     modifier =
                         if (focusRequester != null)
-                            Modifier.focusRequester(focusRequester)
+                            Modifier
+                                .focusRequester(focusRequester)
+                                .focusable()
                         else
                             Modifier,
                     value = value,

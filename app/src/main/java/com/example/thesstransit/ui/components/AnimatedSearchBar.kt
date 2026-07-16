@@ -40,8 +40,10 @@ fun AnimatedSearchBar(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 12.dp)
-            .height(58.dp),
-            //.bounceClick(onClick = onClick),
+            .height(58.dp)
+            .bounceClick {
+                onClick()
+            },
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surfaceContainer,
         border = BorderStroke(

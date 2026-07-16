@@ -1,6 +1,7 @@
 package com.example.thesstransit.ui.item
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
@@ -153,7 +154,9 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 AnimatedSearchBar(
                     onClick = onSearchClick,
-                    modifier = Modifier.padding(horizontal = 12.dp),
+                    modifier = Modifier
+                        .padding(horizontal = 12.dp)
+                        .animateContentSize(),
                     onFilteredClick = { showFilters = true }
                 )
             }
