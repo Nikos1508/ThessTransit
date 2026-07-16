@@ -1,5 +1,10 @@
 package com.example.thesstransit.ui.item
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -7,38 +12,40 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Search
-import androidx.compose.material3.Icon
+import androidx.compose.material3.Card
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import com.example.thesstransit.ui.components.SearchField
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.slideInVertically
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.Card
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.outlined.LocationOn
-import androidx.compose.material3.ListItem
-import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.thesstransit.ui.components.SearchField
 import com.example.thesstransit.ui.viewModels.TransitSearchViewModel
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.LocationOn
+import androidx.compose.material.icons.outlined.MyLocation
+import androidx.compose.material.icons.outlined.SwapVerticalCircle
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import com.example.thesstransit.ui.data.RecentSearch
+import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun SearchScreen(
@@ -50,12 +57,32 @@ fun SearchScreen(
         mutableStateOf("Η τοποθεσία μου")
     }
 
+    var fromPlace by remember {
+        mutableStateOf<SearchResult?>(null)
+    }
+
+    var toPlace by remember {
+        mutableStateOf<SearchResult?>(null)
+    }
+
     var destinationQuery by remember {
         mutableStateOf("")
     }
 
+    val destinationFocus = remember {
+        FocusRequester()
+    }
+
+    val keyboard = LocalSoftwareKeyboardController.current
+
     var results by remember {
         mutableStateOf<List<SearchResult>>(emptyList())
+    }
+
+    var recentSearches by remember {
+        mutableStateOf<List<RecentSearch>>(
+            emptyList()
+        )
     }
 
     Box(
@@ -68,126 +95,207 @@ fun SearchScreen(
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(58.dp),
-                shape = RoundedCornerShape(18.dp)
+            AnimatedVisibility(
+                visible = true,
+                enter = fadeIn() + slideInVertically()
             ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        Icons.Outlined.Search,
-                        null
-                    )
-
-                    Spacer(
-                        modifier = Modifier.width(12.dp)
-                    )
-
+                Column{
                     SearchField(
-                        title = "Από",
-                        value = "Η τοποθεσία μου",
-                        onValueChange = { }
+                        "Από",
+                        value = fromQuery,
+                        onValueChange = {
+                            fromQuery = it
+                        }
                     )
 
-                    Spacer( modifier = Modifier.height(12.dp) )
+                    Spacer(modifier = Modifier.height(10.dp))
 
                     SearchField(
                         title = "Προς",
+                        focusRequester = destinationFocus,
                         value = destinationQuery,
                         onValueChange = {
                             destinationQuery = it
 
-                            viewModel.search(it){ newResults ->
-                                results = newResults
+                            viewModel.search(it) {
+                                results = it
                             }
                         }
                     )
 
-                    if ( results.isNotEmpty() ) {
-                        Card(
-                            modifier = Modifier.fillMaxWidth()
+                    Spacer( modifier = Modifier.height(12.dp) )
+
+                    Row {
+                        Surface(
+                            shape = RoundedCornerShape(14.dp),
+                            modifier = Modifier.clickable {
+                                val old = fromQuery
+                                destinationQuery = old
+                            }
                         ) {
-                            LazyColumn(
-                                modifier = Modifier.heightIn(max = 300.dp)
-                            ) {
-                                items(results) {item ->
-                                    ListItem(
-                                        leadingContent = {
-                                            Icon(
-                                                Icons.Outlined.LocationOn,
-                                                null
-                                            )
-                                        },
-                                        headlineContent = {
-                                            Text(
-                                                item.title.substringBefore(",")
-                                            )
-                                        },
-                                        supportingContent = {
-                                            Text(
-                                                item.title.substringAfter(",")
-                                            )
-                                        },
-                                        modifier = Modifier.clickable {
-                                            destinationQuery = item.title
+                            IconButton(
+                                onClick = {
+                                    val tempQuery = fromQuery
+                                    fromQuery = destinationQuery
+                                    destinationQuery = tempQuery
 
-                                            results = emptyList()
-
-                                        }
-
-                                    )
+                                    val tempPlace = fromPlace
+                                    fromPlace = toPlace
+                                    toPlace = tempPlace
                                 }
+                            ) {
+                                Icon(
+                                    Icons.Outlined.SwapVerticalCircle,
+                                    null
+                                )
                             }
                         }
+
+                        Spacer( modifier = Modifier.width(10.dp) )
+
+                        Surface(
+                            shape = RoundedCornerShape(14.dp),
+                            modifier = Modifier.clickable {
+                                fromQuery = "Η τοποθεσία μου"
+                            }
+                        ) {
+                            IconButton(
+                                onClick = {
+                                    fromQuery = "Η τοποθεσία μου"
+                                }
+                            ) {
+                                Icon(
+                                    Icons.Outlined.MyLocation,
+                                    null
+                                )
+                            }
+                        }
+
+                    }
+
+                    LaunchedEffect(destinationQuery) {
+
+                        if (destinationQuery.isBlank()) {
+                            results = emptyList()
+                        }
+
+                    }
+
+                    LaunchedEffect(Unit) {
+                        delay(400.milliseconds) //Μπορεί και 250-300
+                        destinationFocus.requestFocus()
+                        keyboard?.show()
                     }
                 }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            Text(
-                "Πρόσφατες αναζητήσεις",
-                fontWeight = FontWeight.Bold
+            SectionTitle(
+                title = "Πρόσφατες αναζητήσεις"
             )
 
             AnimatedVisibility(
-                visible = true,
-                enter = fadeIn() + slideInVertically()
+                visible = results.isEmpty(),
+                enter = fadeIn()
             ) {
-
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text(
-                        "Πρόσφατα",
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    listOf(
-                        "Καμάρα",
-                        "Λευκός πύργος",
-                        "Νέα ελβετία"
-                    )
-                        .forEach {
-                            Surface(
-                                shape = RoundedCornerShape(14.dp),
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text(
-                                    text = it,
-                                    modifier = Modifier.padding(16.dp)
-                                )
-                            }
+                Column {
+                    recentSearches.forEach {
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            tonalElevation = 2.dp
+                        ) {
+                            ListItem(
+                                headlineContent = {
+                                    Text(it.title)
+                                },
+                                supportingContent = {
+                                    Text("Πρόσφατη αναζήτηση")
+                                },
+                                leadingContent = {
+                                    Icon(
+                                        Icons.Outlined.LocationOn,
+                                        null
+                                    )
+                                },
+                                modifier = Modifier.clickable {
+                                    destinationQuery = it.title
+                                    viewModel.search(it.title) {
+                                        results = it
+                                    }
+                                }
+                            )
                         }
 
+                    }
                 }
+            }
 
+            AnimatedVisibility(
+                visible = results.isNotEmpty(),
+                enter = fadeIn() + slideInVertically()
+            ) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 14.dp),
+                    shape = RoundedCornerShape(20.dp)
+                ) {
+                    LazyColumn( modifier = Modifier.heightIn(max = 320.dp) ) {
+
+                        itemsIndexed(results) { index, item ->
+                            AnimatedVisibility(
+                                visible = true,
+                                enter = fadeIn(
+                                    animationSpec = tween(
+                                        durationMillis = 300,
+                                        delayMillis = index * 45
+                                    )
+                                ) + slideInVertically (
+                                    animationSpec = tween(
+                                        durationMillis = 300,
+                                        delayMillis = index * 45
+                                    )
+                                )
+                            ) {
+
+                                ListItem(
+                                    leadingContent = {
+                                        Icon(
+                                            Icons.Outlined.LocationOn,
+                                            null
+                                        )
+                                    },
+
+                                    headlineContent = {
+                                        Text(
+                                            item.title.substringBefore(",")
+                                        )
+                                    },
+
+                                    supportingContent = {
+                                        Text(
+                                            item.title.substringAfter(",", "")
+                                        )
+                                    },
+
+                                    modifier = Modifier.clickable {
+                                        destinationQuery = item.title
+                                        toPlace = item
+                                        results = emptyList()
+
+                                        /* TODO: Τα νεα recent searches */
+                                    }
+                                )
+
+                            }
+                        }
+                    }
+                }
             }
         }
-
     }
 }

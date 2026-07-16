@@ -7,6 +7,7 @@ import com.example.thesstransit.ui.network.NominatimClient
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 class TransitSearchViewModel : ViewModel() {
 
@@ -19,14 +20,14 @@ class TransitSearchViewModel : ViewModel() {
 
         searchJob?.cancel()
 
-        if (query.length < 3) {
+        if (query.trim().length < 2) {
             onResult( emptyList() )
             return
         }
 
         searchJob = viewModelScope.launch {
 
-            delay(500)
+            delay(500.milliseconds) //Μπορεί να γινει και delay(300)
 
             try {
                 val results = NominatimClient.api.search( query = query )
