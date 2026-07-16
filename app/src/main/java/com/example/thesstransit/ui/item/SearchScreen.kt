@@ -2,10 +2,12 @@ package com.example.thesstransit.ui.item
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -58,6 +60,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 import androidx.compose.animation.scaleIn
+import androidx.compose.material3.CardDefaults
+import androidx.compose.ui.graphics.graphicsLayer
+import com.example.thesstransit.ui.components.ScreenHeader
 
 @Composable
 fun SearchScreen(
@@ -132,6 +137,20 @@ fun SearchScreen(
         mutableStateOf(false)
     }
 
+    val locationPressed by remember {
+        mutableStateOf(false)
+    }
+
+    val locationScale by animateFloatAsState(
+        targetValue =
+            if(locationPressed) 0.9f else 1f,
+        animationSpec = spring()
+    )
+
+    var swapRotation by remember {
+        mutableStateOf(0f)
+    }
+
     LaunchedEffect(Unit) {
         showContent = true
     }
@@ -151,11 +170,18 @@ fun SearchScreen(
                     .fillMaxWidth()
                     .padding(16.dp)
             ) {
+                /*
+
+                ScreenHeader(
+
+                )
+
+                 */
                 AnimatedVisibility(
                     visible = true,
                     enter = fadeIn() + slideInVertically()
                 ) {
-                    Column {
+                    Column( modifier = Modifier.animateContentSize() ) {
                         SearchField(
                             "Από",
                             value = fromQuery,
@@ -194,6 +220,8 @@ fun SearchScreen(
                             ) {
                                 IconButton(
                                     onClick = {
+                                        swapRotation += 180f
+
                                         val tempQuery = fromQuery
                                         fromQuery = destinationQuery
                                         destinationQuery = tempQuery
@@ -205,7 +233,10 @@ fun SearchScreen(
                                 ) {
                                     Icon(
                                         Icons.Outlined.SwapVerticalCircle,
-                                        null
+                                        null,
+                                        modifier = Modifier.graphicsLayer {
+                                            rotationZ = swapRotation
+                                        }
                                     )
                                 }
                             }
@@ -214,9 +245,18 @@ fun SearchScreen(
 
                             Surface(
                                 shape = RoundedCornerShape(14.dp),
-                                modifier = Modifier.clickable {
-                                    fromQuery = "Η τοποθεσία μου"
-                                }
+                                modifier = Modifier
+                                    .graphicsLayer {
+                                        scaleX = locationScale
+                                        scaleY = locationScale
+                                    }
+                                    .clickable {
+                                        locationPressed = true
+                                        scope.launch {
+                                            delay(100)
+                                            locationPressed = false
+                                        }
+                                    }
                             ) {
                                 IconButton(
                                     onClick = {
@@ -262,8 +302,9 @@ fun SearchScreen(
                         }
 
                         LaunchedEffect(Unit) {
-                            delay(400.milliseconds) //Μπορεί και 250-300
+                            delay(250.milliseconds)
                             destinationFocus.requestFocus()
+                            delay(300.milliseconds)
                             keyboard?.show()
                         }
                     }
@@ -319,11 +360,36 @@ fun SearchScreen(
                     enter = fadeIn() + scaleIn(initialScale = 0.95f) + slideInVertically(),
                     exit = fadeOut()
                 ) {
+                    var cardVisible by remember {
+                        mutableStateOf(false)
+                    }
+
+                    LaunchedEffect(results) {
+                        cardVisible = results.isNotEmpty()
+                    }
+
+                    val elevation by animateDpAsState(
+                        targetValue =
+                            if(cardVisible)
+                                8.dp
+                            else
+                                0.dp,
+                        animationSpec = spring()
+                    )
+
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(top = 14.dp)
-                            .animateContentSize(),
+                            .animateContentSize(
+                                animationSpec = spring(
+                                    dampingRatio = 0.8f,
+                                    stiffness = 300f
+                                )
+                            ),
+                        elevation = CardDefaults.cardElevation(
+                          defaultElevation = elevation
+                        ),
                         shape = RoundedCornerShape(20.dp)
                     ) {
                         LazyColumn(modifier = Modifier.heightIn(max = 320.dp)) {
@@ -331,17 +397,28 @@ fun SearchScreen(
                             itemsIndexed(results) { index, item ->
                                 AnimatedVisibility(
                                     visible = true,
-                                    enter = fadeIn(
-                                        animationSpec = tween(
-                                            durationMillis = 300,
-                                            delayMillis = index * 45
+                                    enter =
+                                        fadeIn(
+                                            animationSpec = tween(
+                                                durationMillis = 250,
+                                                delayMillis = index * 40
+                                            )
                                         )
-                                    ) + slideInVertically(
-                                        animationSpec = tween(
-                                            durationMillis = 300,
-                                            delayMillis = index * 45
+                                        +
+                                        scaleIn(
+                                            initialScale = 0.92f,
+                                            animationSpec = spring(
+                                                dampingRatio = 0.75f,
+                                                stiffness = 350f
+                                            )
                                         )
-                                    )
+                                        +
+                                        slideInVertically(
+                                            animationSpec = tween(
+                                                durationMillis = 260,
+                                                delayMillis = index * 40
+                                            )
+                                        )
                                 ) {
 
                                     ListItem(

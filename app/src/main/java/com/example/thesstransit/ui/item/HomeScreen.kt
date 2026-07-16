@@ -131,6 +131,19 @@ fun HomeScreen(
         initial = Triple(null, null, null)
     )
 
+    var searchPressed by remember {
+        mutableStateOf(false)
+    }
+
+    val searchScale by animateFloatAsState(
+        targetValue =
+            if (searchPressed)
+                0.96f
+            else
+                1f,
+        animationSpec = spring()
+    )
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -156,7 +169,10 @@ fun HomeScreen(
                     onClick = onSearchClick,
                     modifier = Modifier
                         .padding(horizontal = 12.dp)
-                        .animateContentSize(),
+                        .graphicsLayer(
+                            scaleX = searchScale,
+                            scaleY = searchScale
+                        ),
                     onFilteredClick = { showFilters = true }
                 )
             }

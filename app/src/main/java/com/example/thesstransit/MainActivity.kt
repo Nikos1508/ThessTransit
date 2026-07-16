@@ -6,8 +6,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.scaleIn
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -301,11 +306,18 @@ class MainActivity : ComponentActivity() {
                             }
 
                             composable<SearchRoute> {
-                                SearchScreen(
-                                    onBackClick = {
-                                        navController.popBackStack()
-                                    }
-                                )
+                                AnimatedVisibility(
+                                    visible = true,
+                                    enter =
+                                        fadeIn( tween(250) )
+                                        + scaleIn( initialScale = 0.96f, animationSpec = spring() )
+                                ) {
+                                    SearchScreen(
+                                        onBackClick = {
+                                            navController.popBackStack()
+                                        }
+                                    )
+                                }
                             }
 
                             composable<StopDetailsRoute> { backStackEntry ->
