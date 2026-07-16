@@ -46,6 +46,11 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import com.example.thesstransit.ui.data.RecentSearch
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.rememberCoroutineScope
+import com.example.thesstransit.ui.data.RecentSearchStorage
+import kotlinx.coroutines.launch
 
 @Composable
 fun SearchScreen(
@@ -73,17 +78,21 @@ fun SearchScreen(
         FocusRequester()
     }
 
+    val scope = rememberCoroutineScope()
+
     val keyboard = LocalSoftwareKeyboardController.current
 
     var results by remember {
         mutableStateOf<List<SearchResult>>(emptyList())
     }
 
-    var recentSearches by remember {
-        mutableStateOf<List<RecentSearch>>(
-            emptyList()
-        )
-    }
+    val context = LocalContext.current
+
+    val storage = remember { RecentSearchStorage(context) }
+
+    val recentSearches by storage.searches.collectAsState(
+        initial = emptyList()
+    )
 
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -127,11 +136,7 @@ fun SearchScreen(
 
                     Row {
                         Surface(
-                            shape = RoundedCornerShape(14.dp),
-                            modifier = Modifier.clickable {
-                                val old = fromQuery
-                                destinationQuery = old
-                            }
+                            shape = RoundedCornerShape(14.dp)
                         ) {
                             IconButton(
                                 onClick = {
@@ -287,7 +292,15 @@ fun SearchScreen(
                                         toPlace = item
                                         results = emptyList()
 
-                                        /* TODO: Τα νεα recent searches */
+                                        scope.launch {
+
+                                            storage.saveSearch(
+                                                title = item.title,
+                                                latitude = item.latitude,
+                                                longitude = item.longitude
+                                            )
+
+                                        }
                                     }
                                 )
 
