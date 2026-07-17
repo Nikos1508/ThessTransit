@@ -46,16 +46,15 @@ class RoutesViewModel(
             errorMessage = null
 
             try {
-                Oseth()
+
+                val context = getApplication<Application>().applicationContext
+
+                routes = Oseth(context)
                     .getRoutes()
-                    .onSuccess { results ->
-                        routes = results.sortedBy {
-                            it.shortName
-                        }
+                    .sortedBy {
+                        it.shortName
                     }
-                    .onFailure {
-                        errorMessage = it.message ?: "Unknown Error"
-                    }
+
             } catch (e: Exception) {
                 errorMessage = e.message ?: "Error loading routes"
             }

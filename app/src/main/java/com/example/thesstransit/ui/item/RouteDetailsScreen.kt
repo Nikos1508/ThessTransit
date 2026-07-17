@@ -3,8 +3,10 @@ package com.example.thesstransit.ui.item
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
 import android.util.TypedValue
+import android.view.ViewGroup.LayoutParams
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -62,24 +64,25 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import android.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.graphics.toColorInt
 import androidx.core.graphics.drawable.toDrawable
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.thesstransit.R
 import com.example.thesstransit.ui.components.ScreenHeader
+import com.example.thesstransit.ui.data.SavedLocations
 import com.example.thesstransit.ui.viewModels.FavoritesViewModel
 import com.example.thesstransit.ui.viewModels.LanguageViewModel
 import com.example.thesstransit.ui.viewModels.RouteDetailsViewModel
+import io.gitlab.mitsiosm.oseth.Oseth
 import io.gitlab.mitsiosm.oseth.data.Route
 import io.gitlab.mitsiosm.oseth.data.Stop
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -93,9 +96,6 @@ import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.Polyline
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
-import android.view.ViewGroup.LayoutParams
-import com.example.thesstransit.ui.data.SavedLocations
-import kotlinx.coroutines.flow.first
 
 private fun formatDay(day: LocalDate): String {
     return when(day.dayOfWeek) {
@@ -118,6 +118,8 @@ fun RouteDetailsScreen(
     onStopClick: (Stop) -> Unit,
     viewModel: RouteDetailsViewModel = viewModel()
 ) {
+    val context = LocalContext.current
+    val api = Oseth(context)
 
     var selectedTab by remember {
         mutableIntStateOf(0)
@@ -132,9 +134,10 @@ fun RouteDetailsScreen(
 
     val languageViewModel: LanguageViewModel = viewModel()
     val language by languageViewModel.language.collectAsState()
-
-    val currentDirection = route.tripHeadsigns.find {
-        it.shapeId == viewModel.selectedShape.value
+    
+    val trips = api.getTripsFromRoute(route.id)
+    val currentDirection = trips.find { 
+        it.shapeId == viewModel.selectedShapeId.value
     }?.headsign ?: "Επιλέξτε κατεύθυνση"
 
     LaunchedEffect(route) {
@@ -207,7 +210,7 @@ fun RouteDetailsScreen(
                         .background(MaterialTheme.colorScheme.surfaceContainerHighest)
                         .clip(RoundedCornerShape(18.dp))
                 ) {
-                    route.tripHeadsigns.forEach { direction ->
+                    api.getTripsFromRoute(route.id).forEach { direction ->
                         DropdownMenuItem(
                             text = {
                                 Text(
@@ -216,7 +219,9 @@ fun RouteDetailsScreen(
                                 )
                             },
                             onClick = {
-                                viewModel.loadShape(direction.shapeId, direction.routeId)
+                                viewModel.selectedShapeId.value = direction.shapeId
+                                
+                                viewModel.loadShape(routeId = route.id)
                                 expanded = false
                             }
                         )
@@ -411,7 +416,7 @@ private fun StopsTab(
                     )
 
                     Text(
-                        text = "Κωδικός στάσης: ${stop.code}",
+                        text = "Κωδικός στάσης: ${stop.id}",
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -603,17 +608,13 @@ private fun RouteMapTab(
 
             val line = Polyline()
 
-            line.setPoints(vm.routePolyline)
+            line.setPoints(
+                vm.routePolyline.map { 
+                    GeoPoint(it.latitude, it.longitude) 
+                }
+            )
 
             line.outlinePaint.strokeWidth = 8f
-
-            val color = vm.detailedRoute.value
-                ?.color
-                ?.removePrefix("#")
-                ?: "1976D2"
-
-            line.outlinePaint.color =
-                "#$color".toColorInt()
 
             map.overlays.add(line)
 
@@ -780,12 +781,11 @@ private fun TimetableTab(
                 modifier = Modifier.height(32.dp),
                 selected = day == vm.selectedDate,
                 onClick = {
-                    val shapeId = vm.selectedShape.value
+                    val shapeId = vm.selectedShapeId.value
                     val route = vm.route.value
 
                     if (shapeId != null && route != null) {
                         vm.loadShape(
-                            vm.selectedShape.value!!,
                             vm.selectedRouteId.value!!,
                             day
                         )
@@ -819,10 +819,10 @@ private fun TimetableTab(
         } else {
             vm.trips.indexOfFirst { trip ->
                 val effectiveMinutes =
-                    if (trip.departureTime.hour == 0 && trip.departureTime.minute <= 30)
-                        24 * 60 + trip.departureTime.hour * 60 + trip.departureTime.minute
+                    if (trip.time.hour == 0 && trip.time.minute <= 30)
+                        24 * 60 + trip.time.hour * 60 + trip.time.minute
                     else
-                        trip.departureTime.hour * 60 + trip.departureTime.minute
+                        trip.time.hour * 60 + trip.time.minute
 
                 val nowMinutes =
                     if (now.hour == 0 && now.minute <= 30)
@@ -849,10 +849,10 @@ private fun TimetableTab(
                     false
                 } else {
                     val tripMinutes =
-                        if (trip.departureTime.hour == 0 && trip.departureTime.minute <= 30)
-                            24 * 60 + trip.departureTime.hour * 60 + trip.departureTime.minute
+                        if (trip.time.hour == 0 && trip.time.minute <= 30)
+                            24 * 60 + trip.time.hour * 60 + trip.time.minute
                         else
-                            trip.departureTime.hour * 60 + trip.departureTime.minute
+                            trip.time.hour * 60 + trip.time.minute
 
                     val nowMinutes =
                         if (now.hour == 0 && now.minute <= 30)
@@ -887,13 +887,19 @@ private fun TimetableTab(
                 ListItem(
                     headlineContent = {
                         Text(
-                            trip.departureTime.toString()
+                            trip.time.toString()
                                 .substring(0,5),
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp
                         )
                     },
-                    supportingContent = { Text(trip.headsign) },
+                    supportingContent = {
+                        Text(
+                            Oseth(LocalContext.current)
+                                .getTrip(trip.tripId)
+                                !!.headsign
+                        )
+                    },
                     modifier = Modifier.alpha(
                         if (departed) 0.45f else 1f
                     )

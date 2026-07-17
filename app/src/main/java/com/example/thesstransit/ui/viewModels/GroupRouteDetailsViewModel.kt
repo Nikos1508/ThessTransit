@@ -5,11 +5,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.thesstransit.ui.data.RouteGroup
+import io.gitlab.mitsiosm.oseth.data.FirstStopTime
 import io.gitlab.mitsiosm.oseth.data.Stop
-import io.gitlab.mitsiosm.oseth.data.TimetableTrip
+import io.gitlab.mitsiosm.oseth.data.Timetable
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
+import kotlin.collections.map
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -23,7 +25,7 @@ class GroupRouteDetailsViewModel(
     )
 
     data class GroupTrip(
-        val trip: TimetableTrip,
+        val trip: FirstStopTime,
         val routeShortName: String
     )
 
@@ -45,14 +47,15 @@ class GroupRouteDetailsViewModel(
 
             group.routes.forEach { route ->
 
-                val headsignInfo = route.tripHeadsigns.getOrNull(direction) ?: return@forEach
-                val targetRouteId = headsignInfo.routeId
-                val targetShapeId = headsignInfo.shapeId
+//                val headsignInfo = route.tripHeadsigns.getOrNull(direction) ?: return@forEach
+//                val targetRouteId = headsignInfo.routeId
+//                val targetShapeId = headsignInfo.shapeId
 
-                val (routeStops, routeTrips) = repository.loadRoute(targetRouteId, targetShapeId, date)
+                val (routeStops, routeTrips) = repository
+                    .loadRoute(routeId = route.id, date)
 
                 newStops += routeStops
-                    .distinctBy { it.code }
+                    .distinctBy { it.id }
                     .map { GroupStop(it, route.shortName) }
 
                 newTrips += routeTrips.map {
@@ -61,7 +64,9 @@ class GroupRouteDetailsViewModel(
             }
 
             stops.addAll(newStops)
-            trips.addAll(newTrips.sortedBy { it.trip.departureTime })
+            trips.addAll(
+                newTrips.sortedBy { it.trip.time }
+            )
 
             isLoaded.value = true
         }

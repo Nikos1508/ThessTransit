@@ -53,6 +53,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -85,6 +86,7 @@ import com.example.thesstransit.ui.components.RouteFiltersDialog
 import com.example.thesstransit.ui.data.SavedLocations
 import com.example.thesstransit.ui.utils.SharedKeys
 import com.example.thesstransit.ui.viewModels.FavoritesViewModel
+import io.gitlab.mitsiosm.oseth.Oseth
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -124,6 +126,14 @@ fun HomeScreen(
     val totalFavorites = favoriteRoutes.size + favoriteGroups.size
 
     val context = LocalContext.current
+
+    val api = remember(context) {
+        Oseth(context = context)
+    }
+
+    LaunchedEffect(Unit) {
+        api.sync()
+    }
 
     val savedLocations = remember(context) {
         SavedLocations(context)

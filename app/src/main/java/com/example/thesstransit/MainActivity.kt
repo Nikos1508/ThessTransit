@@ -283,7 +283,7 @@ class MainActivity : ComponentActivity() {
                                     onStopClick = { stop ->
                                         navController.navigate(
                                             StopDetailsRoute(
-                                                stopId = stop.id.id
+                                                stopId = stop.id.value
                                             )
                                         )
                                     }
@@ -325,11 +325,9 @@ class MainActivity : ComponentActivity() {
                                 val stop = remember(stopId) {
                                     Stop(
                                         id = StopId(stopId),
-                                        code = "",
                                         name = "Loading...",
                                         latitude = 0.0,
-                                        longitude = 0.0,
-                                        sequence = 0u
+                                        longitude = 0.0
                                     )
                                 }
 

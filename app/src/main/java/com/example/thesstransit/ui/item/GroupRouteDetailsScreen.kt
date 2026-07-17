@@ -35,7 +35,6 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -45,6 +44,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -53,6 +53,7 @@ import com.example.thesstransit.ui.components.ScreenHeader
 import com.example.thesstransit.ui.data.RouteGroup
 import com.example.thesstransit.ui.viewModels.FavoritesViewModel
 import com.example.thesstransit.ui.viewModels.GroupRouteDetailsViewModel
+import io.gitlab.mitsiosm.oseth.Oseth
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -157,9 +158,9 @@ private fun GroupTimetableTab(
     val listState = rememberLazyListState()
     val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).time
 
-    val sortedTrips = trips.sortedBy { it.trip.departureTime }
+    val sortedTrips = trips.sortedBy { it.trip.time }
 
-    val nextTripIndex = sortedTrips.indexOfFirst { it.trip. departureTime > now }
+    val nextTripIndex = sortedTrips.indexOfFirst { it.trip.time > now }
 
     LaunchedEffect(sortedTrips.size) {
         if (nextTripIndex > 0) {
@@ -173,7 +174,7 @@ private fun GroupTimetableTab(
         contentPadding = PaddingValues(vertical = 8.dp)
     ) {
         itemsIndexed(sortedTrips) { index, item ->
-            val isPast = item.trip.departureTime < now
+            val isPast = item.trip.time < now
             val isNext = index == nextTripIndex
 
             Card(
@@ -193,7 +194,7 @@ private fun GroupTimetableTab(
                     headlineContent = {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                text = item.trip.departureTime.toString().substring(0, 5),
+                                text = item.trip.time.toString().substring(0, 5),
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 18.sp
                             )
@@ -207,8 +208,12 @@ private fun GroupTimetableTab(
                         }
                     },
                     supportingContent = {
-                        if (item.trip.headsign.isNotEmpty()) {
-                            Text(text = item.trip.headsign)
+                        val context = LocalContext.current
+                        val api = Oseth(context)
+
+                        val headsign = api.getTrip( item.trip.tripId )
+                        if (headsign?.headsign?.isNotEmpty() == true) {
+                            Text(text = headsign.headsign)
                         }
                     }
                 )
@@ -283,7 +288,7 @@ private fun GroupStopsTab(
                                 )
 
                                 val passing = stops
-                                    .filter {it.stop.code == groupStop.stop.code}
+                                    .filter {it.stop.id == groupStop.stop.id}
                                     .map {it.routeShortName}
                                     .distinct()
 
@@ -299,7 +304,7 @@ private fun GroupStopsTab(
                             Spacer(Modifier.height(4.dp))
 
                             Text(
-                                text = "Κωδικός: ${groupStop.stop.code}",
+                                text = "Κωδικός: ${groupStop.stop.id}",
                                 fontSize = 12.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )

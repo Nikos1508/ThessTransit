@@ -1,5 +1,6 @@
 package com.example.thesstransit.ui.viewModels
 
+import android.annotation.SuppressLint
 import android.app.Application
 import android.util.Log
 import androidx.compose.runtime.getValue
@@ -12,13 +13,12 @@ import com.example.thesstransit.ui.data.LanguagePreferences
 import io.gitlab.mitsiosm.oseth.Oseth
 import io.gitlab.mitsiosm.oseth.OsethTrackVehicle
 import io.gitlab.mitsiosm.oseth.data.Coordinates
-import io.gitlab.mitsiosm.oseth.data.DetailedRoute
+import io.gitlab.mitsiosm.oseth.data.FirstStopTime
 import io.gitlab.mitsiosm.oseth.data.Language
 import io.gitlab.mitsiosm.oseth.data.Route
 import io.gitlab.mitsiosm.oseth.data.RouteId
 import io.gitlab.mitsiosm.oseth.data.ShapeId
 import io.gitlab.mitsiosm.oseth.data.Stop
-import io.gitlab.mitsiosm.oseth.data.TimetableTrip
 import io.gitlab.mitsiosm.oseth.data.Vehicle
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -26,10 +26,8 @@ import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.plus
 import kotlinx.datetime.todayIn
-import org.osmdroid.util.GeoPoint
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
@@ -41,16 +39,19 @@ class RouteDetailsViewModel(
     application: Application
 ) : AndroidViewModel(application) {
 
-    private val api = Oseth()
+    @SuppressLint("StaticFieldLeak")
+    private val context = getApplication<Application>().applicationContext
 
-    private val preferences =
-        LanguagePreferences(application)
+    private val api = Oseth(context)
+
+    private val preferences = LanguagePreferences(application)
 
     private val _language = mutableStateOf(Language.GREEK)
 
     var isLoading = mutableStateOf(false)
     var errorMessage = mutableStateOf<String?>(null)
-    var selectedShape = mutableStateOf<ShapeId?>(null)
+    var selectedShapeId = mutableStateOf<ShapeId?>(null)
+
     var route = mutableStateOf<Route?>(null)
     var selectedRouteId = mutableStateOf<RouteId?>(null)
 
@@ -69,16 +70,17 @@ class RouteDetailsViewModel(
         private set
 
     val stops = mutableStateListOf<Stop>()
-    val trips = mutableStateListOf<TimetableTrip>()
 
-    val detailedRoute = mutableStateOf<DetailedRoute?>(null)
+    val trips = mutableStateListOf<FirstStopTime>()
 
-    val routePolyline =
-        mutableStateListOf<GeoPoint>()
+    val detailedRoute = mutableStateOf<Route?>(null)
+
+    val routePolyline = mutableStateListOf<Coordinates>()
 
     val vehicles = mutableStateListOf<Vehicle>()
 
     val currentVehicles = mutableStateListOf<Coordinates>()
+
     val vehiclePositions = mutableStateListOf<Pair<Int,Float>>()
 
     private var tracker: OsethTrackVehicle? = null
@@ -99,7 +101,7 @@ class RouteDetailsViewModel(
 
         if (
             this.route.value?.id == route.id &&
-            selectedShape.value != null
+            selectedShapeId.value != null
         ) {
             reloadCurrentRoute()
             return
@@ -107,14 +109,8 @@ class RouteDetailsViewModel(
 
         this.route.value = route
 
-        val first = route.tripHeadsigns.firstOrNull() ?: run {
-            errorMessage.value = "Δεν βρέθηκε κατεύθυνση διαδρομής."
-            return
-        }
-
         loadShape(
-            first.shapeId,
-            first.routeId
+            routeId = route.id
         )
     }
 
@@ -317,45 +313,43 @@ class RouteDetailsViewModel(
 
     }
 
-    private fun parseLineString(lineString: String): List<GeoPoint> {
+//    private fun parseLineString(lineString: String): List<GeoPoint> {
+//
+//        return lineString
+//            .removePrefix("LINESTRING(")
+//            .removePrefix("LINESTRING (")
+//            .removeSuffix(")")
+//            .split(",")
+//            .mapNotNull { point ->
+//
+//                val coords = point
+//                    .trim()
+//                    .split(Regex("\\s+"))
+//
+//                if (coords.size != 2)
+//                    return@mapNotNull null
+//
+//                runCatching {
+//                    GeoPoint(
+//                        coords[1].toDouble(),
+//                        coords[0].toDouble()
+//                    )
+//                }.getOrNull()
+//            }
+//    }
 
-        return lineString
-            .removePrefix("LINESTRING(")
-            .removePrefix("LINESTRING (")
-            .removeSuffix(")")
-            .split(",")
-            .mapNotNull { point ->
-
-                val coords = point
-                    .trim()
-                    .split(Regex("\\s+"))
-
-                if (coords.size != 2)
-                    return@mapNotNull null
-
-                runCatching {
-                    GeoPoint(
-                        coords[1].toDouble(),
-                        coords[0].toDouble()
-                    )
-                }.getOrNull()
-            }
-    }
-
+    @SuppressLint("SuspiciousIndentation")
     @OptIn(ExperimentalTime::class)
     fun loadShape(
-        shapeId: ShapeId,
         routeId: RouteId,
         date: LocalDate = selectedDate
     ){
-        Log.d("RouteDetails", "Loading shape $shapeId route $routeId")
+        Log.d("RouteDetails", "Loading route $routeId")
         Log.d("RouteDetails", "Stops: ${stops.size}")
         Log.d("RouteDetails", "Trips: ${trips.size}")
 
         selectedDate = date
-        val midnight = date.atStartOfDayIn(TimeZone.currentSystemDefault())
 
-        selectedShape.value = shapeId
         selectedRouteId.value = routeId
 
         loadingJob?.cancel()
@@ -371,54 +365,33 @@ class RouteDetailsViewModel(
                 vehicles.clear()
                 routePolyline.clear()
 
-                val routeInfo =
-                    api.getRouteInfo(
-                        routeId,
-                        shapeId,
-                        _language.value
-                    )
+                val routeInfo = api.getRoute(routeId)
 
-                val timetable =
-                    api.getTimetable(
-                        routeId,
-                        shapeId,
-                        midnight,
-                        _language.value
-                    )
+                val timetable = api.getFirstStopTimeFromRoute(date, routeId)
 
-                val infoResult = routeInfo.getOrNull()
-                val timetableResult = timetable.getOrNull()
+                if (selectedShapeId.value == null) {
+                    val first = timetable.first()
+                    val trip = api.getTrip(first.tripId)
 
-                val nextMidnight = date.plus(1, DateTimeUnit.DAY).atStartOfDayIn(TimeZone.currentSystemDefault())
+                    selectedShapeId.value = trip?.shapeId
+                }
 
-                val nextDayTimetable =
-                    api.getTimetable(
-                        routeId,
-                        shapeId,
-                        nextMidnight,
-                        _language.value
-                    )
+                val nextMidnight = date.plus(1, DateTimeUnit.DAY)
 
-                if (infoResult == null && timetableResult == null) {
-                    errorMessage.value = "Δεν βρέθηκαν δεδομένα για αυτή την κατεύθυνση."
-                } else {
-                    infoResult?.let {
+                val nextDayTimetable = api.getFirstStopTimeFromRoute(
+                    nextMidnight, routeId
+                )
+
+                    routeInfo?.let {
 
                         detailedRoute.value = it
 
-                        stops.addAll(it.stops)
-                        vehiclePositions.clear() // If it breaks I have to delete this
+                        stops.addAll( api.getStopsFromRoute(routeId) )
+                        vehiclePositions.clear()
 
                         Log.d(
                             "RouteDetails",
-                            "Loaded ${stops.size} stops"
-                        )
-
-                        vehicles.addAll(it.vehicles)
-
-                        Log.d(
-                            "RouteDetails",
-                            "Drawing route from ${it.stops.size} stops"
+                            "Drawing route from ${stops.size} stops"
                         )
 
                         Log.d(
@@ -426,19 +399,17 @@ class RouteDetailsViewModel(
                             "Polyline points: ${routePolyline.size}"
                         )
 
-                        Log.d(
-                            "Polyline",
-                            it.shape.lineString
-                        )
-
-                        val parsed = parseLineString(it.shape.lineString)
+//                        Log.d(
+//                            "Polyline",
+//                            it.shape.lineString
+//                        )
 
                         routePolyline.clear()
-                        routePolyline.addAll(parsed)
+                        routePolyline.addAll( api.getShape(id = selectedShapeId.value!!)!! )
 
-                        Log.d("Polyline", "Points = ${parsed.size}")
+                         Log.d("Polyline", "Points = ${routePolyline.size}")
 
-                        parsed.forEachIndexed { index, p ->
+                        routePolyline.forEachIndexed { index, p ->
                             Log.d(
                                 "Polyline",
                                 "$index -> ${p.latitude}, ${p.longitude}"
@@ -447,33 +418,26 @@ class RouteDetailsViewModel(
 
                         startVehicleTracking(
                             routeId,
-                            shapeId
+                            shapeId = selectedShapeId.value!!
                         )
                     }
 
-                    val dayTrips = mutableListOf<TimetableTrip>()
-                    timetableResult?.let {
+                    val dayTrips = mutableListOf<FirstStopTime>()
+
+                    timetable.let {
                         var prevTime: LocalTime? = null
-                        for (trip in it.trips) {
-                            if (prevTime != null && trip.departureTime < prevTime) break
+
+                        for (trip in it) {
+                            if (prevTime != null && trip.time < prevTime) break
                             dayTrips.add(trip)
-                            prevTime = trip.departureTime
+                            prevTime = trip.time
                         }
                     }
 
-                    nextDayTimetable.getOrNull()?.let {
-                        dayTrips.addAll(
-                            it.trips.filter { trip ->
-                                trip.departureTime.hour == 0 &&
-                                        trip.departureTime.minute <= 30
-                            }
-                        )
-                    }
-
                     trips.addAll(dayTrips)
-                }
+
             } catch (e: Exception) {
-                Log.e("RouteDetails", "Error loading shape $shapeId: ${e.message}")
+                Log.e("RouteDetails", "Error loading shape ${selectedShapeId.value}: ${e.message}")
                 errorMessage.value = "Σφάλμα κατά τη φόρτωση των δεδομένων."
             } finally {
                 isLoading.value = false
@@ -488,12 +452,11 @@ class RouteDetailsViewModel(
 
     fun reloadCurrentRoute() {
 
-        val shape = selectedShape.value ?: return
+        val shape = selectedShapeId.value ?: return
         val routeId = selectedRouteId.value ?: return
 
         loadShape(
-            shape,
-            routeId,
+            routeId = routeId,
             selectedDate
         )
     }
@@ -506,36 +469,25 @@ class RouteDetailsViewModel(
 }
 
 class RouteRepository {
-
     private val api = Oseth()
 
     @OptIn(ExperimentalTime::class)
-    suspend fun loadRoute(
+    fun loadRoute(
         routeId: RouteId,
-        shapeId: ShapeId,
         date: LocalDate
-    ): Pair<List<Stop>, List<TimetableTrip>> {
-
-        val midnight =
-            date.atStartOfDayIn(
-                TimeZone.currentSystemDefault()
-            )
-
-        val info =
-            api.getRouteInfo(routeId, shapeId)
+    ): Pair<List<Stop>, List<FirstStopTime>> {
 
         val timetable =
-            api.getTimetable(
-                routeId,
-                shapeId,
-                midnight
+            api.getFirstStopTimeFromRoute(
+                id = routeId,
+                date = date
             )
 
+        val stops = api.getStopsFromRoute(routeId)
+
         return Pair(
-
-            info.getOrNull()?.stops ?: emptyList(),
-
-            timetable.getOrNull()?.trips ?: emptyList()
+            stops,
+            timetable
         )
     }
 }
