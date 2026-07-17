@@ -1,7 +1,8 @@
 package com.example.thesstransit.ui.item
 
+import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
@@ -79,10 +80,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.thesstransit.R
+import com.example.thesstransit.ui.components.AnimatedSearchBar
 import com.example.thesstransit.ui.components.RouteFiltersDialog
 import com.example.thesstransit.ui.data.SavedLocations
+import com.example.thesstransit.ui.utils.SharedKeys
 import com.example.thesstransit.ui.viewModels.FavoritesViewModel
-import com.example.thesstransit.ui.components.AnimatedSearchBar
+
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun HomeScreen(
@@ -99,7 +102,10 @@ fun HomeScreen(
     onSettingsClick: () -> Unit = {},
     onHomeClick: () -> Unit = {},
     onWorkClick: () -> Unit = {},
-    favoritesViewModel: FavoritesViewModel = viewModel()
+    favoritesViewModel: FavoritesViewModel = viewModel(),
+
+    sharedTransitionScope: SharedTransitionScope,
+    animatedContentScope: AnimatedContentScope
 ){
 
     val tiles = listOf(
@@ -165,16 +171,21 @@ fun HomeScreen(
             }
             item {
                 Spacer(modifier = Modifier.height(8.dp))
-                AnimatedSearchBar(
-                    onClick = onSearchClick,
-                    modifier = Modifier
-                        .padding(horizontal = 12.dp)
-                        .graphicsLayer(
-                            scaleX = searchScale,
-                            scaleY = searchScale
-                        ),
-                    onFilteredClick = { showFilters = true }
-                )
+                with(sharedTransitionScope){
+                    AnimatedSearchBar(
+                        onClick = onSearchClick,
+
+                        modifier = Modifier
+                            .padding(horizontal = 12.dp)
+                            .sharedElement(
+                                rememberSharedContentState(
+                                    key = SharedKeys.SEARCH_BAR
+                                ),
+                                animatedVisibilityScope = animatedContentScope
+                            ),
+                        onFilteredClick = { showFilters = true }
+                    )
+                }
             }
             item {
                 Spacer(modifier = Modifier.height(16.dp))

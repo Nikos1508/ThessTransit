@@ -142,6 +142,8 @@ class MainActivity : ComponentActivity() {
             @OptIn(ExperimentalSharedTransitionApi::class)
             SharedTransitionLayout {
 
+                val navController = rememberNavController()
+
                 ThessTransitTheme(
                     darkTheme = when (appTheme) {
                         AppTheme.LIGHT -> false
@@ -149,8 +151,6 @@ class MainActivity : ComponentActivity() {
                         AppTheme.SYSTEM -> isSystemInDarkTheme()
                     }
                 ) {
-
-                    val navController = rememberNavController()
 
                     Scaffold(
                         modifier = Modifier.fillMaxSize()
@@ -163,6 +163,9 @@ class MainActivity : ComponentActivity() {
                         ) {
                             composable<HomeRoute> {
                                 HomeScreen(
+                                    sharedTransitionScope = this@SharedTransitionLayout,
+                                    animatedContentScope = this,
+
                                     onLoginClick = {
                                         navController.navigate(TicketsRoute)
                                     },
@@ -306,18 +309,13 @@ class MainActivity : ComponentActivity() {
                             }
 
                             composable<SearchRoute> {
-                                AnimatedVisibility(
-                                    visible = true,
-                                    enter =
-                                        fadeIn( tween(250) )
-                                        + scaleIn( initialScale = 0.96f, animationSpec = spring() )
-                                ) {
-                                    SearchScreen(
-                                        onBackClick = {
-                                            navController.popBackStack()
-                                        }
-                                    )
-                                }
+                                SearchScreen(
+                                    sharedTransitionScope = this@SharedTransitionLayout,
+                                    animatedContentScope = this,
+                                    onBackClick = {
+                                        navController.popBackStack()
+                                    }
+                                )
                             }
 
                             composable<StopDetailsRoute> { backStackEntry ->
