@@ -58,7 +58,6 @@ fun RoutesScreen(
     viewModel: RoutesViewModel = viewModel(),
     initialTab: Int = 0,
 ) {
-
     LocalContext.current
 
     val listState = rememberLazyListState()

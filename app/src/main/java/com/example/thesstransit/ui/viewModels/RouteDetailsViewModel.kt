@@ -399,22 +399,10 @@ class RouteDetailsViewModel(
                             "Polyline points: ${routePolyline.size}"
                         )
 
-//                        Log.d(
-//                            "Polyline",
-//                            it.shape.lineString
-//                        )
-
                         routePolyline.clear()
                         routePolyline.addAll( api.getShape(id = selectedShapeId.value!!)!! )
 
                          Log.d("Polyline", "Points = ${routePolyline.size}")
-
-                        routePolyline.forEachIndexed { index, p ->
-                            Log.d(
-                                "Polyline",
-                                "$index -> ${p.latitude}, ${p.longitude}"
-                            )
-                        }
 
                         startVehicleTracking(
                             routeId,

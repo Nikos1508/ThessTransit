@@ -126,12 +126,9 @@ fun HomeScreen(
     val totalFavorites = favoriteRoutes.size + favoriteGroups.size
 
     val context = LocalContext.current
+    val api = Oseth(context)
 
-    val api = remember(context) {
-        Oseth(context = context)
-    }
-
-    LaunchedEffect(Unit) {
+    LaunchedEffect(api) {
         api.sync()
     }
 
