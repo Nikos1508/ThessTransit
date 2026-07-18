@@ -135,10 +135,15 @@ fun RouteDetailsScreen(
     val languageViewModel: LanguageViewModel = viewModel()
     val language by languageViewModel.language.collectAsState()
     
-    val trips = api.getTripsFromRoute(route.id)
-    val currentDirection = trips.find { 
+    val directions = remember(route.id) {
+        api.getTripsFromRoute(route.id)
+    }
+
+    val selectedTrip = directions.firstOrNull {
         it.shapeId == viewModel.selectedShapeId.value
-    }?.headsign ?: "Επιλέξτε κατεύθυνση"
+    }
+
+    val currentDirection = selectedTrip?.headsign ?: "Επιλογή κατεύθυνσης"
 
     LaunchedEffect(route) {
         viewModel.loadRoute(route)
@@ -210,7 +215,7 @@ fun RouteDetailsScreen(
                         .background(MaterialTheme.colorScheme.surfaceContainerHighest)
                         .clip(RoundedCornerShape(18.dp))
                 ) {
-                    api.getTripsFromRoute(route.id).forEach { direction ->
+                    directions.forEach { direction ->
                         DropdownMenuItem(
                             text = {
                                 Text(
@@ -219,9 +224,10 @@ fun RouteDetailsScreen(
                                 )
                             },
                             onClick = {
-                                viewModel.selectedShapeId.value = direction.shapeId
-                                
-                                viewModel.loadShape(routeId = route.id)
+                                viewModel.changeDirection(
+                                    direction.shapeId
+                                )
+
                                 expanded = false
                             }
                         )
@@ -895,9 +901,7 @@ private fun TimetableTab(
                     },
                     supportingContent = {
                         Text(
-                            Oseth(LocalContext.current)
-                                .getTrip(trip.tripId)
-                                !!.headsign
+                            vm.tripHeadsigns[trip.id] ?: ""
                         )
                     },
                     modifier = Modifier.alpha(
