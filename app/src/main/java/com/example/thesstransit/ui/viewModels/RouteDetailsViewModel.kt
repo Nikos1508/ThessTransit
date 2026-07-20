@@ -14,6 +14,7 @@ import com.example.thesstransit.ui.data.LanguagePreferences
 import io.gitlab.mitsiosm.oseth.Oseth
 import io.gitlab.mitsiosm.oseth.OsethTrackVehicle
 import io.gitlab.mitsiosm.oseth.data.Coordinates
+import io.gitlab.mitsiosm.oseth.data.DetailedRoute
 import io.gitlab.mitsiosm.oseth.data.FirstStopTime
 import io.gitlab.mitsiosm.oseth.data.Language
 import io.gitlab.mitsiosm.oseth.data.Route
@@ -23,11 +24,11 @@ import io.gitlab.mitsiosm.oseth.data.Stop
 import io.gitlab.mitsiosm.oseth.data.Timetable
 import io.gitlab.mitsiosm.oseth.data.TripId
 import io.gitlab.mitsiosm.oseth.data.Vehicle
+import io.gitlab.mitsiosm.oseth.data.VehicleId
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
 import kotlinx.datetime.todayIn
@@ -52,11 +53,34 @@ class RouteDetailsViewModel(
     private val _language = mutableStateOf(Language.GREEK)
 
     var isLoading = mutableStateOf(false)
+
     var errorMessage = mutableStateOf<String?>(null)
+
     var selectedShapeId = mutableStateOf<ShapeId?>(null)
 
-    var route = mutableStateOf<Route?>(null)
     var selectedRouteId = mutableStateOf<RouteId?>(null)
+
+    val detailedRoute = mutableStateOf<DetailedRoute?>(null)
+
+    val stops = mutableStateListOf<Stop>()
+
+    val departures = mutableStateListOf<FirstStopTime>()
+
+    val trips = mutableStateListOf<Timetable>()
+
+    val tripHeadsigns = mutableStateMapOf<TripId, String>()
+
+    var currentHeadsign by mutableStateOf<String?>(null)
+
+    val routePolyline = mutableStateListOf<Coordinates>()
+
+    val vehicles = mutableStateListOf<Vehicle>()
+
+    val vehiclePositions = mutableStateListOf<Pair<Int,Float>>()
+
+    private var tracker: OsethTrackVehicle? = null
+    private var trackingJob: Job? = null
+    private var loadingJob: Job? = null
 
     init {
         viewModelScope.launch {
@@ -66,31 +90,16 @@ class RouteDetailsViewModel(
         }
     }
 
+    companion object {
+        private const val TAG = "RouteDetails"
+        const val EARTH_RADIUS = 6371000.0
+    }
+
     @OptIn(ExperimentalTime::class)
     var selectedDate by mutableStateOf(
         Clock.System.todayIn( TimeZone.currentSystemDefault() )
     )
         private set
-
-    val stops = mutableStateListOf<Stop>()
-
-    val trips = mutableStateListOf<Timetable>()
-
-    val tripHeadsigns = mutableStateMapOf<TripId, String>()
-
-    val detailedRoute = mutableStateOf<Route?>(null)
-
-    val routePolyline = mutableStateListOf<Coordinates>()
-
-    val vehicles = mutableStateListOf<Vehicle>()
-
-    val currentVehicles = mutableStateListOf<Coordinates>()
-
-    val vehiclePositions = mutableStateListOf<Pair<Int,Float>>()
-
-    private var tracker: OsethTrackVehicle? = null
-    private var trackingJob: Job? = null
-    private var loadingJob: Job? = null
 
     @OptIn(ExperimentalTime::class)
     val weekDays: List<LocalDate>
@@ -104,19 +113,12 @@ class RouteDetailsViewModel(
 
     fun loadRoute(route: Route) {
 
-        if (
-            this.route.value?.id == route.id &&
-            selectedShapeId.value != null
-        ) {
-            reloadCurrentRoute()
+        if (selectedRouteId.value == route.id)
             return
-        }
 
-        this.route.value = route
+        selectedRouteId.value = route.id
 
-        loadShape(
-            routeId = route.id
-        )
+        loadShape(route.id)
     }
 
     private fun startVehicleTracking(
@@ -145,8 +147,7 @@ class RouteDetailsViewModel(
 
                 lastUpdate = now
 
-                currentVehicles.clear()
-                currentVehicles.addAll(vehicles)
+                vehicles.addAll(detailed.vehicles)
 
                 updateVehiclePositions()
 
@@ -166,19 +167,17 @@ class RouteDetailsViewModel(
     }
 
     private fun updateVehiclePositions() {
-        vehiclePositions.clear()
+        vehiclePositions.apply {
+            clear()
 
-        currentVehicles.forEach { vehicle ->
-            val position = calculateVehiclePosition(vehicle)
-
-            if (position != null) {
-                vehiclePositions.add(position)
+            vehicles.forEach { vehicle ->
+                calculateVehiclePosition(vehicle)?.let(::add)
             }
         }
     }
 
     private fun calculateVehiclePosition(
-        vehicle: Coordinates
+        vehicle: Vehicle
     ): Pair<Int, Float>? {
 
         if (stops.size < 2)
@@ -235,10 +234,7 @@ class RouteDetailsViewModel(
             .coerceIn(0.0, 1.0)
             .toFloat()
 
-        return Pair(
-            closestSegment,
-            progress
-        )
+        return closestSegment to progress
 
     }
 
@@ -311,9 +307,9 @@ class RouteDetailsViewModel(
 
     private fun stopVehicleTracking() {
         trackingJob?.cancel()
-        trackingJob = null
-
         tracker?.stop()
+
+        trackingJob = null
         tracker = null
 
     }
@@ -329,10 +325,11 @@ class RouteDetailsViewModel(
         Log.d("RouteDetails", "Trips: ${trips.size}")
 
         selectedDate = date
-
         selectedRouteId.value = routeId
 
         loadingJob?.cancel()
+
+        stopVehicleTracking()
 
         loadingJob = viewModelScope.launch {
 
@@ -342,95 +339,158 @@ class RouteDetailsViewModel(
 
                 stops.clear()
                 trips.clear()
-                vehicles.clear()
-                routePolyline.clear()
-
-                val routeInfo = api.getRoute(routeId)
-                val routeTrips = api.getTripsFromRoute(routeId)
-                val timetable = api.getFirstStopTimeFromRoute(date, routeId)
-
                 tripHeadsigns.clear()
+                vehicles.clear()
+                currentVehicles.clear()
+                vehiclePositions.clear()
+                routePolyline.clear()
+                departures.clear()
 
-                trips.forEach { firstStopTime ->
-                    api.getTrip(firstStopTime.tripId)?.let { trip ->
-                        tripHeadsigns[trip.id] = trip.headsign
-                    }
-                }
+                val routeTrips = api.getTripsFromRoute(routeId)
 
-                if (selectedShapeId.value == null) {
-                    selectedShapeId.value = routeTrips.firstOrNull()?.shapeId
-                }
-
-                val nextMidnight = date.plus(1, DateTimeUnit.DAY)
-
-                val nextDayTimetable = api.getFirstStopTimeFromRoute(
-                    nextMidnight, routeId
+                Log.d(
+                    TAG,
+                    "Route ${routeId.value} has ${routeTrips.size} directions"
                 )
 
-                    routeInfo?.let {
+                routeTrips.forEachIndexed { index, trip ->
 
-                        detailedRoute.value = it
-
-                        val routeStops = api.getStopsFromRoute(routeId)
-
-                        stops.addAll(routeStops)
-                        vehiclePositions.clear()
-
-                        Log.d(
-                            "RouteDetails",
-                            "Drawing route from ${stops.size} stops"
-                        )
-
-                        Log.d(
-                            "RouteDetails",
-                            "Polyline points: ${routePolyline.size}"
-                        )
-
-                        routePolyline.clear()
-                        api.getShape(selectedShapeId.value!!) ?.let(routePolyline::addAll)
-
-                         Log.d("Polyline", "Points = ${routePolyline.size}")
-
-                        startVehicleTracking(
-                            routeId,
-                            shapeId = selectedShapeId.value!!
-                        )
-                    }
-
-                val timetableResult =
-                    api.apiTimetableForToday(
-                        routeId,
-                        selectedShapeId.value!!
+                    Log.d(
+                        TAG,
+                        "[$index] shape=${trip.shapeId.value} headsign=${trip.headsign}"
                     )
 
-                timetableResult
-                    .getOrNull()?.let {
-                        trips.addAll(
-                            it
+                }
+
+                if (routeTrips.isEmpty()) {
+                    errorMessage.value = "Δεν υπάρχουν διαθέσιμες κατευθύνσεις"
+
+                    return@launch
+                }
+
+                val shapeId = selectedShapeId.value
+                    ?.takeIf {
+                        routeTrips.any { trip ->
+                            trip.shapeId == it
+                        }
+                    }
+                    ?: routeTrips.first().shapeId
+
+                selectedShapeId.value = shapeId
+
+                Log.d(
+                    TAG,
+                    "Selected shape: ${shapeId.value}"
+                )
+
+                val detailed = api.apiRouteInfo(
+                    routeId,
+                    shapeId,
+                    _language.value
+                ).getOrNull()
+
+                if (detailed == null) {
+                    errorMessage.value = "Αποτυχία λήψης στοιχείων διαδρομής"
+                    return@launch
+                }
+
+                detailedRoute.value = detailed
+
+                stops.addAll(detailed.stops)
+
+                Log.d(
+                    TAG,
+                    "Loaded ${stops.size} stops"
+                )
+
+                vehicles.addAll(
+                    vehiclesFromTracker.mapIndexed { index, coordinate ->
+                        Vehicle(
+                            id = VehicleId(index.toString()),
+                            bearing = 0.0,
+                            latitude = coordinate.latitude,
+                            longitude = coordinate.longitude
                         )
                     }
+                )
 
+                updateVehiclePositions()
+
+                Log.d(
+                    TAG,
+                    "Loaded ${vehicles.size} vehicles"
+                )
+
+                api.getShape(shapeId)?.let(routePolyline::addAll)
+
+                Log.d(
+                    TAG,
+                    "Polyline points = ${routePolyline.size}"
+                )
+
+                api.apiTimetableForToday(
+                    routeId,
+                    shapeId,
+                    _language.value
+                )
+                    .getOrNull()?.let {timetable ->
+                        trips.add(timetable)
+
+                        api.getTrip(
+                            timetable.id
+                        )?.let { trip ->
+                            tripHeadsigns[trip.id] = trip.headsign
+                        }
+                    }
+
+                Log.d(
+                    TAG,
+                    "loaded ${trips.size} timetable entries"
+                )
+
+                departures.addAll(
+                    api.getFirstStopTimeFromRoute(
+                        selectedDate,
+                        routeId
+                    )
+                )
+
+                Log.d(
+                    TAG,
+                    "Loaded ${departures.size} departures"
+                )
+
+
+
+
+                startVehicleTracking(
+                    routeId,
+                    shapeId
+                )
             } catch (e: Exception) {
-                Log.e("RouteDetails", "Error loading shape ${selectedShapeId.value}: ${e.message}")
-                errorMessage.value = "Σφάλμα κατά τη φόρτωση των δεδομένων."
+
+                Log.e(
+                    TAG,
+                    "loadshape()",
+                    e
+                )
+
+                errorMessage.value = e.message ?: "Άγνωστο σφαλμα"
+
             } finally {
                 isLoading.value = false
+
             }
 
-            Log.d(
-                "RouteDetails",
-                "Trips loaded: ${trips.size}"
-            )
         }
     }
 
     fun reloadCurrentRoute() {
 
-        val shape = selectedShapeId.value ?: return
         val routeId = selectedRouteId.value ?: return
 
         loadShape(
-            routeId = routeId,
+            routeId,
             selectedDate
         )
     }
@@ -450,32 +510,4 @@ class RouteDetailsViewModel(
         super.onCleared()
     }
 
-}
-
-class RouteRepository {
-    private val api = Oseth()
-
-    @OptIn(ExperimentalTime::class)
-    fun loadRoute(
-        routeId: RouteId,
-        date: LocalDate
-    ): Pair<List<Stop>, List<FirstStopTime>> {
-
-        val timetable =
-            api.getFirstStopTimeFromRoute(
-                date,
-                routeId
-            )
-
-        val shape =
-            api.getTripsFromRoute(routeId).first()
-
-        val stops =
-            api.getStopsFromRoute(routeId)
-
-        return Pair(
-            stops,
-            timetable
-        )
-    }
 }

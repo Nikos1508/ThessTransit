@@ -56,6 +56,7 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlin.reflect.typeOf
+import com.example.thesstransit.ui.item.LoginScreen
 
 @Serializable object HomeRoute
 @Serializable
@@ -65,6 +66,8 @@ data class RoutesRoute(
 @Serializable object TicketsRoute
 
 @Serializable object LinesRoute
+
+@Serializable object LoginRoute
 @Serializable object NearbyStopsRoute
 @Serializable object LiveDeparturesRoute
 
@@ -167,7 +170,7 @@ class MainActivity : ComponentActivity() {
                                     animatedContentScope = this,
 
                                     onLoginClick = {
-                                        navController.navigate(TicketsRoute)
+                                        navController.navigate(LoginRoute)
                                     },
                                     onTicketsClick = {
                                         navController.navigate(TicketsRoute)
@@ -214,6 +217,14 @@ class MainActivity : ComponentActivity() {
                                     },
                                     onSettingsClick = {
                                         navController.navigate(SettingsRoute)
+                                    }
+                                )
+                            }
+
+                            composable<LoginRoute> {
+                                LoginScreen(
+                                    onLoginClick = {
+                                        /* TODO */
                                     }
                                 )
                             }

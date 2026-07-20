@@ -1,6 +1,7 @@
 package com.example.thesstransit.ui.viewModels
 
 import android.app.Application
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -49,6 +50,14 @@ class RoutesViewModel(
 
                 val context = getApplication<Application>().applicationContext
 
+                val allRoutes = Oseth(context).getRoutes()
+
+                allRoutes.forEach {
+                    Log.d(
+                        "RouteD8",
+                        "id=${it.id.value} short=${it.shortName} direction=${it.direction}"
+                    )
+                }
                 routes = Oseth(context)
                     .getRoutes()
                     .sortedBy {
