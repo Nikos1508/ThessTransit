@@ -823,12 +823,12 @@ private fun TimetableTab(
         if (!viewingToday) {
             -1
         } else {
-            vm.trips.indexOfFirst { trip ->
+            vm.departures.indexOfFirst { departure ->
                 val effectiveMinutes =
-                    if (trip.time.hour == 0 && trip.time.minute <= 30)
-                        24 * 60 + trip.time.hour * 60 + trip.time.minute
+                    if (departure.time.hour == 0 && departure.time.minute <= 30)
+                        24 * 60 + departure.time.hour * 60 + departure.time.minute
                     else
-                        trip.time.hour * 60 + trip.time.minute
+                        departure.time.hour * 60 + departure.time.minute
 
                 val nowMinutes =
                     if (now.hour == 0 && now.minute <= 30)
@@ -840,7 +840,7 @@ private fun TimetableTab(
             }
         }
 
-    LaunchedEffect(vm.trips.size) {
+    LaunchedEffect(vm.departures.size) {
         if (nextTripIndex > 0) {
             listState.scrollToItem(
                 nextTripIndex
@@ -849,16 +849,16 @@ private fun TimetableTab(
     }
 
     LazyColumn(state = listState){
-        itemsIndexed(vm.trips) { index, trip ->
+        itemsIndexed(vm.departures) { index, departure ->
             val departed =
                 if (!viewingToday) {
                     false
                 } else {
                     val tripMinutes =
-                        if (trip.time.hour == 0 && trip.time.minute <= 30)
-                            24 * 60 + trip.time.hour * 60 + trip.time.minute
+                        if (departure.time.hour == 0 && departure.time.minute <= 30)
+                            24 * 60 + departure.time.hour * 60 + departure.time.minute
                         else
-                            trip.time.hour * 60 + trip.time.minute
+                            departure.time.hour * 60 + departure.time.minute
 
                     val nowMinutes =
                         if (now.hour == 0 && now.minute <= 30)
@@ -893,7 +893,7 @@ private fun TimetableTab(
                 ListItem(
                     headlineContent = {
                         Text(
-                            trip.time.toString()
+                            departure.time.toString()
                                 .substring(0,5),
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp
@@ -901,7 +901,7 @@ private fun TimetableTab(
                     },
                     supportingContent = {
                         Text(
-                            vm.tripHeadsigns[trip.id] ?: ""
+                            vm.tripHeadsigns[departure.tripId] ?: ""
                         )
                     },
                     modifier = Modifier.alpha(

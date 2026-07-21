@@ -9,7 +9,6 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.thesstransit.ui.data.LanguagePreferences
@@ -23,7 +22,6 @@ import io.gitlab.mitsiosm.oseth.data.Route
 import io.gitlab.mitsiosm.oseth.data.RouteId
 import io.gitlab.mitsiosm.oseth.data.ShapeId
 import io.gitlab.mitsiosm.oseth.data.Stop
-import io.gitlab.mitsiosm.oseth.data.Timetable
 import io.gitlab.mitsiosm.oseth.data.TripId
 import io.gitlab.mitsiosm.oseth.data.Vehicle
 import io.gitlab.mitsiosm.oseth.data.VehicleId
@@ -40,8 +38,6 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
 import kotlin.time.Clock
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
@@ -66,13 +62,9 @@ class RouteDetailsViewModel(
 
     var selectedRouteId = mutableStateOf<RouteId?>(null)
 
-    val detailedRoute = mutableStateOf<DetailedRoute?>(null)
-
     val stops = mutableStateListOf<Stop>()
 
     val departures = mutableStateListOf<FirstStopTime>()
-
-    val trips = mutableStateListOf<FirstStopTime>()
 
     val tripHeadsigns = mutableStateMapOf<TripId, String>()
 
@@ -366,10 +358,6 @@ class RouteDetailsViewModel(
             "SelectedShape = ${selectedShapeId.value}"
         )
 
-        Log.d("RouteDetails", "Loading route $routeId")
-        Log.d("RouteDetails", "Stops: ${stops.size}")
-        Log.d("RouteDetails", "Trips: ${trips.size}")
-
         selectedDate = date
         selectedRouteId.value = routeId
 
@@ -384,14 +372,13 @@ class RouteDetailsViewModel(
                 errorMessage.value = null
 
                 stops.clear()
-                trips.clear()
                 tripHeadsigns.clear()
                 vehicles.clear()
                 vehiclePositions.clear()
                 routePolyline.clear()
                 departures.clear()
 
-                val routeTrips = Oseth(getApplication<Application>().applicationContext).getTripsFromRoute(routeId)
+                val routeTrips = api.getTripsFromRoute(routeId)
 
                 Log.d(
                     TAG,
@@ -433,27 +420,18 @@ class RouteDetailsViewModel(
                     "Calling apiRouteInfo()..."
                 )
 
-                val detailed = Oseth(getApplication<Application>().applicationContext).apiRouteInfo(
-                    routeId,
-                    shapeId,
-                    _language.value
-                ).getOrNull()
-
-                if (detailed == null) {
-                    errorMessage.value = "Αποτυχία λήψης στοιχείων διαδρομής"
-                    return@launch
-                }
-
-                detailedRoute.value = detailed
+                val routeStops = api.getStopsFromRoute(
+                    routeId
+                )
 
                 Log.d(TAG, "========== ROUTE INFO ==========")
-                Log.d(TAG, "Stops = ${detailed.stops.size}")
-                Log.d(TAG, "Vehicles = ${detailed.vehicles.size}")
+                Log.d(TAG, "Stops = ${routeStops.size}")
+                Log.d(TAG, "Vehicles = ${vehicles.size}")
                 Log.d(TAG, "Route = ${routeId.value}")
                 Log.d(TAG, "Shape = ${shapeId.value}")
                 Log.d(TAG, "================================")
 
-                stops.addAll(detailed.stops)
+                stops.addAll(routeStops)
 
                 stops.forEachIndexed { index, stop ->
                     Log.d(
@@ -474,7 +452,7 @@ class RouteDetailsViewModel(
                     "Loaded ${vehicles.size} vehicles"
                 )
 
-                Oseth(getApplication<Application>().applicationContext).getShape(shapeId)?.let{
+                api.getShape(shapeId)?.let{
                     routePolyline.addAll(it)
 
                     Log.d(
@@ -491,43 +469,36 @@ class RouteDetailsViewModel(
                     "Calling apiTimetableForToday()..."
                 )
 
-//                try{
-//                    Oseth(getApplication<Application>().applicationContext).getFirstStopTimeFromRoute(
-//                        date = Clock.System.todayIn(TimeZone.currentSystemDefault()),
-//                        id = routeId
-//                    )
-//                        .let {timetable ->
-//                            trips.addAll(timetable)
-//
-//                            Log.d(
-//                                TAG,
-//                                "Trip = ${timetable.id.value}"
-//                            )
-//
-//                            Oseth(getApplication<Application>().applicationContext).getTrip(
-//                                timetable.id
-//                            )?.let { trip ->
-//                                tripHeadsigns[trip.id] = trip.headsign
-//                                currentHeadsign = trip.headsign
-//
-//                                Log.d(
-//                                    TAG,
-//                                    "Headsign = ${trip.headsign}"
-//                                )
-//                            }
-//                        }
-//                } catch (e: CancellationException) {
-//                    throw e
-//                } catch (e: Exception) {
-//                    Log.e(
-//                        TAG,
-//                        "apiTimetableForToday failed ${e.message}"
-//                    )
-//                }
+                try{
+                    for (departure in departures) {
+                        val tripDetails = api.getTrip(departure.tripId)
+
+                        tripHeadsigns[tripDetails!!.id] = tripDetails.headsign
+
+                        currentHeadsign = tripDetails.headsign
+
+                        Log.d(
+                            TAG,
+                            "Trip = ${tripDetails.id.value}"
+                        )
+
+                        Log.d(
+                            TAG,
+                            "Headsign = ${tripDetails.headsign}"
+                        )
+                    }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Log.e(
+                        TAG,
+                        "apiTimetableForToday failed ${e.message}"
+                    )
+                }
 
                 Log.d(
                     TAG,
-                    "loaded ${trips.size} timetable entries"
+                    "loaded ${departures.size} timetable entries"
                 )
 
                 Log.d(
@@ -537,7 +508,7 @@ class RouteDetailsViewModel(
 
                 try {
                     departures.addAll(
-                        Oseth(getApplication<Application>().applicationContext).getFirstStopTimeFromRoute(
+                        api.getFirstStopTimeFromRoute(
                             selectedDate,
                             routeId
                         )
