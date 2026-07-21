@@ -1,7 +1,10 @@
 package com.example.thesstransit.ui.viewModels
 
+import android.app.Application
+import androidx.compose.runtime.Applier
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.thesstransit.ui.data.RouteGroup
@@ -14,8 +17,10 @@ import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 class GroupRouteDetailsViewModel(
-    private val repository: RouteRepository = RouteRepository()
-) : ViewModel() {
+    application: Application
+) : AndroidViewModel(application) {
+
+    private val repository = RouteRepository(getApplication<Application>().applicationContext)
 
     data class GroupStop(
         val stop: Stop,

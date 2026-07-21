@@ -12,6 +12,7 @@ import com.example.thesstransit.ui.data.LanguagePreferences
 import io.gitlab.mitsiosm.oseth.Oseth
 import io.gitlab.mitsiosm.oseth.data.Language
 import io.gitlab.mitsiosm.oseth.data.Route
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
 class RoutesViewModel(
@@ -65,6 +66,7 @@ class RoutesViewModel(
                     }
 
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 errorMessage = e.message ?: "Error loading routes"
             }
 

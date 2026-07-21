@@ -15,6 +15,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.CancellationException
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -60,6 +61,7 @@ class StopDetailsViewModel(
                 // computeArrivals(stop, matchingRoutes)
 
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 e.printStackTrace()
             } finally {
                 isLoading.value = false
