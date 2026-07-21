@@ -7,11 +7,9 @@ import androidx.lifecycle.viewModelScope
 import com.example.thesstransit.ui.data.RouteGroup
 import io.gitlab.mitsiosm.oseth.data.FirstStopTime
 import io.gitlab.mitsiosm.oseth.data.Stop
-import io.gitlab.mitsiosm.oseth.data.Timetable
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
-import kotlin.collections.map
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 

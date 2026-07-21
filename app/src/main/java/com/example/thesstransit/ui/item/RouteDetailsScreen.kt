@@ -712,7 +712,7 @@ private fun RouteMapTab(
                 return@LaunchedEffect
 
             snapshotFlow {
-                vm.currentVehicles.toList()
+                vm.vehicles.toList()
             }
                 .collectLatest { vehicles ->
                     val map = mapView.value ?: return@collectLatest
