@@ -45,6 +45,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -113,12 +114,72 @@ fun  LoginContent(
         mutableStateOf(false)
     }
 
+    val glowTransition = rememberInfiniteTransition(label = "glow")
+
+    val glowScale by glowTransition.animateFloat(
+        initialValue = 0.95f,
+        targetValue = 1.08f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(
+                durationMillis = 4500,
+                easing = FastOutSlowInEasing
+            ),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "scale"
+    )
+
+    var step by remember {
+        mutableStateOf(0)
+    }
+
+    val cardTransition = rememberInfiniteTransition()
+
+    val offset by cardTransition.animateFloat(
+
+        initialValue = -3f,
+        targetValue = 3f,
+
+        animationSpec = infiniteRepeatable(
+            tween(
+                5000,
+                easing = FastOutSlowInEasing
+            ),
+            RepeatMode.Reverse
+        )
+    )
+
+    LaunchedEffect(Unit) {
+        repeat(6) {
+            delay(100.milliseconds)
+            step++
+        }
+    }
+
     Box(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .size(420.dp)
+            .graphicsLayer{
+                scaleX = glowScale
+                scaleY = glowScale
+            }
+            .background(
+                Brush.radialGradient(
+                    listOf(
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.13f),
+                        Color.Transparent
+                    )
+                ),
+                CircleShape
+            ),
         contentAlignment = Alignment.Center
     ) {
+
         Card(
             modifier = Modifier
+                .graphicsLayer{
+                    translationY = offset
+                }
                 .fillMaxWidth()
                 .padding(horizontal = 28.dp),
             shape = RoundedCornerShape(34.dp),
@@ -137,52 +198,88 @@ fun  LoginContent(
                     ),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                FloatingLogo()
+                AnimatedVisibility(
+                    visible = step >= 1,
+                    enter = fadeIn() + scaleIn()
+                ) {
+                    FloatingLogo()
+                }
 
                 Spacer(Modifier.height(26.dp))
 
-                Text(
-                    "Καλοσήρθατε πίσω",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold
-                )
+                AnimatedVisibility(
+                    visible = step >= 2,
+                    enter = fadeIn()
+                ) {
+                    Text(
+                        "Καλοσήρθατε πίσω",
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
 
                 Spacer(Modifier.height(8.dp))
 
-                Text(
-                    "Συνδεθείτε για διαθέσιμα δεδομενα σε πολλαπλες συσκευές",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                AnimatedVisibility(
+                    visible = step >= 2,
+                    enter = fadeIn()
+                ) {
+                    Text(
+                        "Συνδεθείτε για διαθέσιμα δεδομενα σε πολλαπλες συσκευές",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
 
                 Spacer(Modifier.height(32.dp))
 
-                LoginEmailField(
-                    value = email,
-                    onValueChange = {email = it}
-                )
+                AnimatedVisibility(
+                    visible = step >= 3,
+                    enter = fadeIn()
+                ) {
+                    LoginEmailField(
+                        value = email,
+                        onValueChange = {email = it}
+                    )
+                }
 
                 Spacer(Modifier.height(18.dp))
 
-                LoginPasswordField(
-                    value = password,
-                    onValueChange = {password = it},
-                    visible = passwordVisible,
-                    onVisibilityChange = {
-                        passwordVisible = !passwordVisible
-                    }
-                )
+                AnimatedVisibility(
+                    visible = step >= 4,
+                    enter = fadeIn()
+                ) {
+                    LoginPasswordField(
+                        value = password,
+                        onValueChange = {password = it},
+                        visible = passwordVisible,
+                        onVisibilityChange = {
+                            passwordVisible = !passwordVisible
+                        }
+                    )
+                }
 
                 Spacer(Modifier.height(28.dp))
 
-//                LoginButton(
-//                    onClick = onLoginClick
-//                )
+                AnimatedVisibility(
+                    visible = step >= 5,
+                    enter = fadeIn()
+                ) {
+                    LoginButton(
+                        onClick = onLoginClick
+                    )
+                }
 
                 Spacer(Modifier.height(22.dp))
 
-                TextButton( onClick = {} ) {
-                    Text("Συνέχεια ως επισκέπτης")
+                AnimatedVisibility(
+                    visible = step >= 6,
+                    enter = fadeIn()
+                ) {
+                    TextButton( onClick = {} ) {
+                        Text("Συνέχεια ως επισκέπτης")
+                    }
                 }
+
             }
 
         }
@@ -239,22 +336,35 @@ fun LoginEmailField(
     onValueChange: (String) -> Unit
 ) {
 
+    var focused by remember {
+        mutableStateOf(false)
+    }
+
     TextField(
         value = value,
         onValueChange = onValueChange,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .onFocusChanged {
+                focused = it.isFocused
+            },
         singleLine = true,
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(20.dp),
         leadingIcon = {
             Icon(
-                Icons.Outlined.Email,
-                null
+                imageVector = Icons.Outlined.Email,
+                contentDescription = null,
+                tint =
+                    if (focused)
+                        MaterialTheme.colorScheme.primary
+                    else
+                        MaterialTheme.colorScheme.onSurfaceVariant
             )
         },
         placeholder = { Text("Email") },
         colors = TextFieldDefaults.colors(
-            focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+            focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.85f),
+            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.65f),
             focusedIndicatorColor = Color.Transparent,
             unfocusedIndicatorColor = Color.Transparent
         )
@@ -268,12 +378,21 @@ fun LoginPasswordField(
     visible: Boolean,
     onVisibilityChange: () -> Unit
 ) {
+
+    var focused by remember {
+        mutableStateOf(false)
+    }
+
     TextField(
         value = value,
         onValueChange = onValueChange,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .onFocusChanged{
+                focused = it.isFocused
+            },
         singleLine = true,
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(size = 20.dp),
         visualTransformation =
             if (visible)
                 VisualTransformation.None
@@ -282,7 +401,12 @@ fun LoginPasswordField(
         leadingIcon = {
             Icon(
                 Icons.Outlined.Lock,
-                null
+                null,
+                tint =
+                    if(focused)
+                        MaterialTheme.colorScheme.primary
+                    else
+                        MaterialTheme.colorScheme.onSurfaceVariant
             )
         },
         trailingIcon = {
@@ -300,10 +424,9 @@ fun LoginPasswordField(
         },
         placeholder = { Text("Password") },
         colors = TextFieldDefaults.colors(
-            focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-            focusedIndicatorColor = Color.Transparent,
-            unfocusedTextColor = Color.Transparent
+            focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.85f),
+            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.65f),
+            focusedIndicatorColor = Color.Transparent
         )
     )
 }
