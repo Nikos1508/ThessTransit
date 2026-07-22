@@ -579,7 +579,8 @@ class RouteDetailsViewModel(
         )
     }
 
-    fun changeDirection(shapeId: ShapeId) {
+    fun changeDirection(shapeId: ShapeId, routeId: RouteId) {
+        selectedRouteId.value = routeId
         selectedShapeId.value = shapeId
 
         selectedRouteId.value?.let {

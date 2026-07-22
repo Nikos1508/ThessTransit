@@ -59,12 +59,19 @@ class RoutesViewModel(
                         "id=${it.id.value} short=${it.shortName} direction=${it.direction}"
                     )
                 }
+
+                var tempSort = ""
+
                 routes = Oseth(context)
                     .getRoutes()
                     .sortedBy {
                         it.shortName
                     }
-
+                    .filter {
+                        val r = it.shortName != tempSort
+                        tempSort = it.shortName
+                        return@filter r
+                    }
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 errorMessage = e.message ?: "Error loading routes"

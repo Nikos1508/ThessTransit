@@ -4,18 +4,14 @@ import android.annotation.SuppressLint
 import android.app.Application
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.gitlab.mitsiosm.oseth.Oseth
 import io.gitlab.mitsiosm.oseth.data.Route
 import io.gitlab.mitsiosm.oseth.data.RouteId
 import io.gitlab.mitsiosm.oseth.data.Stop
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.CancellationException
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -54,11 +50,14 @@ class StopDetailsViewModel(
 
                 val matchingRoutes = allRoutes.map { route ->
                     val stops = api.getStopsFromRoute(route.id)
-                    if (stops.any {it.id == stop.id}) route else null
+                    if (stops.any { it.id == stop.id }) route else null
                 }.filterNotNull()
 
                 routes.value = matchingRoutes
-                // computeArrivals(stop, matchingRoutes)
+                loadArrivals(
+                    stop,
+                    matchingRoutes
+                )
 
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
@@ -68,63 +67,55 @@ class StopDetailsViewModel(
             }
         }
     }
-//
-//    @OptIn(ExperimentalTime::class)
-//    private suspend fun computeArrivals(stop: Stop, matchingRoutes: List<Route>) {
-//        val now = Clock.System.now()
-//            .toLocalDateTime(TimeZone.currentSystemDefault())
-//            .time
-//        val allResults = mutableListOf<StopArrivalUi>()
-//
-//        coroutineScope {
-//            matchingRoutes.map { route ->
-//                async {
-//                    val shape = route.tripHeadsigns.first() ?: return@async
-//
-//                    val timetable = api.getTimetableForToday(route.id, shape.shapeId).getOrNull()
-//                    val liveInfo = api.getRouteInfo(route.id, shape.shapeId).getOrNull()
-//
-//                    timetable?.trips?.forEach { trip ->
-//                        val diff = calculateMinutes(trip.departureTime, now)
-//                        if (diff in 0..120) {
-//                            allResults.add(
-//                                StopArrivalUi(
-//                                    route.id,
-//                                    routeName = route.shortName,
-//                                    headsign = trip.headsign,
-//                                    minutes = diff,
-//                                    isLive = false,
-//                                    departureTime = trip.departureTime
-//                                )
-//                            )
-//                        }
-//                    }
-//
-//                    liveInfo?.vehicles?.forEach { vehicle ->
-//                        allResults.add(
-//                            StopArrivalUi(
-//                                routeId = route.id,
-//                                routeName = route.shortName,
-//                                headsign = "LIVE - Προς ${route.tripHeadsigns.firstOrNull()?.headsign}",
-//                                minutes = 0,
-//                                isLive = true,
-//                                departureTime = now
-//                            )
-//                        )
-//                    }
-//                }
-//            }.awaitAll()
-//        }
-//
-//        arrivals.value = allResults
-//            .distinctBy { "${it.routeId.value}-${it.departureTime}" }
-//            .sortedBy { it.minutes }
-//    }
-//
-//    private fun calculateMinutes(departure: LocalTime, now: LocalTime): Int {
-//        val depTotal= departure.hour * 60 + departure.minute
-//        val nowTotal = now.hour * 60 + now.minute
-//
-//        return depTotal - nowTotal
-//    }
+
+    @OptIn(ExperimentalTime::class)
+    private suspend fun loadArrivals(
+        stop: Stop,
+        routes: List<Route>
+    ) {
+        val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+
+        val today = now.date
+        val currentTime = now.time
+
+        val currentMinutes = currentTime.hour * 60 + currentTime.minute
+
+        val result = mutableListOf<StopArrivalUi>()
+
+        routes.forEach { route ->
+            val stopTimes =
+                api.getStopTimesAfterTimeFromRoute(
+                    date = today,
+                    route = route.id,
+                    stop = stop.id,
+                    after = currentTime
+                )
+
+            stopTimes.forEach { stopTime ->
+                val arrivalMinutes = stopTime.time.hour * 60 + stopTime.time.minute
+
+                val diff = arrivalMinutes - currentMinutes
+
+                if (diff in 0..120) {
+                    val trip = api.getTrip(stopTime.trip)
+
+                    result.add(
+                        StopArrivalUi(
+                            routeId = route.id,
+                            routeName = route.shortName,
+                            headsign = trip?.headsign ?: "",
+                            minutes = diff,
+                            isLive = diff <= 2,
+                            departureTime = stopTime.time
+                        )
+                    )
+                }
+            }
+        }
+
+        arrivals.value =
+            result.sortedBy {
+                it.departureTime
+            }
+    }
 }

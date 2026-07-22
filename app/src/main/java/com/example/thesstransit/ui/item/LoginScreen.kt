@@ -32,6 +32,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.outlined.DirectionsBus
@@ -152,22 +153,6 @@ fun  LoginContent(
         mutableIntStateOf(0)
     }
 
-    val cardTransition = rememberInfiniteTransition()
-
-    val offset by cardTransition.animateFloat(
-
-        initialValue = -3f,
-        targetValue = 3f,
-
-        animationSpec = infiniteRepeatable(
-            tween(
-                5000,
-                easing = FastOutSlowInEasing
-            ),
-            RepeatMode.Reverse
-        )
-    )
-
     LaunchedEffect(Unit) {
         repeat(6) {
             delay(100.milliseconds)
@@ -199,9 +184,6 @@ fun  LoginContent(
 
         Card(
             modifier = Modifier
-                .graphicsLayer{
-                    translationY = offset
-                }
                 .fillMaxWidth()
                 .padding(horizontal = 10.dp)
                 .widthIn(max = 420.dp)
@@ -214,10 +196,10 @@ fun  LoginContent(
                 ),
             shape = RoundedCornerShape(34.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.72f)
+                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f)
             ),
             elevation = CardDefaults.cardElevation(
-                defaultElevation = 12.dp
+                defaultElevation = 6.dp
             ),
             border = BorderStroke(
                 1.dp,
@@ -267,12 +249,12 @@ fun  LoginContent(
                     )
                 }
 
-                AnimatedVisibility(
-                    visible = step >= 2,
-                    enter = fadeIn()
-                ) {
-                    LoginBenefits()
-                }
+//                AnimatedVisibility(
+//                    visible = step >= 2,
+//                    enter = fadeIn()
+//                ) {
+//                    LoginBenefits()
+//                }
 
                 Spacer(Modifier.height(28.dp))
 
@@ -415,6 +397,32 @@ fun LoginEmailField(
         mutableStateOf(false)
     }
 
+    Column(modifier = Modifier.fillMaxWidth()) {
+
+        Text(
+            "Email",
+            style = MaterialTheme.typography.labelMedium,
+            color =
+                if (focused)
+                    MaterialTheme.colorScheme.primary
+                else
+                    MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        BasicTextField(
+            value = value,
+            onValueChange = onValueChange,
+            modifier = Modifier
+                .fillMaxWidth()
+                .onFocusChanged{
+                    focused = it.isFocused
+                },
+            singleLine = true,
+            textStyle = MaterialTheme.typography.bodyLarge.copy(
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        )
+    }
     TextField(
         value = value,
         onValueChange = onValueChange,

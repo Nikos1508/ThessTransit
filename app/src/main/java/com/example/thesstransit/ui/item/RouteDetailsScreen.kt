@@ -80,6 +80,7 @@ import com.example.thesstransit.ui.viewModels.LanguageViewModel
 import com.example.thesstransit.ui.viewModels.RouteDetailsViewModel
 import io.gitlab.mitsiosm.oseth.Oseth
 import io.gitlab.mitsiosm.oseth.data.Route
+import io.gitlab.mitsiosm.oseth.data.RouteId
 import io.gitlab.mitsiosm.oseth.data.Stop
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
@@ -134,16 +135,27 @@ fun RouteDetailsScreen(
 
     val languageViewModel: LanguageViewModel = viewModel()
     val language by languageViewModel.language.collectAsState()
-    
-    val directions = remember(route.id) {
-        api.getTripsFromRoute(route.id)
+
+    val directionA = remember(route.id) {
+        api.getTripsFromRoute(route.id).map {
+            Pair(it, route.id)
+        }
     }
+
+    val directionB = remember(route.id) {
+        val newRouteId = RouteId(route.id.value.replace("_1_", "_2_"))
+        api.getTripsFromRoute(newRouteId).map {
+                Pair(it, newRouteId)
+            }
+    }
+
+    val directions = directionA.plus(directionB)
 
     val selectedTrip = directions.firstOrNull {
-        it.shapeId == viewModel.selectedShapeId.value
+        it.first.shapeId == viewModel.selectedShapeId.value
     }
 
-    val currentDirection = selectedTrip?.headsign ?: "Επιλογή κατεύθυνσης"
+    val currentDirection = selectedTrip?.first?.headsign ?: "Επιλογή κατεύθυνσης"
 
     LaunchedEffect(route) {
         viewModel.loadRoute(route)
@@ -219,13 +231,14 @@ fun RouteDetailsScreen(
                         DropdownMenuItem(
                             text = {
                                 Text(
-                                    direction.headsign,
+                                    direction.first.headsign,
                                     modifier = Modifier.padding(vertical = 4.dp)
                                 )
                             },
                             onClick = {
                                 viewModel.changeDirection(
-                                    direction.shapeId
+                                    direction.first.shapeId,
+                                    routeId = direction.second
                                 )
 
                                 expanded = false
@@ -316,7 +329,6 @@ fun RouteDetailsScreen(
                 )
             }
         ) {
-
             Icon(
                 if (favorites.contains(route.id.value))
                     Icons.Default.Favorite
@@ -524,6 +536,8 @@ private fun RouteMapTab(
                         Context.MODE_PRIVATE
                     )
                 )
+
+                Configuration.getInstance().userAgentValue = "ThessTransit/1.0"
 
                 MapView(context).apply {
 

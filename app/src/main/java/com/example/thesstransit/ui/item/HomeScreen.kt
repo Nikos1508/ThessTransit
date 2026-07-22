@@ -129,7 +129,7 @@ fun HomeScreen(
     val api = Oseth(context)
 
     LaunchedEffect(api) {
-        api.sync(true)
+        api.sync()
     }
 
     val savedLocations = remember(context) {
