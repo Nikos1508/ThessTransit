@@ -1,10 +1,18 @@
 package com.example.thesstransit.ui.item
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -24,9 +32,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.DirectionsBus
@@ -39,19 +44,15 @@ import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.QrCode2
 import androidx.compose.material.icons.outlined.Route
-import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material.icons.outlined.Train
-import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material.icons.outlined.Work
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -65,16 +66,13 @@ import androidx.compose.ui.composed
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -87,6 +85,8 @@ import com.example.thesstransit.ui.data.SavedLocations
 import com.example.thesstransit.ui.utils.SharedKeys
 import com.example.thesstransit.ui.viewModels.FavoritesViewModel
 import io.gitlab.mitsiosm.oseth.Oseth
+import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -142,19 +142,6 @@ fun HomeScreen(
 
     val work by savedLocations.work.collectAsState(
         initial = Triple(null, null, null)
-    )
-
-    var searchPressed by remember {
-        mutableStateOf(false)
-    }
-
-    val searchScale by animateFloatAsState(
-        targetValue =
-            if (searchPressed)
-                0.96f
-            else
-                1f,
-        animationSpec = spring()
     )
 
     Box(
@@ -255,6 +242,17 @@ fun HomeScreen(
 fun HeaderSection(
     onLoginClick: () -> Unit = {}
 ) {
+    var showGreekTitle: Boolean by remember {
+        mutableStateOf(false)
+    }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(4500.milliseconds)
+            showGreekTitle = !showGreekTitle
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -347,12 +345,38 @@ fun HeaderSection(
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "Thess",
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontSize = 34.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+
+                    AnimatedContent(
+                        targetState = showGreekTitle,
+                        transitionSpec = {
+                            (
+                                    fadeIn(
+                                        animationSpec = tween(500)
+                                    ) + slideInVertically(
+                                        animationSpec = tween(500),
+                                        initialOffsetY = { it / 2 }
+                                    )
+                                    ).togetherWith(
+                                    fadeOut(
+                                        animationSpec = tween(400)
+                                    ) + slideOutVertically(
+                                        animationSpec = tween(400),
+                                        targetOffsetY = { -it / 2 }
+                                    )
+                                ) using SizeTransform(clip = false)
+                        },
+                        label = "ThessAnimation"
+                    ) { greek ->
+
+                        Text(
+                            text = if (greek) "Θες" else "Thess",
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontSize = 34.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+
                     Text(
                         text = "Transit",
                         color = MaterialTheme.colorScheme.primary,
@@ -370,103 +394,6 @@ fun HeaderSection(
                     lineHeight = 18.sp
                 )
             }
-        }
-    }
-}
-
-@Composable
-fun SearchBarSection(
-    onFilterClick: () -> Unit,
-    onSearchClick: () -> Unit
-) {
-
-    var searchQuery by remember {mutableStateOf("")}
-
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 12.dp)
-            .height(58.dp)
-            .bounceClick( onClick = onSearchClick ),
-        shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surfaceContainer,
-        border = BorderStroke(
-            1.dp,
-            MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
-        )
-    ) {
-        Row(
-            modifier = Modifier.fillMaxSize(),
-            verticalAlignment = Alignment.CenterVertically
-        ){
-            IconButton(
-                onClick = { searchQuery = "" },
-                modifier = Modifier.padding(start = 8.dp)
-            ){
-                Icon(
-                    imageVector = Icons.Outlined.Search,
-                    contentDescription = "Search Button",
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }
-
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(horizontal = 4.dp),
-                contentAlignment = Alignment.CenterStart
-            ) {
-
-                if (searchQuery.isEmpty()) {
-                    Text(
-                        text = "Πού θέλεις να πας;",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                        fontSize = 16.sp
-                    )
-                }
-
-                BasicTextField(
-                    value = searchQuery,
-                    onValueChange = {searchQuery = it},
-                    textStyle = TextStyle(
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontSize = 16.sp
-                    ),
-                    cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                    keyboardActions = KeyboardActions(
-                        onSearch = { searchQuery }
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-
-            VerticalDivider(
-                modifier = Modifier
-                    .height(28.dp)
-                    .padding(horizontal = 4.dp),
-                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
-            )
-
-            Box(
-                modifier = Modifier
-                    .padding(end = 8.dp)
-                    .size(40.dp)
-                    .background(
-                        color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                        shape = RoundedCornerShape(12.dp)
-                    )
-                    .bounceClick { onFilterClick() },
-                contentAlignment = Alignment.Center
-            ){
-                Icon(
-                    imageVector = Icons.Outlined.Tune,
-                    contentDescription = "Φίλτρα Αναζήτησης",
-                    tint = MaterialTheme.colorScheme.onSurface
-                )
-            }
-
         }
     }
 }
