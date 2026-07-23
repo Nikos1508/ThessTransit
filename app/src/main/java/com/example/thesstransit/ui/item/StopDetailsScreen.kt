@@ -7,10 +7,13 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.scaleIn
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -52,7 +55,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -162,7 +167,7 @@ fun StopDetailsScreen(
                             Spacer(modifier = Modifier.height(4.dp))
 
                             Text (
-                                text = "Κωδικός στάσης • ${stop.id}",
+                                text = "Κωδικός στάσης • ${stop.id.value}",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -250,13 +255,101 @@ fun StopDetailsScreen(
 }
 
 @Composable
-private fun ArrivalsTab(arrivals: List<StopArrivalUi>) {
-    if ( arrivals.isEmpty() ) {
+private fun ArrivalsTab(
+    arrivals: List<StopArrivalUi>
+) {
+    if (arrivals.isEmpty()) {
         EmptyState(message = "Δεν βρέθηκαν προγραμματισμένες αφίξεις για τις επόμενες 2 ώρες.")
-    } else {
-        LazyColumn( Modifier.fillMaxSize() ) {
-            items(arrivals) { arrival ->
-                ArrivalItem(arrival)
+        return
+    }
+
+    val nextArrival = arrivals.first()
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(
+            horizontal = 16.dp,
+            vertical = 12.dp
+        ),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        item {
+            NextArrivalCard( nextArrival )
+        }
+
+        items(arrivals.drop(1)) {
+            ArrivalItem(it)
+        }
+    }
+}
+
+@Composable
+private fun NextArrivalCard(
+    arrival: StopArrivalUi
+) {
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(
+                horizontal = 18.dp,
+                vertical = 16.dp
+            )
+        ) {
+            Text(
+                "Επόμενο λεωφορείο",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer( modifier = Modifier.height(8.dp) )
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
+                RouteBadge( arrival.routeName )
+
+                Spacer( modifier = Modifier.width(12.dp) )
+
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        text = arrival.headsign,
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Clip,
+                        modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE)
+                    )
+
+                    Spacer( modifier = Modifier.height(4.dp) )
+
+                    Text(
+                        "Αναχώρηση ${arrival.departureTime.toString().substring(0,5)}",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    Spacer( modifier = Modifier.height(4.dp) )
+
+                    Text(
+                        if(arrival.isLive)
+                            "Το όχημα παρακολουθείται ζωντανά"
+                        else
+                            "Προγραμματισμένη άφιξη",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+
+                ArrivalChip(arrival)
             }
         }
     }
@@ -278,13 +371,8 @@ private fun ArrivalItem(
     ) {
 
         Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(
-                    horizontal = 16.dp,
-                    vertical = 8.dp
-                ),
-            shape = RoundedCornerShape(28.dp),
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(24.dp),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.88f)
             ),
@@ -300,7 +388,10 @@ private fun ArrivalItem(
         ) {
 
             Column(
-                modifier = Modifier.padding(20.dp),
+                modifier = Modifier.padding(
+                    horizontal = 18.dp,
+                    vertical = 14.dp
+                ),
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically
@@ -315,11 +406,16 @@ private fun ArrivalItem(
                         Text(
                             text = arrival.headsign,
                             fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.titleMedium
+                            style = MaterialTheme.typography.titleMedium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Clip,
+                            modifier = Modifier.basicMarquee(
+                                iterations = Int.MAX_VALUE
+                            )
                         )
 
                         Text(
-                            text = "Προς ${arrival.headsign}",
+                            text = "Κανονικό δρομολόγιο",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -329,7 +425,13 @@ private fun ArrivalItem(
 
                 }
 
-                Spacer( modifier = Modifier.height(18.dp) )
+                Spacer( modifier = Modifier.height(10.dp) )
+
+                HorizontalDivider(
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = .12f)
+                )
+
+                Spacer( modifier = Modifier.height(10.dp) )
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -344,14 +446,17 @@ private fun ArrivalItem(
                     )
 
                     InfoItem(
-                        icon = Icons.Default.Flag,
+                        icon = Icons.Default.Timer,
                         title = "Τέρμα",
-                        value = "_"
+                        value =
+                            if (arrival.isLive)
+                                "Live"
+                            else
+                                "${arrival.minutes} λεπτά"
                     )
-
                 }
 
-                Spacer( modifier = Modifier.height(14.dp) )
+                Spacer( modifier = Modifier.height(10.dp) )
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically
@@ -365,11 +470,25 @@ private fun ArrivalItem(
 
                     Spacer( modifier = Modifier.width(6.dp) )
 
-                    Text(
-                        text = "Κατεύθυνση: ${arrival.headsign}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary
-                    )
+                    Column {
+
+                        Text(
+                            "Κατεύθυνση",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+
+                        Spacer(
+                            Modifier.height(2.dp)
+                        )
+
+                        Text(
+                            arrival.headsign,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+
+                    }
                 }
             }
         }
@@ -377,18 +496,93 @@ private fun ArrivalItem(
 }
 
 @Composable
-fun InfoItem(icon: ImageVector) {
-    TODO("Not yet implemented")
+fun InfoItem(
+    icon: ImageVector,
+    title: String,
+    value: String
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            icon,
+            null,
+            modifier = Modifier.size(18.dp),
+            tint = MaterialTheme.colorScheme.primary
+        )
+
+        Spacer( modifier = Modifier.width(8.dp) )
+
+        Column {
+
+            Text(
+                title,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Text(
+                value,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
 }
 
 @Composable
-fun ArrivalChip(x0: StopArrivalUi) {
-    TODO("Not yet implemented")
+fun ArrivalChip(
+    arrival: StopArrivalUi
+) {
+    Surface(
+        shape = RoundedCornerShape(50),
+        color =
+            if (arrival.isLive)
+                MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+            else
+                MaterialTheme.colorScheme.surfaceContainer
+    ) {
+        Text(
+            text =
+                if (arrival.isLive)
+                    "● Live"
+                else
+                    "${arrival.minutes} λεπτά",
+            modifier = Modifier
+                .padding(
+                    horizontal = 11.dp,
+                    vertical = 5.dp
+                ),
+            fontWeight = FontWeight.ExtraBold,
+            color =
+                if (arrival.isLive)
+                    MaterialTheme.colorScheme.primary
+                else
+                    MaterialTheme.colorScheme.onSurface
+        )
+    }
 }
 
 @Composable
-fun RouteBadge(x0: String) {
-    TODO("Not yet implemented")
+fun RouteBadge(
+    route: String
+) {
+    Surface(
+        shape = RoundedCornerShape(50),
+        shadowElevation = 2.dp,
+        tonalElevation = 4.dp,
+        color = MaterialTheme.colorScheme.primary,
+    ) {
+        Text(
+            route,
+            modifier = Modifier
+                .padding(
+                    horizontal = 12.dp,
+                    vertical = 6.dp
+                ),
+            color = Color.White,
+            fontWeight = FontWeight.Bold
+        )
+    }
 }
 
 @Composable
@@ -468,7 +662,7 @@ private fun EmptyState(message: String) {
                 fontWeight = FontWeight.Bold
             )
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
             Text(
                 message,

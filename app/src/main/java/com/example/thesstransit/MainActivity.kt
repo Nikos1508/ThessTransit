@@ -6,13 +6,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatDelegate
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.scaleIn
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -37,6 +32,7 @@ import com.example.thesstransit.ui.data.AppThemePreferences
 import com.example.thesstransit.ui.item.GroupRouteDetailsScreen
 import com.example.thesstransit.ui.item.HomeScreen
 import com.example.thesstransit.ui.item.LocationPickerScreen
+import com.example.thesstransit.ui.item.LoginScreen
 import com.example.thesstransit.ui.item.RouteDetailsScreen
 import com.example.thesstransit.ui.item.RoutesScreen
 import com.example.thesstransit.ui.item.SearchScreen
@@ -50,13 +46,11 @@ import com.example.thesstransit.ui.viewModels.RoutesViewModel
 import com.example.thesstransit.ui.viewModels.StopDetailsViewModel
 import io.gitlab.mitsiosm.oseth.data.Route
 import io.gitlab.mitsiosm.oseth.data.Stop
-import io.gitlab.mitsiosm.oseth.data.StopId
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlin.reflect.typeOf
-import com.example.thesstransit.ui.item.LoginScreen
 
 @Serializable object HomeRoute
 @Serializable
@@ -91,7 +85,7 @@ object SettingsRoute
 
 @Serializable
 data class StopDetailsRoute(
-    val stopId: String
+    val stop: Stop
 )
 
 @Serializable
@@ -112,6 +106,32 @@ val CustomRouteType = object : NavType<Route>(isNullableAllowed = false) {
 
     override fun serializeAsValue(value: Route): String {
         return Uri.encode(Json.encodeToString(value))
+    }
+}
+
+val CustomStopType = object : NavType<Stop>(isNullableAllowed = false) {
+
+    override fun get(bundle: Bundle, key: String): Stop? {
+        return bundle.getString(key)?.let {
+            Json.decodeFromString(it)
+        }
+    }
+
+    override fun parseValue(value: String): Stop {
+        return Json.decodeFromString(Uri.decode(value))
+    }
+
+    override fun put(bundle: Bundle, key: String, value: Stop) {
+        bundle.putString(
+            key,
+            Json.encodeToString(value)
+        )
+    }
+
+    override fun serializeAsValue(value: Stop): String {
+        return Uri.encode(
+            Json.encodeToString(value)
+        )
     }
 }
 
@@ -293,9 +313,7 @@ class MainActivity : ComponentActivity() {
                                     onBackClick = { navController.popBackStack() },
                                     onStopClick = { stop ->
                                         navController.navigate(
-                                            StopDetailsRoute(
-                                                stopId = stop.id.value
-                                            )
+                                            StopDetailsRoute(stop)
                                         )
                                     }
                                 )
@@ -329,20 +347,13 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
 
-                            composable<StopDetailsRoute> { backStackEntry ->
-                                val stopId = backStackEntry.toRoute<StopDetailsRoute>().stopId
+                            composable<StopDetailsRoute>(
+                                typeMap = mapOf(typeOf<Stop>() to CustomStopType)
+                            ) { backStackEntry ->
+                                val stop = backStackEntry.toRoute<StopDetailsRoute>().stop
                                 val vm: StopDetailsViewModel = viewModel()
 
-                                val stop = remember(stopId) {
-                                    Stop(
-                                        id = StopId(stopId),
-                                        name = "Loading...",
-                                        latitude = 0.0,
-                                        longitude = 0.0
-                                    )
-                                }
-
-                                LaunchedEffect(stopId) {
+                                LaunchedEffect(stop) {
                                     vm.load(stop)
                                 }
 
