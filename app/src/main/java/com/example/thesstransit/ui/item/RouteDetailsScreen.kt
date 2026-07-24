@@ -32,6 +32,8 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.DirectionsBus
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.LocationOn
@@ -44,10 +46,10 @@ import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Surface
@@ -94,7 +96,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.osmdroid.config.Configuration
-import org.osmdroid.tileprovider.tilesource.TileSourceFactory
+import org.osmdroid.tileprovider.tilesource.XYTileSource
 import org.osmdroid.util.BoundingBox
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
@@ -193,15 +195,14 @@ fun RouteDetailsScreen(
             RouteInfoCard(
                 route = route,
                 direction = currentDirection,
-                stopCount = viewModel.stops.size,
-                favorite = favorites.contains(route.id.value)
+                stopCount = viewModel.stops.size
             )
 
             Spacer( modifier = Modifier.height(10.dp) )
 
             Card(
                 modifier = Modifier
-                    .padding(horizontal = 16.dp)
+                    .padding(horizontal = 16.dp, vertical = 4.dp)
                     .fillMaxWidth(),
                 shape = RoundedCornerShape(22.dp),
                 colors = CardDefaults.cardColors(
@@ -416,8 +417,7 @@ fun RouteDetailsScreen(
 fun RouteInfoCard(
     route: Route,
     direction: String,
-    stopCount: Int,
-    favorite: Boolean
+    stopCount: Int
 ) {
     Card(
         modifier = Modifier
@@ -432,13 +432,8 @@ fun RouteInfoCard(
             Row(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                RouteBadge(route.shortName)
-
-                Spacer( modifier = Modifier.width(12.dp) )
-
-                Column( modifier = Modifier.weight(1f) ) {
                     Text(
-                        text = route.longName,
+                        text = route.shortName,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         maxLines = 2
@@ -451,7 +446,6 @@ fun RouteInfoCard(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.primary
                     )
-                }
             }
 
             Spacer( modifier = Modifier.height(18.dp) )
@@ -515,96 +509,140 @@ private fun StopsTab(
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(vertical = 6.dp)
+        contentPadding = PaddingValues(bottom = 24.dp)
     ) {
-
         itemsIndexed(vm.stops) { index, stop ->
 
-            Row(
+            Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp)
+                    .padding(horizontal = 24.dp)
                     .clickable {
                         onStopClick(stop)
                     },
-                verticalAlignment = Alignment.Top
+                shape = RoundedCornerShape(22.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
+                elevation = CardDefaults.cardElevation(
+                    defaultElevation = 2.dp
+                )
             ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
+                Row(
+                    modifier = Modifier.padding(18.dp),
+                    verticalAlignment = Alignment.Top
                 ) {
-
-                    Box(
-                        modifier = Modifier
-                            .width(24.dp)
-                            .height(
-                                if (index != vm.stops.lastIndex)
-                                    86.dp
-                                else
-                                    14.dp
-                            ),
-                        contentAlignment = Alignment.TopCenter
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        if (index != vm.stops.lastIndex) {
-                            Box(
-                                modifier = Modifier
-                                    .width(2.dp)
-                                    .height(72.dp)
-                                    .align(Alignment.TopCenter)
-                                    .offset(y = 14.dp)
-                                    .background(
-                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.35f)
-                                    )
-                            )
-                        }
 
                         Box(
                             modifier = Modifier
-                                .size(14.dp)
-                                .background(
-                                    MaterialTheme.colorScheme.primary,
-                                    CircleShape
-                                )
-                        )
-
-                        vm.vehiclePositions.forEach { position ->
-
-                            val stopIndex = position.first
-                            val progress = position.second
-
-                            if (stopIndex == index) {
+                                .width(24.dp)
+                                .height(
+                                    if (index != vm.stops.lastIndex)
+                                        86.dp
+                                    else
+                                        14.dp
+                                ),
+                            contentAlignment = Alignment.TopCenter
+                        ) {
+                            if (index != vm.stops.lastIndex) {
                                 Box(
                                     modifier = Modifier
-                                        .offset(
-                                            y = 14.dp + (72.dp * progress)
-                                        )
-                                        .size(16.dp)
+                                        .width(3.dp)
+                                        .height(72.dp)
+                                        .align(Alignment.TopCenter)
+                                        .offset(y = 14.dp)
                                         .background(
-                                            MaterialTheme.colorScheme.onPrimary,
-                                            CircleShape
+                                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)
                                         )
                                 )
                             }
+
+                            Box(
+                                modifier = Modifier
+                                    .size(14.dp)
+                                    .background(
+                                        MaterialTheme.colorScheme.primary,
+                                        CircleShape
+                                    )
+                            )
+
+                            vm.vehiclePositions.forEach { position ->
+
+                                val stopIndex = position.first
+                                val progress = position.second
+
+                                if (stopIndex == index) {
+                                    Surface(
+                                        modifier = Modifier
+                                            .offset(
+                                                y = 14.dp + (72.dp * progress)
+                                            )
+                                            .size(22.dp),
+                                        shape = CircleShape,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        shadowElevation = 6.dp
+                                    ) {
+                                        Box(
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                Icons.Default.DirectionsBus,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(12.dp),
+                                                tint = MaterialTheme.colorScheme.onPrimary
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
-                }
 
-                Spacer( modifier = Modifier.width(16.dp) )
+                    Spacer(modifier = Modifier.width(16.dp))
 
-                Column(
-                    modifier = Modifier.padding(bottom = 4.dp)
-                ) {
+                    Column(
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    ) {
 
-                    Text(
-                        text = stop.name,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp
-                    )
+                        Text(
+                            text = stop.name,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
 
-                    Text(
-                        text = "Κωδικός στάσης: ${stop.id}",
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Default.LocationOn,
+                                contentDescription = null,
+                                modifier = Modifier.size(14.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+
+                            Spacer(modifier = Modifier.width(4.dp))
+
+
+                            Text(
+                                text = "Κωδικός στάσης: ${stop.id.value}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+
+                            Spacer(Modifier.weight(1f))
+
+                            Icon(
+                                Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.outline
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -704,13 +742,28 @@ private fun RouteMapTab(
                     )
                 )
 
-                Configuration.getInstance().userAgentValue = "ThessTransit/1.0"
+                Configuration.getInstance().userAgentValue =
+                    "${context.packageName}/1.0"
+
+                Configuration.getInstance().tileDownloadThreads = 2
+                Configuration.getInstance().tileFileSystemThreads = 2
+
+                val tileSource = XYTileSource(
+                    "CartoLight",
+                    0,
+                    20,
+                    256,
+                    ".png",
+                    arrayOf(
+                        "https://a.basemaps.cartocdn.com/light_all/",
+                        "https://b.basemaps.cartocdn.com/light_all/",
+                        "https://c.basemaps.cartocdn.com/light_all/"
+                    )
+                )
 
                 MapView(context).apply {
 
-                    setTileSource(
-                        TileSourceFactory.MAPNIK
-                    )
+                    setTileSource(tileSource)
 
                     setMultiTouchControls(true)
 
@@ -959,13 +1012,21 @@ private fun TimetableTab(
     vm: RouteDetailsViewModel
 ){
     LazyRow(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.padding(12.dp)
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        modifier = Modifier.padding(
+            horizontal = 16.dp,
+            vertical = 14.dp
+        )
     ){
         items(vm.weekDays) { day ->
 
             FilterChip(
-                modifier = Modifier.height(32.dp),
+                modifier = Modifier.height(38.dp),
+                shape = RoundedCornerShape(18.dp),
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                ),
                 selected = day == vm.selectedDate,
                 onClick = {
                     val shapeId = vm.selectedShapeId.value
@@ -1055,8 +1116,12 @@ private fun TimetableTab(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 2.dp),
+                    .padding(horizontal = 16.dp, vertical = 6.dp),
 
+                shape = RoundedCornerShape(22.dp),
+                elevation = CardDefaults.cardElevation(
+                    defaultElevation = 2.dp
+                ),
                 border =
                     if (isNextTrip)
                         BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
@@ -1071,24 +1136,48 @@ private fun TimetableTab(
                             MaterialTheme.colorScheme.surface
                 )
             ) {
-                ListItem(
-                    headlineContent = {
+                Column(
+                    modifier = Modifier
+                        .padding(18.dp)
+                        .alpha( if(departed) 0.45f else 1f )
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Text(
-                            departure.time.toString()
-                                .substring(0,5),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp
+                            text = departure.time.toString(),
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold
                         )
-                    },
-                    supportingContent = {
-                        Text(
-                            vm.tripHeadsigns[departure.tripId] ?: ""
-                        )
-                    },
-                    modifier = Modifier.alpha(
-                        if (departed) 0.45f else 1f
+
+                        Spacer( modifier = Modifier.weight(1f) )
+
+                        if (isNextTrip) {
+                            Surface(
+                                shape = RoundedCornerShape(50),
+                                color = MaterialTheme.colorScheme.primary
+                            ) {
+                                Text(
+                                    "Επόμενο",
+                                    modifier = Modifier.padding(
+                                        horizontal = 10.dp,
+                                        vertical = 5.dp
+                                    ),
+                                    color = MaterialTheme.colorScheme.onPrimary,
+                                    style = MaterialTheme.typography.labelSmall
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer( modifier = Modifier.height(10.dp) )
+
+                    Text(
+                        text = vm.tripHeadsigns[departure.tripId] ?: "",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium
                     )
-                )
+                }
             }
             HorizontalDivider()
         }
