@@ -34,6 +34,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
@@ -48,6 +50,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -64,6 +67,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -166,109 +171,176 @@ fun RouteDetailsScreen(
     }
 
     Box(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    listOf(
+                        MaterialTheme.colorScheme.background,
+                        MaterialTheme.colorScheme.surface
+                    )
+                )
+            )
     ) {
         Column {
 
-            Row(
+            ScreenHeader(
+                title = route.shortName,
+                onBackClick = onBackClick,
+                onProfileClick = {}
+            )
+
+            RouteInfoCard(
+                route = route,
+                direction = currentDirection,
+                stopCount = viewModel.stops.size,
+                favorite = favorites.contains(route.id.value)
+            )
+
+            Spacer( modifier = Modifier.height(10.dp) )
+
+            Card(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                ScreenHeader(
-                    title = route.shortName,
-                    onBackClick = onBackClick,
-                    onProfileClick = {}
+                    .padding(horizontal = 16.dp)
+                    .fillMaxWidth(),
+                shape = RoundedCornerShape(22.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer
                 )
-            }
-
-            Spacer(Modifier.height(12.dp))
-
-            ExposedDropdownMenuBox(
-                expanded = expanded,
-                onExpandedChange = { expanded = !expanded },
-                modifier = Modifier
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
-                    .fillMaxWidth()
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Επιλογή Κατεύθυνσης",
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = MaterialTheme.colorScheme.primary,
-                            letterSpacing = 1.sp
-                        )
-
-                        Text(
-                            text = currentDirection,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            maxLines = 1
-                        )
-                    }
-
-                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-                }
-
-
-                ExposedDropdownMenu(
+                ExposedDropdownMenuBox(
                     expanded = expanded,
-                    onDismissRequest = { expanded = false },
+                    onExpandedChange = { expanded = !expanded },
                     modifier = Modifier
-                        .background(MaterialTheme.colorScheme.surfaceContainerHighest)
-                        .clip(RoundedCornerShape(18.dp))
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                        .fillMaxWidth()
                 ) {
-                    directions.forEach { direction ->
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    direction.first.headsign,
-                                    modifier = Modifier.padding(vertical = 4.dp)
-                                )
-                            },
-                            onClick = {
-                                viewModel.changeDirection(
-                                    direction.first.shapeId,
-                                    routeId = direction.second
-                                )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Επιλογή Κατεύθυνσης",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.primary,
+                                letterSpacing = 1.sp
+                            )
 
-                                expanded = false
-                            }
-                        )
+                            Text(
+                                text = currentDirection,
+                                fontSize = 16.sp,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                maxLines = 1
+                            )
+                        }
+
+                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                    }
+
+
+                    ExposedDropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false },
+                        modifier = Modifier
+                            .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                            .clip(RoundedCornerShape(18.dp))
+                    ) {
+                        directions.forEach { direction ->
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        direction.first.headsign,
+                                        modifier = Modifier.padding(vertical = 4.dp)
+                                    )
+                                },
+                                onClick = {
+                                    viewModel.changeDirection(
+                                        direction.first.shapeId,
+                                        routeId = direction.second
+                                    )
+
+                                    expanded = false
+                                }
+                            )
+                        }
                     }
                 }
             }
 
             Spacer(Modifier.height(12.dp))
 
-            PrimaryTabRow(selectedTabIndex = selectedTab) {
+            Surface(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .fillMaxWidth(),
+                shape = RoundedCornerShape(24.dp),
+                color = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.65f)
+            ) {
 
-                Tab(
-                    selected = selectedTab == 0,
-                    onClick = { selectedTab = 0 },
-                    text = { Text("Στάσεις") }
-                )
+                PrimaryTabRow(
+                    selectedTabIndex = selectedTab,
+                    containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                    divider = {},
+                    indicator = {}
+                ) {
+                    Tab(
+                        selected = selectedTab == 0,
+                        onClick = { selectedTab = 0 },
+                        selectedContentColor = MaterialTheme.colorScheme.primary,
+                        unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        text = {
+                            Text(
+                                "Στάσεις",
+                                fontWeight =
+                                    if (selectedTab == 0)
+                                        FontWeight.Bold
+                                    else
+                                        FontWeight.Medium
+                            )
+                        }
+                    )
 
-                Tab(
-                    selected = selectedTab == 1,
-                    onClick = { selectedTab = 1 },
-                    text = { Text("Δρομολόγια") }
-                )
+                    Tab(
+                        selected = selectedTab == 1,
+                        onClick = { selectedTab = 1 },
+                        selectedContentColor = MaterialTheme.colorScheme.primary,
+                        unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        text = {
+                            Text(
+                                "Δρομολόγια",
+                                fontWeight =
+                                    if (selectedTab == 1)
+                                        FontWeight.Bold
+                                    else
+                                        FontWeight.Medium
+                            )
+                        }
+                    )
 
-                Tab(
-                    selected = selectedTab == 2,
-                    onClick = {selectedTab = 2},
-                    text = { Text("Χάρτης") }
-                )
+                    Tab(
+                        selected = selectedTab == 2,
+                        onClick = { selectedTab = 2 },
+                        selectedContentColor = MaterialTheme.colorScheme.primary,
+                        unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        text = {
+                            Text(
+                                "Χάρτης",
+                                fontWeight =
+                                    if (selectedTab == 2)
+                                        FontWeight.Bold
+                                    else
+                                        FontWeight.Medium
+                            )
+                        }
+                    )
+                }
 
             }
 
@@ -335,6 +407,101 @@ fun RouteDetailsScreen(
                 else
                     Icons.Default.FavoriteBorder,
                 contentDescription = null
+            )
+        }
+    }
+}
+
+@Composable
+fun RouteInfoCard(
+    route: Route,
+    direction: String,
+    stopCount: Int,
+    favorite: Boolean
+) {
+    Card(
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .fillMaxWidth(),
+        shape = RoundedCornerShape(26.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        )
+    ) {
+        Column( Modifier.padding(22.dp) ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                RouteBadge(route.shortName)
+
+                Spacer( modifier = Modifier.width(12.dp) )
+
+                Column( modifier = Modifier.weight(1f) ) {
+                    Text(
+                        text = route.longName,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 2
+                    )
+
+                    Spacer( modifier = Modifier.height(6.dp) )
+
+                    Text(
+                        text = direction,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+
+            Spacer( modifier = Modifier.height(18.dp) )
+
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                RouteStatChip(
+                    Icons.Default.LocationOn,
+                    "$stopCount στάσεις"
+                )
+
+                RouteStatChip( /* TODO: Change it for smt else */
+                    Icons.Default.SwapHoriz,
+                    "2 κατευθύνσεις"
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun RouteStatChip(
+    icon: ImageVector,
+    text: String
+) {
+    Surface(
+        shape = RoundedCornerShape(50),
+        color = MaterialTheme.colorScheme.primary.copy(0.08f)
+    ) {
+        Row(
+            modifier = Modifier.padding(
+                horizontal = 12.dp,
+                vertical = 8.dp
+            ),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(16.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+
+            Spacer( modifier = Modifier.width(6.dp) )
+
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelLarge
             )
         }
     }

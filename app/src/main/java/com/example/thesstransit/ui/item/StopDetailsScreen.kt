@@ -376,14 +376,10 @@ private fun ArrivalItem(
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.88f)
             ),
-            border =
-                if (arrival.isLive)
-                    BorderStroke(
-                        1.5.dp,
-                        MaterialTheme.colorScheme.primary
-                    )
-                else
-                    null,
+            border = BorderStroke(
+                1.5.dp,
+                MaterialTheme.colorScheme.primary
+            ),
             elevation = CardDefaults.cardElevation(6.dp)
         ) {
 
