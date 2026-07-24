@@ -225,7 +225,7 @@ private fun SettingsContent(
                         trailing = {
                             Switch(
                                 checked = language == Language.ENGLISH,
-                                onCheckedChange = { }
+                                onCheckedChange = { languageViewModel.toggleLanguage() }
                             )
                         }
                     )
@@ -275,6 +275,10 @@ private fun SettingsContent(
                         onClick = showAbout
                     )
                 }
+            }
+
+            item {
+                Spacer( modifier = Modifier.height(12.dp) )
             }
         }
     }
@@ -501,7 +505,7 @@ private fun ThemeCard(
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 ThemeOption(
-                    text = "Συστήματος",
+                    text = "Σύστημα",
                     selected = selected == AppTheme.SYSTEM
                 ) {
                     onThemeSelected(

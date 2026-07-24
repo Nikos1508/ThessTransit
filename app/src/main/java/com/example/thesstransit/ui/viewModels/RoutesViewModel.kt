@@ -51,18 +51,14 @@ class RoutesViewModel(
 
                 val context = getApplication<Application>().applicationContext
 
-                val allRoutes = Oseth(context).getRoutes()
-
-                allRoutes.forEach {
-                    Log.d(
-                        "RouteD8",
-                        "id=${it.id.value} short=${it.shortName} direction=${it.direction}"
-                    )
-                }
+                Log.d(
+                    "Language=*=*=*=*=*=*=*=*=*=*=",
+                    "${language == Language.GREEK}"
+                )
 
                 var tempSort = ""
 
-                routes = Oseth(context)
+                routes = Oseth(context, language = language)
                     .getRoutes()
                     .sortedBy {
                         it.shortName

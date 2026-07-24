@@ -48,11 +48,11 @@ class RouteDetailsViewModel(
     @SuppressLint("StaticFieldLeak")
     private val context = getApplication<Application>().applicationContext
 
-    private val api = Oseth(context)
-
     private val preferences = LanguagePreferences(application)
 
-    private val _language = mutableStateOf(Language.GREEK)
+    val _language = mutableStateOf(Language.GREEK)
+
+    private val api = Oseth(context, language = _language.value)
 
     var isLoading = mutableStateOf(false)
 
@@ -77,8 +77,6 @@ class RouteDetailsViewModel(
     val vehicles = mutableStateListOf<Vehicle>()
 
     val vehiclePositions = mutableStateListOf<Pair<Int,Float>>()
-
-    val tripArrivalTimes = mutableStateMapOf<TripId, String>()
 
     private var tracker: OsethTrackVehicle? = null
     private var trackingJob: Job? = null

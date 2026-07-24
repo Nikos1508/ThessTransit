@@ -64,7 +64,7 @@ fun BusRouteRowItem(
         ){
             Box(
                 modifier = Modifier
-                    .width(68.dp)
+                    .width(80.dp)
                     .height(42.dp)
                     .background(
                         MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
@@ -89,7 +89,7 @@ fun BusRouteRowItem(
 
             Column( modifier = Modifier.weight(1f) ) {
 
-                val shouldScroll = route.longName.length > 25
+                val shouldScroll = route.longName.length > 18
 
                 Text(
                     text = route.longName,

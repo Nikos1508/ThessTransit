@@ -16,14 +16,11 @@ class LanguageViewModel(
     application: Application
 ): AndroidViewModel(application) {
 
-    private val apiPreferences =
-        LanguagePreferences(application)
+    private val apiPreferences = LanguagePreferences(application)
 
-    private val appPreferences =
-        AppLanguagePreferences(application)
+    private val appPreferences = AppLanguagePreferences(application)
 
-    private val _language =
-        MutableStateFlow(Language.GREEK)
+    private val _language = MutableStateFlow(Language.GREEK)
 
     val language: StateFlow<Language>
         get() = _language

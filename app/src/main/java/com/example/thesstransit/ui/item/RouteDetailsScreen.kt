@@ -128,7 +128,7 @@ fun RouteDetailsScreen(
     viewModel: RouteDetailsViewModel = viewModel()
 ) {
     val context = LocalContext.current
-    val api = Oseth(context)
+    val api = Oseth(context, language = viewModel._language.value)
 
     var selectedTab by remember {
         mutableIntStateOf(0)
@@ -528,7 +528,6 @@ private fun StopsTab(
                 ) {
                     Box(
                         modifier = Modifier
-                            .width(24.dp)
                             .height(
                                 if (index != vm.stops.lastIndex)
                                     86.dp
