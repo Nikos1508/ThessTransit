@@ -602,7 +602,7 @@ fun MainFeatureCard(
 }
 
 @Composable
-fun SectionTitle(
+private fun SectionTitle(
     title: String
 ) {
     Text(

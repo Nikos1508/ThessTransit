@@ -38,6 +38,7 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
@@ -513,88 +514,76 @@ private fun StopsTab(
     ) {
         itemsIndexed(vm.stops) { index, stop ->
 
-            Card(
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 24.dp)
                     .clickable {
                         onStopClick(stop)
-                    },
-                shape = RoundedCornerShape(22.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                ),
-                elevation = CardDefaults.cardElevation(
-                    defaultElevation = 2.dp
-                )
+                    }
             ) {
-                Row(
-                    modifier = Modifier.padding(18.dp),
-                    verticalAlignment = Alignment.Top
+                Column(
+                    modifier = Modifier.width(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
+                    Box(
+                        modifier = Modifier
+                            .width(24.dp)
+                            .height(
+                                if (index != vm.stops.lastIndex)
+                                    86.dp
+                                else
+                                    14.dp
+                            ),
+                        contentAlignment = Alignment.TopCenter
                     ) {
+                        if (index != vm.stops.lastIndex) {
+                            Box(
+                                modifier = Modifier
+                                    .width(3.dp)
+                                    .height(72.dp)
+                                    .align(Alignment.TopCenter)
+                                    .offset(y = 14.dp)
+                                    .background(
+                                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)
+                                    )
+                            )
+                        }
 
                         Box(
                             modifier = Modifier
-                                .width(24.dp)
-                                .height(
-                                    if (index != vm.stops.lastIndex)
-                                        86.dp
-                                    else
-                                        14.dp
-                                ),
-                            contentAlignment = Alignment.TopCenter
-                        ) {
-                            if (index != vm.stops.lastIndex) {
-                                Box(
-                                    modifier = Modifier
-                                        .width(3.dp)
-                                        .height(72.dp)
-                                        .align(Alignment.TopCenter)
-                                        .offset(y = 14.dp)
-                                        .background(
-                                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)
-                                        )
+                                .size(12.dp)
+                                .background(
+                                    MaterialTheme.colorScheme.primary,
+                                    CircleShape
                                 )
-                            }
+                        )
 
-                            Box(
-                                modifier = Modifier
-                                    .size(14.dp)
-                                    .background(
-                                        MaterialTheme.colorScheme.primary,
-                                        CircleShape
-                                    )
-                            )
+                        vm.vehiclePositions.forEach { position ->
 
-                            vm.vehiclePositions.forEach { position ->
+                            val stopIndex = position.first
+                            val progress = position.second
 
-                                val stopIndex = position.first
-                                val progress = position.second
-
-                                if (stopIndex == index) {
-                                    Surface(
-                                        modifier = Modifier
-                                            .offset(
-                                                y = 14.dp + (72.dp * progress)
-                                            )
-                                            .size(22.dp),
-                                        shape = CircleShape,
-                                        color = MaterialTheme.colorScheme.primary,
-                                        shadowElevation = 6.dp
+                            if (stopIndex == index) {
+                                Surface(
+                                    modifier = Modifier
+                                        .offset(
+                                            y = 14.dp + (72.dp * progress)
+                                        )
+                                        .size(22.dp),
+                                    shape = CircleShape,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    shadowElevation = 6.dp
+                                ) {
+                                    Box(
+                                        contentAlignment = Alignment.Center
                                     ) {
-                                        Box(
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Icon(
-                                                Icons.Default.DirectionsBus,
-                                                contentDescription = null,
-                                                modifier = Modifier.size(12.dp),
-                                                tint = MaterialTheme.colorScheme.onPrimary
-                                            )
-                                        }
+                                        Icon(
+                                            Icons.Default.DirectionsBus,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(12.dp),
+                                            tint = MaterialTheme.colorScheme.onPrimary
+                                        )
                                     }
                                 }
                             }
@@ -610,39 +599,24 @@ private fun StopsTab(
                         Text(
                             text = stop.name,
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 1
                         )
 
-                        Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
 
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                Icons.Default.LocationOn,
-                                contentDescription = null,
-                                modifier = Modifier.size(14.dp),
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-
-                            Spacer(modifier = Modifier.width(4.dp))
-
-
-                            Text(
-                                text = "Κωδικός στάσης: ${stop.id.value}",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-
-                            Spacer(Modifier.weight(1f))
-
-                            Icon(
-                                Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.outline
-                            )
-                        }
+                        Text(
+                            text = "Κωδικός στάσης: ${stop.id.value}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
+
+                    Icon(
+                        Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.outline
+                    )
                 }
             }
         }
@@ -1116,12 +1090,9 @@ private fun TimetableTab(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 6.dp),
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
 
-                shape = RoundedCornerShape(22.dp),
-                elevation = CardDefaults.cardElevation(
-                    defaultElevation = 2.dp
-                ),
+                shape = RoundedCornerShape(16.dp),
                 border =
                     if (isNextTrip)
                         BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
@@ -1136,50 +1107,63 @@ private fun TimetableTab(
                             MaterialTheme.colorScheme.surface
                 )
             ) {
-                Column(
+                Row(
                     modifier = Modifier
-                        .padding(18.dp)
+                        .padding(12.dp)
                         .alpha( if(departed) 0.45f else 1f )
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = departure.time.toString(),
+                            text = departure.time.toString().substring(0,5),
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold
                         )
 
-                        Spacer( modifier = Modifier.weight(1f) )
+                        Text(
+                            text = "Αναχώρηση",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+
+                        Box(
+                            modifier = Modifier
+                                .padding(horizontal = 12.dp)
+                                .width(1.dp)
+                                .height(30.dp)
+                                .background(MaterialTheme.colorScheme.outlineVariant)
+                        )
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = vm.tripHeadsigns[departure.tripId] ?: "",
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Medium,
+                                maxLines = 1
+                            )
+
+                            Text(
+                                text = "Άφιξη: ",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
 
                         if (isNextTrip) {
-                            Surface(
-                                shape = RoundedCornerShape(50),
-                                color = MaterialTheme.colorScheme.primary
-                            ) {
-                                Text(
-                                    "Επόμενο",
-                                    modifier = Modifier.padding(
-                                        horizontal = 10.dp,
-                                        vertical = 5.dp
-                                    ),
-                                    color = MaterialTheme.colorScheme.onPrimary,
-                                    style = MaterialTheme.typography.labelSmall
-                                )
-                            }
+                            Icon(
+                                Icons.Default.Timer,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp)
+                            )
                         }
+
                     }
 
-                    Spacer( modifier = Modifier.height(10.dp) )
-
-                    Text(
-                        text = vm.tripHeadsigns[departure.tripId] ?: "",
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Medium
-                    )
                 }
             }
-            HorizontalDivider()
+            HorizontalDivider() //Remove it maybe later
         }
     }
 }

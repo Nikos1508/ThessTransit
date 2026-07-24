@@ -63,7 +63,7 @@ dependencies {
     implementation(libs.androidx.material.icons.extended)
 
     //ΑΠΙ
-    implementation("io.gitlab.mitsiosm:oseth:2.0.3")
+    implementation("io.gitlab.mitsiosm:oseth:2.1.0")
 
     //Help for the ΑΠΙ
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")

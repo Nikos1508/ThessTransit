@@ -78,6 +78,8 @@ class RouteDetailsViewModel(
 
     val vehiclePositions = mutableStateListOf<Pair<Int,Float>>()
 
+    val tripArrivalTimes = mutableStateMapOf<TripId, String>()
+
     private var tracker: OsethTrackVehicle? = null
     private var trackingJob: Job? = null
     private var loadingJob: Job? = null
@@ -470,11 +472,11 @@ class RouteDetailsViewModel(
                 )
 
                 try{
+
                     for (departure in departures) {
                         val tripDetails = api.getTrip(departure.tripId)
 
                         tripHeadsigns[tripDetails!!.id] = tripDetails.headsign
-
                         currentHeadsign = tripDetails.headsign
 
                         Log.d(
