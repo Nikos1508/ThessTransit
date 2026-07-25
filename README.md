@@ -46,7 +46,6 @@ The application is primarily developed by us (Hallooo), with AI being used only 
 <div align="center">
 <img width="144" height="320" alt="signal-2026-07-25-22-31-09-445_009" src="https://github.com/user-attachments/assets/3fce7a8c-0254-4af0-b31f-3b4b6dd5a8b0" />
 <img width="144" height="320" alt="signal-2026-07-25-22-31-09-445_003" src="https://github.com/user-attachments/assets/523dc358-e5bc-4552-9c86-9f0349538c5b" />
-<img width="144" height="320" alt="signal-2026-07-25-22-31-09-445_005" src="https://github.com/user-attachments/assets/05e6ecd7-a149-47ad-9833-20a6aca55e22" />
 <img width="144" height="320" alt="signal-2026-07-25-22-31-09-445_006" src="https://github.com/user-attachments/assets/04fe7d33-8944-4967-92e9-9f66550b7de7" />
 <img width="144" height="320" alt="signal-2026-07-25-22-31-09-445_007" src="https://github.com/user-attachments/assets/38edb51b-a900-4f70-9761-c47fd452661e" />
 <img width="144" height="320" alt="signal-2026-07-25-22-31-09-445" src="https://github.com/user-attachments/assets/a2bc4af0-e9f2-47b1-9efd-51dbd07b0c05" />
