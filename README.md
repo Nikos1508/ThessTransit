@@ -14,17 +14,17 @@
 
 To download the application:
 
-1. Download the latest release APK (version 0.9) from **[HERE](https://github.com/Nikos1508/ThessTransit/releases/download/0.9/app-debug.apk)**.
+1) Download the latest release APK (version 0.9) from **[HERE](https://github.com/Nikos1508/ThessTransit/releases/download/0.9/app-debug.apk)**.
 2. Open the app and wait approximately **2–3 minutes** while all routes, stops, and timetable information are downloaded and stored locally.
-3. Enjoy the application! More updates and features will be announced here as development continues.
+3) Enjoy the application! More updates and features will be announced here as development continues.
 
 ---
 
 ## About the Project
 
-The project is mainly focused on creating a modern transportation application for Thessaloniki that combines both the bus and metro systems while incorporating LLMs and AI agents to improve the user experience. The long-term goal is to provide more reliable route suggestions, adjusted arrival times, live news updates, and all the information a passenger may need in one place.
+The project is mainly focused on creating a modern transportation application for Thessaloniki that combines both the bus and metro systems while incorporating LLMs and AI agents to improve the user experience. The long-term goal fot the project is to provide more reliable route suggestions, adjusted arrival times, live news updates, and all the information a passenger may need in one place (including guides on various different aspects)
 
-The application is primarily developed by us (Hallooo), with AI being used only as a development assistant for tasks such as generating XML string resources, debugging errors, and speeding up parts of the development process with the repeating parts of the code with minimal changes between them.
+The application is primarily developed by me, for now, (Hallooo), with AI being used only as a development assistant for tasks such as generating XML string resources, debugging errors, and speeding up parts of the development process with the repeating parts of the code with minimal changes between them.
 
 ---
 
@@ -81,8 +81,7 @@ The project is primarily developed using **Kotlin** with **Android Studio** and 
 
 The project also uses:
 - **Gradle Kotlin DSL** with **Version Catalogs (`libs.versions.toml`)** for dependency and build management.
-- **SQL databases** for storing and managing structured transportation data (although not seen in this repository)
-- **JSON files** for handling and processing external data sources (likewise, the SQL they are mostly used in the api used in this project, which can be found **[HERE](https://github.com/GalaxyGamingBoy/kt-bus)**
-- **REST APIs** for communication with transportation services and retrieving live information
+- **SQL databases** for storing and managing structured transportation data, although not seen in this repository as they are mostly used in the api used in this project, which can be found **[HERE](https://github.com/GalaxyGamingBoy/kt-bus)**
+- **REST APIs** for communication with transportation services and retrieving live information (the one above)
 
 In future versions, **Python** will be introduced for AI-related features, including AI agents and intelligent route optimization
