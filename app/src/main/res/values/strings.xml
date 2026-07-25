@@ -1,3 +1,251 @@
 <resources>
+
     <string name="app_name">ThessTransit</string>
+    <string name="tickets">Εισητήρια</string>
+    <string name="language">Γλώσσα</string>
+    <string name="greek">Ελληνικά</string>
+    <string name="english">English</string>
+    <string name="settings">Ρυθμίσεις</string>
+    <string name="home">Οικία</string>
+
+    <!-- GROUPED ROUTES SCREEN -->
+    <string name="route_group_title">Ομάδα γραμμών %1$s</string>
+    <string name="available_routes_count">%1$d διαθέσιμες διαδρομές</string>
+
+    <!-- GROUPED ROUTES DETAILS SCREEN -->
+    <string name="route_header_title">Γραμμή %1$s</string>
+    <string name="direction_label">Κατεύθυνση</string>
+    <string name="direction_start">Αφετηρία</string>
+    <string name="direction_end">Τέρμα</string>
+    <string name="tab_schedules">Δρομολόγια</string>
+    <string name="tab_stops">Στάσεις</string>
+
+    <!-- HOME SCREEN -->
+    <!-- Header Section -->
+    <string name="login">Login</string>
+    <string name="welcome_to">Καλωσόρισες στο</string>
+    <string name="app_subtitle">Η έξυπνη μετακίνηση στη Θεσσαλονίκη</string>
+
+    <!-- Quick Access -->
+    <string name="quick_home">Οικία</string>
+    <string name="quick_work">Εργασία</string>
+    <string name="quick_favorites">Αγαπημένα</string>
+    <string name="quick_set_location">Καθόρισε</string>
+    <string name="routes_count_format">%1$d διαδρομές</string>
+
+    <!-- Main Features -->
+    <string name="feature_how_to_go_title">Πώς να πάω;</string>
+    <string name="feature_how_to_go_subtitle">Βρες την καλύτερη διαδρομή</string>
+    <string name="feature_lines_title">Γραμμές &amp;\nΔρομολόγια</string>
+    <string name="feature_lines_subtitle">Δες όλες τις γραμμές και τα δρομολόγια</string>
+    <string name="feature_nearby_stops_title">Στάσεις κοντά\nμου</string>
+    <string name="feature_nearby_stops_subtitle">Στάσεις λεωφορείου και μετρό κοντά σου</string>
+    <string name="feature_live_departures_title">Αναχωρήσεις\nτώρα</string>
+    <string name="feature_live_departures_subtitle">Ζωντανά δεδομένα των αναχωρήσεων και αφίξεων λεωφορείων και μετρό</string>
+
+    <!-- Section Titles -->
+    <string name="section_updates_news">Ενημερώσεις / Νέα</string>
+    <string name="section_extra_features">Επιπλέον λειτουργίες</string>
+
+    <!-- AI Updates Mock Data -->
+    <string name="update_traffic_title">Κυκλοφορία</string>
+    <string name="update_traffic_desc">Αυξημένη κίνηση στην Εγνατία Οδό</string>
+    <string name="update_works_title">Έργα &amp; Διακοπές</string>
+    <string name="update_works_desc">Γραμμή 3K: Καθυστέρηση 10 λεπτών</string>
+
+    <!-- Feature Tiles -->
+    <string name="tile_tickets">Εισιτήρια\n&amp; Τιμές</string>
+    <string name="tile_buy_ticket">Αγορά\nΕισιτηρίου</string>
+    <string name="tile_metro_lines">Γραμμές\nΜετρό</string>
+    <string name="tile_favorite_routes">Αγαπημένες\nΔιαδρομές</string>
+    <string name="tile_notifications">Ειδοποιήσεις</string>
+    <string name="tile_settings">Ρυθμίσεις</string>
+
+    <!-- LOCATION PICKER SCREEN -->
+    <string name="title_set_home">Ορισμός Οικίας</string>
+    <string name="title_set_work">Ορισμός Εργασίας</string>
+    <string name="search_location_placeholder">Αναζήτηση δρόμου ή περιοχής</string>
+    <string name="marker_selected_location">Επιλογή τοποθεσίας</string>
+    <string name="marker_home">Οικία</string>
+    <string name="marker_work">Εργασία</string>
+    <string name="btn_confirm_location">Επιβεβαίωση τοποθεσίας</string>
+
+    <!-- -->
+    <string name="login_title">Σύνδεση</string>
+    <string name="login_subtitle">Συγχρονίστε τις αγαπημένες σας διαδρομές, τις ειδοποιήσεις και τις ρυθμίσεις σας σε όλες τις συσκευές.</string>
+    <string name="email_label">EMAIL</string>
+    <string name="email_placeholder">Email</string>
+    <string name="password_placeholder">Password</string>
+    <string name="btn_login">Σύνδεση</string>
+    <string name="btn_forgot_password">Ξέχασες τον κωδικό;</string>
+    <string name="divider_or">ή</string>
+    <string name="no_account_prompt">Δεν έχεις λογαριασμό;</string>
+    <string name="link_register">Εγγραφή</string>
+
+    <!-- ROUTE DETAILS SCREEN -->
+    <string name="day_mon">ΔΕΥ</string>
+    <string name="day_tue">ΤΡΙ</string>
+    <string name="day_wed">ΤΕΤ</string>
+    <string name="day_thu">ΠΕΜ</string>
+    <string name="day_fri">ΠΑΡ</string>
+    <string name="day_sat">ΣΑΒ</string>
+    <string name="day_sun">ΚΥΡ</string>
+
+    <string name="direction_select_default">Επιλογή κατεύθυνσης</string>
+    <string name="tab_map">Χάρτης</string>
+    <string name="stat_stops_count">%1$d στάσεις</string>
+    <string name="stat_directions_count">2 κατευθύνσεις</string>
+    <string name="chip_today">ΣΗΜ</string>
+    <string name="arrival_label_prefix">Άφιξη: </string>
+
+    <!-- ROUTES SCREEN -->
+    <string name="title_routes">Διαδρομές</string>
+    <string name="tab_all_routes">Όλες</string>
+    <string name="tab_categories">Κατηγορίες</string>
+    <string name="tab_favorites">Αγαπημένα</string>
+    <string name="search_route_placeholder">Αναζήτηση γραμμής…</string>
+    <string name="header_favorite_groups">Αγαπημένες ομάδες</string>
+    <string name="header_favorite_routes">Αγαπημένες γραμμές</string>
+
+    <!-- SEARCH SCREEN -->
+    <string name="my_location">Η τοποθεσία μου</string>
+    <string name="current_location">Τρέχουσα τοποθεσία</string>
+    <string name="search_from_label">Από</string>
+    <string name="search_to_label">Προς</string>
+    <string name="recent_searches_title">Πρόσφατες αναζητήσεις</string>
+    <string name="recent_search_subtitle">Πρόσφατη αναζήτηση</string>
+
+    <!-- SETTINGS SCREEN -->
+    <string name="title_settings">Ρυθμίσεις</string>
+    <string name="settings_about_dialog_text">
+        Δημιουργήθηκε για μία εύκολη\nμετακίνηση στη Θεσσαλονίκη.\n\nVersion 0.8
+    </string>
+    <string name="ok">OK</string>
+    <string name="section_general">Γενικά</string>
+    <string name="settings_language">Γλώσσα</string>
+    <string name="section_appearance">Εμφάνιση</string>
+    <string name="settings_contact_title">Στοιχεία επικοινωνίας</string>
+    <string name="settings_contact_subtitle">Επικοινωνήστε μαζί μας</string>
+    <string name="settings_about_title">Σχετικά</string>
+    <string name="settings_about_subtitle">Έκδοση 0.8</string>
+    <string name="settings_header_subtitle">Προσωποποίησε την εμπειρία σου στο ThessTransit</string>
+    <string name="theme_title">Θέμα εφαρμογής</string>
+    <string name="theme_subtitle">Διάλεξε εμφάνιση</string>
+    <string name="theme_system">Σύστημα</string>
+    <string name="theme_light">Φωτεινό</string>
+    <string name="theme_dark">Σκούρο</string>
+
+    <!-- STOP DETAILS SCREEN -->
+    <string name="stop_code_format">Κωδικός στάσης • %1$s</string>
+    <string name="routes_serving_stop_format">%1$d γραμμές εξυπηρετούν τη στάση</string>
+    <string name="tab_arrivals">Αφίξεις</string>
+    <string name="empty_arrivals_message">Δεν βρέθηκαν προγραμματισμένες αφίξεις για τις επόμενες 2 ώρες.</string>
+    <string name="next_bus_header">Επόμενο λεωφορείο</string>
+    <string name="departure_time_format">Αναχώρηση %1$s</string>
+    <string name="live_tracking_label">Το όχημα παρακολουθείται ζωντανά</string>
+    <string name="scheduled_arrival_label">Προγραμματισμένη άφιξη</string>
+    <string name="regular_route_label">Κανονικό δρομολόγιο</string>
+    <string name="departure_label">Αναχώρηση</string>
+    <string name="terminus_label">Τέρμα</string>
+    <string name="minutes_format">%1$d λεπτά</string>
+    <string name="live_badge">● Live</string>
+    <string name="live_text">Live</string>
+    <string name="no_arrivals_title">Δεν υπάρχουν αφίξεις</string>
+
+    <!-- TICKETS SCREEN -->
+    <string name="tickets_screen_title">Εισιτήρια</string>
+    <string name="tickets_header_title">Εισιτήρια &amp; Κάρτες</string>
+    <string name="tickets_header_subtitle">Πληροφορίες για τη μετακίνησή σου στη Θεσσαλονίκη</string>
+
+    <!-- Tabs -->
+    <string name="tab_prices_and_types">Τιμές &amp; Είδη</string>
+    <string name="tab_discounts">Εκπτώσεις</string>
+    <string name="tab_sales_points">Πού αγοράζω</string>
+    <string name="tab_fines">Πρόστιμα</string>
+
+    <!-- Tab 0: Prices & Types -->
+    <string name="section_bus_tickets">Εισιτήρια &amp; Κάρτες Μετακίνησης</string>
+    <string name="table_header_ticket_type">Τύπος Εισιτηρίου</string>
+    <string name="table_header_regular">Κανονικό</string>
+    <string name="table_header_reduced">Μειωμένο</string>
+
+    <string name="ticket_urban_zone">Αστικής Ζώνης (70\')</string>
+    <string name="ticket_suburban_zone">Περιαστικής Ζώνης (70\')</string>
+    <string name="ticket_airport">Ειδικές Γραμμές (X1/X2, 50)</string>
+    <string name="ticket_daily">24ωρο Ημερήσιο</string>
+    <string name="ticket_10_plus_1_urban">10+1 Αστικής Ζώνης</string>
+    <string name="ticket_10_plus_1_suburban">10+1 Περιαστικής Ζώνης</string>
+    <string name="ticket_30_days">Κάρτα 30 Ημερών</string>
+    <string name="ticket_90_days">Κάρτα 90 Ημερών</string>
+    <string name="ticket_180_days">Κάρτα 180 Ημερών</string>
+
+    <string name="price_0_60">0,60€</string>
+    <string name="price_0_30">0,30€</string>
+    <string name="price_0_80">0,80€</string>
+    <string name="price_0_40">0,40€</string>
+    <string name="price_2_00">2,00€</string>
+    <string name="price_1_00">1,00€</string>
+    <string name="price_2_50">2,50€</string>
+    <string name="price_5_80">5,80€</string>
+    <string name="price_2_90">2,90€</string>
+    <string name="price_7_80">7,80€</string>
+    <string name="price_3_90">3,90€</string>
+    <string name="price_16_00">16,00€</string>
+    <string name="price_8_00">8,00€</string>
+    <string name="price_45_00">45,00€</string>
+    <string name="price_22_50">22,50€</string>
+    <string name="price_85_00">85,00€</string>
+    <string name="price_42_50">42,50€</string>
+
+    <string name="tickets_info_note">
+        Τα χρονικά εισιτήρια επιτρέπουν μετεπιβίβαση εντός 70 λεπτών από την πρώτη επικύρωση.
+        Η πληρωμή στα λεωφορεία γίνεται και ανέπαφα με τραπεζική κάρτα ή smartphone.
+    </string>
+
+    <!-- Tab 1: Discounts -->
+    <string name="section_reduced_fare_beneficiaries">Δικαιούχοι Μειωμένου &amp; Δωρεάν Κομίστρου</string>
+    <string name="title_who_pays_reduced">Ποιοι δικαιούνται Μειωμένο (50%)</string>
+    <string name="desc_who_pays_reduced">
+        • Φοιτητές ελληνικών δημόσιων πανεπιστημίων (με ακαδημαϊκή ταυτότητα)\n
+        • Μαθητές Πρωτοβάθμιας &amp; Δευτεροβάθμιας Εκπαίδευσης\n
+        • Νέοι ηλικίας 7 έως 18 ετών\n
+        • Ηλικιωμένοι άνω των 65 ετών (με επίδειξη ΑΔΤ)\n
+        • Πολύτεκνοι &amp; τρίτεκνοι (με επίδειξη ειδικού βιβλιαρίου/κάρτας)
+    </string>
+
+    <string name="title_who_travels_free">Ποιοι μετακινούνται Δωρεάν</string>
+    <string name="desc_who_travels_free">
+        • Παιδιά έως 6 ετών (με συνοδεία ενηλίκου)\n
+        • Άνεργοι εγγεγραμμένοι στη ΔΥΠΑ (με πρόσφατη ψηφιακή βεβαίωση)\n
+        • Άτομα με Αναπηρία (ΑμεΑ) με την επίδειξη της ειδικής κάρτας
+    </string>
+
+    <!-- Tab 2: Sales Points -->
+    <string name="section_where_to_buy">Πού θα εκδώσεις εισιτήριο ή κάρτα</string>
+    <string name="title_thesscard">Προσωποποιημένη &amp; Ανώνυμη Κάρτα (ThessCard / ThessTicket)</string>
+    <string name="desc_thesscard">
+        Έκδοση προσωποποιημένης ThessCard στα εκδοτήρια του ΟΑΣΘ και στους σταθμούς του Μετρό με ΑΔΤ,
+        ΑΜΚΑ και δικαιολογητικό έκπτωσης. Επαναφόρτιση μέσω ΑΕΜ, εκδοτηρίων ή ανέπαφα στα λεωφορεία.
+    </string>
+
+    <string name="title_physical_points">Φυσικά σημεία &amp; Εκδοτήρια</string>
+    <string name="desc_physical_points">
+        Εκδοτήρια ΟΑΣΘ (Πλ. Αριστοτέλους, Ν. Σιδηροδρομικός Σταθμός, Αεροδρόμιο κ.ά.), εκδοτήρια
+        Μετρό Θεσσαλονίκης, καθώς και σε επιλεγμένα σημεία λιανικής (περίπτερα, ψιλικά).
+    </string>
+
+    <!-- Tab 3: Fines -->
+    <string name="section_fines_title">Έλεγχοι Κομίστρου &amp; Πρόστιμα</string>
+    <string name="title_no_ticket_fine">Μη επικύρωση εισιτηρίου / κάρτας</string>
+    <string name="desc_no_ticket_fine">
+        Το πρόστιμο για μη κατοχή ή μη επικύρωση εισιτηρίου ανέρχεται στο 60πλάσιο
+        της τιμής του βασικού εισιτηρίου (60,00€ για κανονικό, 30,00€ για μειωμένο).
+    </string>
+
+    <string name="title_fine_discount">Έκπτωση 50% στην εξόφληση</string>
+    <string name="desc_fine_discount">
+        Το πρόστιμο μειώνεται κατά 50% αν εξοφληθεί εντός 10 εργάσιμων ημερών από την ημερομηνία επιβολής
+        του στα εκδοτήρια του Οργανισμού ή μέσω τραπεζικής κατάθεσης.
+    </string>
+
 </resources>

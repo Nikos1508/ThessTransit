@@ -1,57 +1,199 @@
 package com.example.thesstransit.ui.item
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.DirectionsBus
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.thesstransit.R
+import com.example.thesstransit.ui.components.BusRouteRowItem
 import com.example.thesstransit.ui.components.ScreenHeader
-
-data class MockBusLine(
-    val number: String,
-    val name: String,
-)
-
-val mockRoutes = listOf(
-    MockBusLine("01X", "ΚΤΕΛ - Αεροδρόμιο (Express)"),
-    MockBusLine("03K", "Ν.Σ.Σ. - ΑΣ ΙΚΕΑ"),
-    MockBusLine("01X", "ΚΤΕΛ - Αεροδρόμιο (Express)"),
-    MockBusLine("02K", "Παράδειγμα - Test"),
-    MockBusLine("01X", "ΚΤΕΛ - Αεροδρόμιο (Express)"),
-    MockBusLine("69A", "ΑΣ ΙΚΕΑ - Παραλία Επανομής")
-)
+import com.example.thesstransit.ui.utils.groupRoutes
+import com.example.thesstransit.ui.viewModels.FavoritesViewModel
+import com.example.thesstransit.ui.viewModels.LanguageViewModel
+import com.example.thesstransit.ui.viewModels.RoutesViewModel
+import io.gitlab.mitsiosm.oseth.data.Route
+import kotlinx.coroutines.launch
 
 @Composable
 fun RoutesScreen(
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onRouteSelected: (Route) -> Unit,
+    onGroupSelected: (String) -> Unit,
+    viewModel: RoutesViewModel = viewModel(),
+    initialTab: Int = 0,
 ) {
+    LocalContext.current
+
+    val listState = rememberLazyListState()
+    val scope = rememberCoroutineScope()
+
+    var searchQuery by rememberSaveable { mutableStateOf("") }
+    var selectedTab by rememberSaveable { mutableIntStateOf(initialTab) }
+
+    val routes = viewModel.routes
+    val loading = viewModel.isLoading
+    val error = viewModel.errorMessage
+
+    val favoritesViewModel: FavoritesViewModel = viewModel()
+    val favorites by favoritesViewModel.favorites.collectAsState()
+    val favoriteGroups by favoritesViewModel.favoriteGroups.collectAsState()
+
+    val languageViewModel: LanguageViewModel = viewModel()
+    val language by languageViewModel.language.collectAsState()
+
+    val filteredRoutesData by remember(routes, searchQuery) {
+        derivedStateOf {
+            routes.filter {
+                it.shortName.contains(searchQuery, true) ||
+                        it.longName.contains(searchQuery, true)
+            }
+        }
+    }
+
+    val groupedRoutesData by remember(routes) {
+        derivedStateOf {
+            routes.groupRoutes().filter { it.routes.size > 1 }
+        }
+    }
+
+    val favoriteGroupedRoutes by remember(groupedRoutesData, favoriteGroups, searchQuery) {
+        derivedStateOf {
+            groupedRoutesData.filter { group ->
+                favoriteGroups.contains(group.groupId) && (
+                        group.groupId.contains(searchQuery, true) ||
+
+                        group.routes.any {
+                            it.shortName.contains(searchQuery, true) ||
+                            it.longName.contains(searchQuery, true)
+                        }
+
+                )
+            }
+        }
+    }
+
+    val filteredGroups by remember(groupedRoutesData, searchQuery) {
+        derivedStateOf {
+            groupedRoutesData.filter { group ->
+                group.groupId.contains(searchQuery, true) ||
+
+                        group.routes.any {route ->
+                            route.shortName.contains(searchQuery, true) ||
+                                    route.longName.contains(searchQuery, true)
+                        }
+            }
+        }
+    }
+
+    val shownRoutesData by remember(filteredRoutesData, favorites, selectedTab) {
+        derivedStateOf {
+            if (selectedTab == 2) {
+                filteredRoutesData.filter { favorites.contains(it.id.value) }
+            } else {
+                filteredRoutesData
+            }
+        }
+    }
+
+    val finalGroupedRoutes by remember(shownRoutesData) {
+        derivedStateOf {
+            shownRoutesData.groupBy {
+                it.shortName.firstOrNull()?.toString() ?: "#"
+            }.entries.sortedBy { it.key }
+        }
+    }
+
+    val sectionIndexes by remember(finalGroupedRoutes) {
+        derivedStateOf {
+            val map = mutableMapOf<String, Int>()
+            var currentIndex = 0
+            finalGroupedRoutes.forEach { (letter, routes) ->
+                map[letter] = currentIndex
+                currentIndex += routes.size + 1
+            }
+            map
+        }
+    }
+
+    val groupedSections by remember(filteredGroups) {
+        derivedStateOf {
+            filteredGroups
+                .groupBy {
+                    it.groupId.firstOrNull()?.toString() ?: "#"
+                }
+                .entries
+                .sortedBy { it.key }
+        }
+    }
+
+    val groupedSectionIndexes by remember(groupedSections) {
+        derivedStateOf {
+
+            val map = mutableMapOf<String, Int>()
+            var current = 0
+
+            groupedSections.forEach { (letter, groups) ->
+
+                map[letter] = current
+                current += groups.size + 1
+
+            }
+            map
+        }
+    }
+
     Column {
-        ScreenHeader(title = "Γραμμές", onBackClick = onBackClick)
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            ScreenHeader(
+                title = stringResource(R.string.title_routes),
+                onBackClick = onBackClick,
+                onProfileClick = onBackClick,
+                modifier = Modifier.weight(1f)
+            )
+        }
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -68,109 +210,242 @@ fun RoutesScreen(
 
                 Column(
                     modifier = Modifier.padding(
-                        start = 20.dp,
                         end = 20.dp,
-                        top = 24.dp,
+                        top = 18.dp,
                         bottom = 12.dp
                     )
                 ) {
-                    Text(
-                        text = "Διαδρομές",
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = "Δείτε τις γραμμές και τα δρομολόγια των λεωφορείων",
-                        fontSize = 14.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
 
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    item { Spacer(modifier = Modifier.height(4.dp)) }
-
-                    items(mockRoutes) { route ->
-                        BusRouteRowItem(route = route)
+                    PrimaryTabRow(selectedTabIndex = selectedTab) {
+                        Tab(
+                            selected = selectedTab == 0,
+                            onClick = { selectedTab = 0 },
+                            text = { Text( stringResource(R.string.tab_all_routes) ) }
+                        )
+                        Tab(
+                            selected = selectedTab == 1,
+                            onClick = { selectedTab = 1 },
+                            text = { Text( stringResource(R.string.tab_categories) ) }
+                        )
+                        Tab(
+                            selected = selectedTab == 2,
+                            onClick = { selectedTab = 2 },
+                            text = { Text( stringResource(R.string.tab_favorites) ) }
+                        )
                     }
 
-                    item { Spacer(modifier = Modifier.height(24.dp)) }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun BusRouteRowItem(route: MockBusLine){
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
-        ),
-        border = BorderStroke(
-            1.dp,
-            MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-
-            Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .background(
-                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
-                        RoundedCornerShape(12.dp)
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.DirectionsBus,
-                    contentDescription = null
-                )
-            }
-
-            Spacer(modifier = Modifier.width(14.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically){
-                    Text(
-                        text = route.number,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    Text(
-                        text = route.name,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        maxLines = 1
-                    )
                 }
 
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Text(
-                    text = "Keimeno poy ua htan h perigrafh",
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    singleLine = true,
+                    shape = RoundedCornerShape(18.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    placeholder = { Text( stringResource(R.string.search_route_placeholder) ) },
+                    leadingIcon = { Icon(imageVector = Icons.Default.Search, contentDescription = null) },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                    )
                 )
+
+                when {
+                    loading -> {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
+                        }
+                    }
+
+                    error != null -> { /* Error UI */ }
+
+                    else -> {
+
+                        if (selectedTab == 1) {
+
+                            Box(
+                                modifier = Modifier.fillMaxSize()
+                            ){
+                                LazyColumn(
+                                    state = listState,
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(start = 16.dp, end = 56.dp),
+                                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    groupedSections.forEach { (letter, groups) ->
+                                        stickyHeader {
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .background(
+                                                        MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
+                                                    )
+                                                    .padding(vertical = 8.dp)
+                                            ){
+                                                Text(
+                                                    text = letter,
+                                                    fontSize = 22.sp,
+                                                    fontWeight = FontWeight.ExtraBold,
+                                                    modifier = Modifier.padding(start = 4.dp)
+                                                )
+                                            }
+                                        }
+
+                                        items(
+                                            groups,
+                                            key = { it.groupId }
+                                        ){ group ->
+                                            GroupCard(
+                                                group = group,
+                                                isFavorite = favoriteGroups.contains(group.groupId),
+                                                onClick = { onGroupSelected(group.groupId) },
+                                                onFavoriteClick = { favoritesViewModel.toggleFavoriteGroup(group.groupId) }
+                                            )
+                                        }
+                                    }
+                                }
+
+                                Column(
+                                    modifier = Modifier
+                                        .align(Alignment.CenterEnd)
+                                        .padding(end = 6.dp)
+                                        .background(
+                                            MaterialTheme.colorScheme.surfaceContainer,
+                                            RoundedCornerShape(20.dp)
+                                        )
+                                        .padding(vertical = 8.dp, horizontal = 4.dp),
+                                    verticalArrangement = Arrangement.spacedBy(3.dp)
+                                ){
+                                    groupedSections.forEach { (letter, _) ->
+                                        Text(
+                                            text = letter,
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier
+                                                .clickable {
+                                                    scope.launch {
+                                                        listState.animateScrollToItem(
+                                                            groupedSectionIndexes[letter] ?: 0
+                                                        )
+                                                    }
+                                                }
+                                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                                        )
+                                    }
+                                }
+                            }
+                            return@Column
+                        }
+
+                        Box(modifier = Modifier.fillMaxSize()) {
+                            LazyColumn(
+                                state = listState,
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(start = 16.dp, end = 56.dp),
+                                verticalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+
+                                if (selectedTab == 2 && favoriteGroupedRoutes.isNotEmpty()) {
+                                    item {
+                                        Text(
+                                            text = stringResource(R.string.header_favorite_groups),
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 18.sp,
+                                            modifier = Modifier.padding(vertical = 8.dp)
+                                        )
+                                    }
+
+                                    items(
+                                        favoriteGroupedRoutes,
+                                        key = {it.groupId}
+                                    ) { group ->
+                                        GroupCard(
+                                            group = group,
+                                            isFavorite = true,
+                                            onClick = { onGroupSelected(group.groupId) },
+                                            onFavoriteClick = { favoritesViewModel.toggleFavoriteGroup(group.groupId) }
+                                        )
+                                    }
+
+                                    item {
+                                        Text(
+                                            text = stringResource(R.string.header_favorite_routes),
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 18.sp,
+                                            modifier = Modifier.padding(
+                                                top = 20.dp,
+                                                bottom = 8.dp
+                                            )
+                                        )
+                                    }
+                                }
+
+                                finalGroupedRoutes.forEach { (letter, routes) ->
+                                    stickyHeader(key = "header_$letter") {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.95f))
+                                                .padding(vertical = 8.dp)
+                                        ) {
+                                            Text(
+                                                text = letter,
+                                                fontSize = 22.sp,
+                                                modifier = Modifier.padding(start = 4.dp),
+                                                fontWeight = FontWeight.ExtraBold
+                                            )
+                                        }
+                                    }
+                                    items(routes, key = { it.id.value }) { route ->
+                                        BusRouteRowItem(
+                                            route = route,
+                                            isFavorite = favorites.contains(route.id.value),
+                                            onFavoriteClick = { favoritesViewModel.toggleFavorite(route.id.value) },
+                                            onClick = { onRouteSelected(route) }
+                                        )
+                                    }
+                                }
+                            }
+
+                            Column(
+                                modifier = Modifier
+                                    .align(Alignment.CenterEnd)
+                                    .padding(end = 6.dp)
+                                    .background(
+                                        MaterialTheme.colorScheme.surfaceContainer,
+                                        RoundedCornerShape(20.dp)
+                                    )
+                                    .padding(vertical = 8.dp, horizontal = 4.dp),
+                                verticalArrangement = Arrangement.spacedBy(3.dp)
+                            ) {
+                                finalGroupedRoutes.forEach { (digit, _) ->
+                                    Text(
+                                        text = digit,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier
+                                            .clickable {
+                                                scope.launch {
+                                                    val targetIndex = sectionIndexes[digit] ?: 0
+                                                    listState.animateScrollToItem(targetIndex)
+                                                }
+                                            }
+                                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }

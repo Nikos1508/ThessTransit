@@ -1,6 +1,6 @@
 [versions]
 agp = "8.13.2"
-kotlin = "2.0.21"
+kotlin = "2.2.20"
 coreKtx = "1.16.0"
 junit = "4.13.2"
 junitVersion = "1.3.0"
@@ -11,6 +11,11 @@ composeBom = "2024.09.00"
 
 kotlinx-serialization = "1.7.3"
 navigation-compose = "2.8.9"
+foundationLayout = "1.11.3"
+material3 = "1.4.0"
+material3Version = "1.4.0"
+appcompat = "1.7.1"
+ui = "1.11.4"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -31,6 +36,9 @@ androidx-material-icons-extended = { group = "androidx.compose.material", name =
 
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigation-compose" }
+androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3Version" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+androidx-compose-ui = { group = "androidx.compose.ui", name = "ui", version.ref = "ui" }
 
 
 [plugins]

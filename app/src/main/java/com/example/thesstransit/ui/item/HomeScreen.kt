@@ -1,18 +1,27 @@
 package com.example.thesstransit.ui.item
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedContentScope
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -25,9 +34,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.DirectionsBus
@@ -40,28 +46,19 @@ import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.QrCode2
 import androidx.compose.material.icons.outlined.Route
-import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material.icons.outlined.Train
-import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material.icons.outlined.Work
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TimePicker
-import androidx.compose.material3.VerticalDivider
-import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -72,26 +69,44 @@ import androidx.compose.ui.composed
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.thesstransit.R
-import java.util.Calendar
+import com.example.thesstransit.ui.components.AnimatedSearchBar
+import com.example.thesstransit.ui.components.RouteFiltersDialog
+import com.example.thesstransit.ui.data.SavedLocations
+import com.example.thesstransit.ui.utils.SharedKeys
+import com.example.thesstransit.ui.viewModels.FavoritesViewModel
+import com.example.thesstransit.ui.viewModels.HomeViewModel
+import io.gitlab.mitsiosm.oseth.Oseth
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
+import kotlin.concurrent.atomics.AtomicBoolean
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.time.Duration.Companion.milliseconds
 
+object Guard {
+    @OptIn(ExperimentalAtomicApi::class)
+    val busy = AtomicBoolean(false)
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class, ExperimentalAtomicApi::class)
 @Composable
 fun HomeScreen(
     onLoginClick: () -> Unit = {},
+    onSearchClick: () -> Unit = {},
     onHowToGoClick: () -> Unit = {},
     onTicketsClick: () -> Unit = {},
     onLinesClick: () -> Unit = {},
@@ -100,19 +115,67 @@ fun HomeScreen(
     onBuyTicketClick: () -> Unit = {},
     onFavouritesClick: () -> Unit = {},
     onNotificationsClick: () -> Unit = {},
-    onSettingsClick: () -> Unit = {}
+    onSettingsClick: () -> Unit = {},
+    onHomeClick: () -> Unit = {},
+    onWorkClick: () -> Unit = {},
+    favoritesViewModel: FavoritesViewModel = viewModel(),
+    homeViewModel: HomeViewModel = viewModel(),
+
+    sharedTransitionScope: SharedTransitionScope,
+    animatedContentScope: AnimatedContentScope
 ){
 
+    val defaultSubtitle = stringResource(R.string.quick_set_location)
+
     val tiles = listOf(
-        FeatureTile("Εισιτήρια\n& Τιμές", "", Icons.Outlined.LocalActivity, onTicketsClick),
-        FeatureTile("Αγορά\nΕισιτηρίου", "", Icons.Outlined.QrCode2, onBuyTicketClick),
-        FeatureTile("Γραμμές\nΜετρό", "", Icons.Outlined.Train, onLinesClick),
-        FeatureTile("Αγαπημένες\nΔιαδρομές", "", Icons.Outlined.Favorite, onFavouritesClick),
-        FeatureTile("Ειδοποιήσεις", "", Icons.Outlined.Notifications, onNotificationsClick),
-        FeatureTile("Ρυθμίσεις", "", Icons.Outlined.Settings, onSettingsClick)
+        FeatureTile(stringResource(R.string.tile_tickets), "", Icons.Outlined.LocalActivity, onTicketsClick),
+        FeatureTile(stringResource(R.string.tile_buy_ticket), "", Icons.Outlined.QrCode2, onBuyTicketClick),
+        FeatureTile(stringResource(R.string.tile_metro_lines), "", Icons.Outlined.Train, onLinesClick),
+        FeatureTile(stringResource(R.string.tile_favorite_routes), "", Icons.Outlined.Favorite, onFavouritesClick),
+        FeatureTile(stringResource(R.string.tile_notifications), "", Icons.Outlined.Notifications, onNotificationsClick),
+        FeatureTile(stringResource(R.string.tile_settings), "", Icons.Outlined.Settings, onSettingsClick)
     )
 
     var showFilters by remember { mutableStateOf(false) }
+
+    val favoriteRoutes by favoritesViewModel.favorites.collectAsState()
+    val favoriteGroups by favoritesViewModel.favoriteGroups.collectAsState()
+    val totalFavorites = favoriteRoutes.size + favoriteGroups.size
+
+    val context = LocalContext.current
+    val api = Oseth(context)
+
+    LaunchedEffect(Unit) {
+
+        if (homeViewModel.hasSynced)
+            return@LaunchedEffect
+
+        if (!Guard.busy.compareAndSet(false, true))
+            return@LaunchedEffect
+
+        homeViewModel.startLoading()
+
+        try {
+            withContext(Dispatchers.IO) {
+                api.sync()
+            }
+        } finally {
+            Guard.busy.store(false)
+            homeViewModel.stopLoading()
+        }
+    }
+
+    val savedLocations = remember(context) {
+        SavedLocations(context)
+    }
+
+    val home by savedLocations.home.collectAsState(
+        initial = Triple(null, null, null)
+    )
+
+    val work by savedLocations.work.collectAsState(
+        initial = Triple(null, null, null)
+    )
 
     Box(
         modifier = Modifier
@@ -135,11 +198,32 @@ fun HomeScreen(
             }
             item {
                 Spacer(modifier = Modifier.height(8.dp))
-                SearchBarSection(onFilterClick = { showFilters = true })
+                with(sharedTransitionScope){
+                    AnimatedSearchBar(
+                        onClick = onSearchClick,
+
+                        modifier = Modifier
+                            .padding(horizontal = 12.dp)
+                            .sharedElement(
+                                rememberSharedContentState(
+                                    key = SharedKeys.SEARCH_BAR
+                                ),
+                                animatedVisibilityScope = animatedContentScope
+                            ),
+                        onFilteredClick = { showFilters = true }
+                    )
+                }
             }
             item {
                 Spacer(modifier = Modifier.height(16.dp))
-                QuickAccessRow()
+                QuickAccessRow(
+                    favoriteCount = totalFavorites,
+                    onHomeClick = onHomeClick,
+                    onWorkClick = onWorkClick,
+                    onFavouritesClick = onFavouritesClick,
+                    homeSubtitle = home.first ?: defaultSubtitle,
+                    workSubtitle = work.first ?: defaultSubtitle
+                )
             }
             item {
                 Spacer(modifier = Modifier.height(18.dp))
@@ -154,7 +238,7 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 SectionTitle(
-                    title = "Ενημερώσεις / Νέα"
+                    title = stringResource(R.string.section_updates_news)
                 )
             }
             item {
@@ -164,7 +248,7 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 SectionTitle(
-                    title = "Επιπλέον λειτουργίες"
+                    title = stringResource(R.string.section_extra_features)
                 )
             }
             item {
@@ -177,8 +261,37 @@ fun HomeScreen(
 
         if (showFilters) {
             RouteFiltersDialog(
-                onDismiss = { showFilters = false }
+                onDismiss = { showFilters = false },
+                onApplyFilters = { filterResults ->
+
+                    println("Applied Filters: $filterResults")
+                }
             )
+        }
+
+        AnimatedVisibility(
+            visible = homeViewModel.isLoading.value
+        ) {
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Color.Gray.copy(alpha = 0.28f)
+                    )
+                    .clickable(
+                        enabled = true,
+                        indication = null,
+                        interactionSource = remember {
+                            androidx.compose.foundation.interaction.MutableInteractionSource()
+                        }
+                    ) {},
+                contentAlignment = Alignment.Center
+            ) {
+
+                CircularProgressIndicator()
+
+            }
         }
     }
 }
@@ -187,6 +300,17 @@ fun HomeScreen(
 fun HeaderSection(
     onLoginClick: () -> Unit = {}
 ) {
+    var showGreekTitle: Boolean by remember {
+        mutableStateOf(false)
+    }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(4500.milliseconds)
+            showGreekTitle = !showGreekTitle
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -254,7 +378,7 @@ fun HeaderSection(
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    text = "Login",
+                    text = stringResource(R.string.login),
                     fontSize = 13.sp,
                     color = MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.Medium
@@ -269,7 +393,7 @@ fun HeaderSection(
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = "Καλωσόρισες στο",
+                    text = stringResource(R.string.welcome_to),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 15.sp
                 )
@@ -279,12 +403,38 @@ fun HeaderSection(
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "Thess",
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontSize = 34.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+
+                    AnimatedContent(
+                        targetState = showGreekTitle,
+                        transitionSpec = {
+                            (
+                                    fadeIn(
+                                        animationSpec = tween(500)
+                                    ) + slideInVertically(
+                                        animationSpec = tween(500),
+                                        initialOffsetY = { it / 2 }
+                                    )
+                                    ).togetherWith(
+                                    fadeOut(
+                                        animationSpec = tween(400)
+                                    ) + slideOutVertically(
+                                        animationSpec = tween(400),
+                                        targetOffsetY = { -it / 2 }
+                                    )
+                                ) using SizeTransform(clip = false)
+                        },
+                        label = "ThessAnimation"
+                    ) { greek ->
+
+                        Text(
+                            text = if (greek) "Θες" else "Thess",
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontSize = 34.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+
                     Text(
                         text = "Transit",
                         color = MaterialTheme.colorScheme.primary,
@@ -296,7 +446,7 @@ fun HeaderSection(
                 Spacer(modifier = Modifier.height(6.dp))
 
                 Text(
-                    text = "Η έξυπνη μετακίνηση στη Θεσσαλονίκη",
+                    text = stringResource(R.string.app_subtitle),
                     fontSize = 13.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     lineHeight = 18.sp
@@ -307,411 +457,84 @@ fun HeaderSection(
 }
 
 @Composable
-fun SearchBarSection(
-    onFilterClick: () -> Unit
+fun QuickAccessRow(
+    favoriteCount: Int,
+    onHomeClick: () -> Unit,
+    onWorkClick: () -> Unit,
+    onFavouritesClick: () -> Unit,
+    homeSubtitle: String,
+    workSubtitle: String
 ) {
-
-    var searchQuery by remember {mutableStateOf("")}
-
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 12.dp)
-            .height(58.dp),
-        shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surfaceContainer,
-        border = BorderStroke(
-            1.dp,
-            MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
-        )
-    ) {
-        Row(
-            modifier = Modifier.fillMaxSize(),
-            verticalAlignment = Alignment.CenterVertically
-        ){
-            IconButton(
-                onClick = { searchQuery = "" },
-                modifier = Modifier.padding(start = 8.dp)
-            ){
-                Icon(
-                    imageVector = Icons.Outlined.Search,
-                    contentDescription = "Search Button",
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }
-
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(horizontal = 4.dp),
-                contentAlignment = Alignment.CenterStart
-            ) {
-
-                if (searchQuery.isEmpty()) {
-                    Text(
-                        text = "Πού θέλεις να πας;",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                        fontSize = 16.sp
-                    )
-                }
-
-                BasicTextField(
-                    value = searchQuery,
-                    onValueChange = {searchQuery = it},
-                    textStyle = TextStyle(
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontSize = 16.sp
-                    ),
-                    cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                    keyboardActions = KeyboardActions(
-                        onSearch = { searchQuery }
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-
-            VerticalDivider(
-                modifier = Modifier
-                    .height(28.dp)
-                    .padding(horizontal = 4.dp),
-                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
-            )
-
-            Box(
-                modifier = Modifier
-                    .padding(end = 8.dp)
-                    .size(40.dp)
-                    .background(
-                        color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                        shape = RoundedCornerShape(12.dp)
-                    )
-                    .bounceClick{ onFilterClick() },
-                contentAlignment = Alignment.Center
-            ){
-                Icon(
-                    imageVector = Icons.Outlined.Tune,
-                    contentDescription = "Φίλτρα Αναζήτησης",
-                    tint = MaterialTheme.colorScheme.onSurface
-                )
-            }
-
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
-@Composable
-fun RouteFiltersDialog(
-    onDismiss: () -> Unit
-) {
-    var fastRoute by remember { mutableStateOf(true) }
-    var lessWalking by remember { mutableStateOf(false) }
-    var avoidMetro by remember { mutableStateOf(false) }
-    var avoidTransfer by remember { mutableStateOf(false) }
-
-    var timeType by remember { mutableStateOf("DEPART") }
-    var selectedHour by remember { mutableStateOf(Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) }
-    var selectedMinute by remember { mutableStateOf(Calendar.getInstance().get(Calendar.MINUTE)) }
-    var showTimePickerDialog by remember { mutableStateOf(false) }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        confirmButton = {},
-        dismissButton = {},
-        shape = RoundedCornerShape(28.dp),
-        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-        text = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp)
-            ) {
-                Text(
-                    text = "Προτιμήσεις Διαδρομής",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                Text(
-                    text = "Προγραμματισμός Ώρας",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-
-                    Surface(
-                        shape = RoundedCornerShape(16.dp),
-                        color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                        border = BorderStroke(
-                            1.dp,
-                            MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
-                        )
-
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(4.dp)
-                        ){
-                            Surface(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .bounceClick{timeType = "DEPART"},
-                                shape = RoundedCornerShape(12.dp),
-                                color =
-                                    if (timeType == "DEPART")
-                                        MaterialTheme.colorScheme.primary
-                                    else
-                                        Color.Transparent
-                            ) {
-                                Text(
-                                    text = "Αναχώρηση",
-                                    modifier = Modifier.padding(vertical = 12.dp),
-                                    textAlign = TextAlign.Center,
-                                    color =
-                                        if (timeType == "DEPART")
-                                            MaterialTheme.colorScheme.onPrimary
-                                        else
-                                            MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-
-                            Surface(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .bounceClick{timeType == "ARRIVE"},
-                                shape = RoundedCornerShape(12.dp),
-                                color =
-                                    if (timeType == "ARRIVE")
-                                        MaterialTheme.colorScheme.primary
-                                    else
-                                        Color.Transparent
-                            ){
-                                Text(
-                                    text = "Άφιξη",
-                                    modifier = Modifier.padding(vertical = 12.dp),
-                                    textAlign = TextAlign.Center,
-                                    color =
-                                        if(timeType == "ARRIVE")
-                                            MaterialTheme.colorScheme.onPrimary
-                                        else
-                                            MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.weight(1f))
-
-                    OutlinedButton(
-                        onClick = {
-                            showTimePickerDialog = true
-                        },
-                        shape = RoundedCornerShape(14.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.AccessTime,
-                            contentDescription = null
-                        )
-
-                        Spacer(modifier = Modifier.width(6.dp))
-
-                        Text(
-                            String.format(
-                                "%02d:%02d",
-                                selectedHour,
-                                selectedMinute
-                            )
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                HorizontalDivider(
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    text = "Κριτήρια",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    FilterChip(
-                        selected = fastRoute,
-                        onClick = { fastRoute = !fastRoute },
-                        label = { Text("Ταχύτερη διαδρομή") }
-                    )
-                    FilterChip(
-                        selected = lessWalking,
-                        onClick = { lessWalking = !lessWalking },
-                        label = { Text("Λιγότερο περπάτημα") }
-                    )
-                    FilterChip(
-                        selected = avoidMetro,
-                        onClick = { avoidMetro = !avoidMetro },
-                        label = { Text("Αποφυγή Μετρό") }
-                    )
-                    FilterChip(
-                        selected = avoidTransfer,
-                        onClick = { avoidTransfer = !avoidTransfer },
-                        label = { Text("Χωρίς μετεπιβίβαση") }
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(28.dp))
-
-
-                Button(
-                    onClick = onDismiss,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text("Εφαρμογή Φίλτρων", fontWeight = FontWeight.Bold)
-                }
-
-            }
-        }
-    )
-
-    if (showTimePickerDialog) {
-        val timePickerState = rememberTimePickerState(
-            initialHour = selectedHour,
-            initialMinute = selectedMinute,
-            is24Hour = true
-        )
-
-        AlertDialog(
-            onDismissRequest = { showTimePickerDialog = false },
-            confirmButton = {
-                TextButton(onClick = {
-                    selectedHour = timePickerState.hour
-                    selectedMinute = timePickerState.minute
-                    showTimePickerDialog = false
-                }) {
-                    Text("Εντάξει", fontWeight = FontWeight.Bold)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showTimePickerDialog = false }) {
-                    Text("Ακύρωση")
-                }
-            },
-            text = {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = if (timeType == "DEPART") "Επιλογή ώρας αναχώρησης" else "Επιλογή ώρας άφιξης",
-                        fontSize = 14.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(bottom = 16.dp)
-                    )
-                    TimePicker(state = timePickerState)
-                }
-            },
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-            shape = RoundedCornerShape(28.dp)
-        )
-    }
-}
-
-data class QuickCard(
-    val title: String,
-    val subtitle: String,
-    val icon: ImageVector,
-    val iconColor: Color
-)
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-fun QuickAccessRow() {
-
-    val items = listOf(
-        QuickCard("Οικία", "25ης Μαρτίου, 17, Επανομή", Icons.Outlined.Home, Color.White),
-        QuickCard("Εργασία", "Καθόρισε", Icons.Outlined.Work, MaterialTheme.colorScheme.primary),
-        QuickCard("Αγαπημένα", "0 Διαδρομές", Icons.Outlined.Star, Color(0xFFFFD700))
-    )
-
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 12.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        items.forEach { item ->
-            Surface(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(76.dp)
-                    .bounceClick { },
-                shape = RoundedCornerShape(14.dp),
-                color = MaterialTheme.colorScheme.surfaceContainer,
-                border = BorderStroke(
-                    1.dp,
-                    MaterialTheme.colorScheme.outline.copy(alpha = 0.15f)
+        QuickAccessItem(
+            title = stringResource(R.string.quick_home),
+            subtitle = homeSubtitle,
+            icon = Icons.Outlined.Home,
+            iconColor = Color.White,
+            onClick = onHomeClick,
+            modifier = Modifier.weight(1f)
+        )
+
+        QuickAccessItem(
+            title = stringResource(R.string.quick_work),
+            subtitle = workSubtitle,
+            icon = Icons.Outlined.Work,
+            iconColor = MaterialTheme.colorScheme.primary,
+            onClick = onWorkClick,
+            modifier = Modifier.weight(1f)
+        )
+
+        QuickAccessItem(
+            title = stringResource(R.string.quick_favorites),
+            subtitle = stringResource(R.string.routes_count_format, favoriteCount),
+            icon = Icons.Outlined.Star,
+            iconColor = Color(0xFFFFD700),
+            onClick = onFavouritesClick,
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+@Composable
+fun QuickAccessItem(
+    title: String,
+    subtitle: String,
+    icon: ImageVector,
+    iconColor: Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier.height(82.dp).bounceClick { onClick() },
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.15f))
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize().padding(6.dp),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(imageVector = icon, contentDescription = null, tint = iconColor, modifier = Modifier.size(18.dp))
+
+                Spacer(modifier = Modifier.width(6.dp))
+
+                Text(
+                    text = title,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold
                 )
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 8.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = item.icon,
-                            contentDescription = null,
-                            tint = item.iconColor,
-                            modifier = Modifier.size(18.dp)
-                        )
-
-                        Spacer(modifier = Modifier.width(6.dp))
-
-                        Text(
-                            text = item.title,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            maxLines = 1
-                        )
-                    }
-
-                    Text(
-                        text = item.subtitle,
-                        fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .basicMarquee(iterations = Int.MAX_VALUE)
-                    )
-
-                }
             }
+
+            Text(
+                text = subtitle,
+                fontSize = 10.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1
+            )
         }
     }
 }
@@ -729,15 +552,15 @@ fun MainFeatureGrid(
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             MainFeatureCard(
                 modifier = Modifier.weight(1f),
-                title = "Πώς να πάω;",
-                subtitle = "Βρες την καλύτερη διαδρομή",
+                title = stringResource(R.string.feature_how_to_go_title),
+                subtitle = stringResource(R.string.feature_how_to_go_subtitle),
                 icon = Icons.Outlined.Route,
                 onClick = onHowToGoClick
             )
             MainFeatureCard(
                 modifier = Modifier.weight(1f),
-                title = "Γραμμές &\nΔρομολόγια",
-                subtitle = "Δες όλες τις γραμμές και τα δρομολόγια",
+                title = stringResource(R.string.feature_lines_title),
+                subtitle = stringResource(R.string.feature_lines_subtitle),
                 icon = Icons.Outlined.DirectionsBus,
                 onClick = onLinesClick
             )
@@ -748,15 +571,15 @@ fun MainFeatureGrid(
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             MainFeatureCard(
                 modifier = Modifier.weight(1f),
-                title = "Στάσεις κοντά\nμου",
-                subtitle = "Στάσεις λεωφορείου και μετρό κοντά σου",
+                title = stringResource(R.string.feature_nearby_stops_title),
+                subtitle = stringResource(R.string.feature_nearby_stops_subtitle),
                 icon = Icons.Outlined.LocationOn,
                 onClick = onNearbyStopsClick
             )
             MainFeatureCard(
                 modifier = Modifier.weight(1f),
-                title = "Αναχωρήσεις\nτώρα",
-                subtitle = "Ζωντανά δεδομένα των αναχωρήσεων και αφίξεων λεωφορείων και μετρό",
+                title = stringResource(R.string.feature_live_departures_title),
+                subtitle = stringResource(R.string.feature_live_departures_subtitle),
                 icon = Icons.Outlined.AccessTime,
                 onClick = onLiveDeparturesClick
             )
@@ -837,7 +660,7 @@ fun MainFeatureCard(
 }
 
 @Composable
-fun SectionTitle(
+private fun SectionTitle(
     title: String
 ) {
     Text(
@@ -856,34 +679,34 @@ data class AIUpdate(
     val icon: ImageVector
 )
 
-val aiUpdates = listOf(
-
-    AIUpdate(
-        title = "Κυκλοφορία",
-        description = "Αυξημένη κίνηση στην Εγνατία Οδό",
-        icon = Icons.Outlined.DirectionsCar
-    ),
-
-    AIUpdate(
-        title = "Έργα & Διακοπές",
-        description = "Γραμμή 3K: Καθυστέρηση 10 λεπτών",
-        icon = Icons.Outlined.Notifications
+@Composable
+fun getAiUpdates(): List<AIUpdate> {
+    return listOf(
+        AIUpdate(
+            title = stringResource(R.string.update_traffic_title),
+            description = stringResource(R.string.update_traffic_desc),
+            icon = Icons.Outlined.DirectionsCar
+        ),
+        AIUpdate(
+            title = stringResource(R.string.update_works_title),
+            description = stringResource(R.string.update_works_desc),
+            icon = Icons.Outlined.Notifications
+        )
     )
-
-)
+}
 
 @Composable
-fun  AIUpdateSection(){
+fun AIUpdateSection(){
+    val updates = getAiUpdates()
     Column(
         modifier = Modifier.padding(horizontal = 20.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        aiUpdates.forEach {
+        updates.forEach {
             AIUpdateCard(update = it)
         }
     }
 }
-
 @Composable
 fun AIUpdateCard(
     update: AIUpdate
@@ -955,6 +778,7 @@ fun FeatureTilesGrid(tilesList: List<FeatureTile>) {
         }
     }
 }
+
 @Composable
 fun SmallFeatureTile(
     modifier: Modifier = Modifier,
@@ -1050,21 +874,4 @@ fun Modifier.bounceClick(
                 onTap = { onClick() }
             )
         }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun HomeScreenPreview() {
-    HomeScreen(
-        onLoginClick = TODO(),
-        onHowToGoClick = TODO(),
-        onTicketsClick = TODO(),
-        onLinesClick = TODO(),
-        onNearbyStopsClick = TODO(),
-        onLiveDeparturesClick = TODO(),
-        onBuyTicketClick = TODO(),
-        onFavouritesClick = TODO(),
-        onNotificationsClick = TODO(),
-        onSettingsClick = TODO()
-    )
 }

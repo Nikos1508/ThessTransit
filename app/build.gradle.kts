@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -33,8 +35,10 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 
-    kotlinOptions {
-        jvmTarget = "11"
+    kotlin {
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_11)
+        }
     }
 
     buildFeatures {
@@ -43,6 +47,8 @@ android {
 }
 
 dependencies {
+    implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -55,6 +61,21 @@ dependencies {
 
     implementation(libs.androidx.material3)
     implementation(libs.androidx.material.icons.extended)
+
+    //API
+    implementation("io.gitlab.mitsiosm:oseth:2.1.1")
+
+    //Help for the API
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
+
+    //Maps
+    implementation("org.osmdroid:osmdroid-android:6.1.20")
+    implementation("org.osmdroid:osmdroid-wms:6.1.20")
+
+    //Search Results on maps
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
 
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.androidx.navigation.compose)
