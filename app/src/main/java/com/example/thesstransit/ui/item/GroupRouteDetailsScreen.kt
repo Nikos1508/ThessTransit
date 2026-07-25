@@ -45,10 +45,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.thesstransit.R
 import com.example.thesstransit.ui.components.ScreenHeader
 import com.example.thesstransit.ui.data.RouteGroup
 import com.example.thesstransit.ui.viewModels.FavoritesViewModel
@@ -78,12 +80,16 @@ fun GroupRouteDetailsScreen(
     Column(Modifier.fillMaxSize()) {
 
         ScreenHeader(
-            title = "Γραμμή ${group.groupId}",
+            title = stringResource(R.string.route_header_title, group.groupId),
             onBackClick = onBackClick,
             onProfileClick = onBackClick
         )
 
-        val directions = listOf("Αφετηρία", "Τέρμα")
+        val directions = listOf(
+            stringResource(R.string.direction_start),
+            stringResource(R.string.direction_end)
+        )
+
         var expanded by remember { mutableStateOf(false) }
 
         ExposedDropdownMenuBox(
@@ -100,7 +106,7 @@ fun GroupRouteDetailsScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .menuAnchor(),
-                label = { Text("Κατεύθυνση") },
+                label = { Text( stringResource(R.string.direction_label) ) },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha=0.4f),
@@ -127,12 +133,12 @@ fun GroupRouteDetailsScreen(
             Tab(
                 selected = selectedTab == 0,
                 onClick = { selectedTab = 0},
-                text = { Text("Δρομολόγια") }
+                text = { Text( stringResource(R.string.tab_schedules) ) }
             )
             Tab(
                 selected = selectedTab == 1,
                 onClick = { selectedTab = 1},
-                text = { Text("Στάσεις") }
+                text = { Text( stringResource(R.string.tab_schedules) ) }
             )
         }
 
@@ -304,7 +310,7 @@ private fun GroupStopsTab(
                             Spacer(Modifier.height(4.dp))
 
                             Text(
-                                text = "Κωδικός: ${groupStop.stop.id}",
+                                text = stringResource(R.string.stop_code_format, groupStop.stop.id),
                                 fontSize = 12.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )

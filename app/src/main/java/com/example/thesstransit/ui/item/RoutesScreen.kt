@@ -37,10 +37,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.thesstransit.R
 import com.example.thesstransit.ui.components.BusRouteRowItem
 import com.example.thesstransit.ui.components.ScreenHeader
 import com.example.thesstransit.ui.utils.groupRoutes
@@ -185,7 +187,7 @@ fun RoutesScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             ScreenHeader(
-                title = "Διαδρομές",
+                title = stringResource(R.string.title_routes),
                 onBackClick = onBackClick,
                 onProfileClick = onBackClick,
                 modifier = Modifier.weight(1f)
@@ -218,17 +220,17 @@ fun RoutesScreen(
                         Tab(
                             selected = selectedTab == 0,
                             onClick = { selectedTab = 0 },
-                            text = { Text("Όλες") }
+                            text = { Text( stringResource(R.string.tab_all_routes) ) }
                         )
                         Tab(
                             selected = selectedTab == 1,
                             onClick = { selectedTab = 1 },
-                            text = { Text("Κατηγορίες") }
+                            text = { Text( stringResource(R.string.tab_categories) ) }
                         )
                         Tab(
                             selected = selectedTab == 2,
                             onClick = { selectedTab = 2 },
-                            text = { Text("Αγαπημένα") }
+                            text = { Text( stringResource(R.string.tab_favorites) ) }
                         )
                     }
 
@@ -242,8 +244,8 @@ fun RoutesScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 12.dp),
-                    placeholder = { Text("Αναζήτηση γραμμής...") },
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                    placeholder = { Text( stringResource(R.string.search_route_placeholder) ) },
+                    leadingIcon = { Icon(imageVector = Icons.Default.Search, contentDescription = null) },
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = MaterialTheme.colorScheme.primary,
                         unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
@@ -354,7 +356,7 @@ fun RoutesScreen(
                                 if (selectedTab == 2 && favoriteGroupedRoutes.isNotEmpty()) {
                                     item {
                                         Text(
-                                            text = "Αγαπημένες ομάδες",
+                                            text = stringResource(R.string.header_favorite_groups),
                                             fontWeight = FontWeight.Bold,
                                             fontSize = 18.sp,
                                             modifier = Modifier.padding(vertical = 8.dp)
@@ -375,7 +377,7 @@ fun RoutesScreen(
 
                                     item {
                                         Text(
-                                            text = "Αγαπημένες γραμμές",
+                                            text = stringResource(R.string.header_favorite_routes),
                                             fontWeight = FontWeight.Bold,
                                             fontSize = 18.sp,
                                             modifier = Modifier.padding(

@@ -138,8 +138,6 @@ val CustomStopType = object : NavType<Stop>(isNullableAllowed = false) {
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
 
         val prefs = AppLanguagePreferences(this)
 
@@ -150,6 +148,10 @@ class MainActivity : ComponentActivity() {
                 LocaleListCompat.forLanguageTags(language)
             )
         }
+
+        super.onCreate(savedInstanceState)
+
+        enableEdgeToEdge()
 
         setContent {
             val context = LocalContext.current

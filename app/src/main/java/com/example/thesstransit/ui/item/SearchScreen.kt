@@ -54,10 +54,12 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.thesstransit.R
 import com.example.thesstransit.ui.components.SearchField
 import com.example.thesstransit.ui.data.Place
 import com.example.thesstransit.ui.data.PlaceType
@@ -82,14 +84,17 @@ fun SearchScreen(
 
     val context = LocalContext.current
 
+    val myLocationSting = stringResource(R.string.my_location)
+    val currentLocationString = stringResource(R.string.current_location)
+
     var fromQuery by remember {
-        mutableStateOf("Η τοποθεσία μου")
+        mutableStateOf(myLocationSting)
     }
 
     var fromPlace by remember {
         mutableStateOf<Place?>(
             Place(
-                name = "Η τοποθεσία μου",
+                name = myLocationSting,
                 latitude = 0.0,
                 longitude = 0.0,
                 type = PlaceType.CURRENT_LOCATION
@@ -202,7 +207,7 @@ fun SearchScreen(
                     ) {
                         Column(modifier = Modifier.animateContentSize()) {
                             SearchField(
-                                "Από",
+                                stringResource(R.string.search_from_label),
                                 value = fromQuery,
                                 onValueChange = {
                                     fromQuery = it
@@ -212,7 +217,7 @@ fun SearchScreen(
                             Spacer(modifier = Modifier.height(10.dp))
 
                             SearchField(
-                                title = "Προς",
+                                title = stringResource(R.string.search_to_label),
                                 focusRequester = destinationFocus,
                                 value = destinationQuery,
                                 onValueChange = { query ->
@@ -231,7 +236,7 @@ fun SearchScreen(
                                 }
                             )
 
-                            Spacer(modifier = Modifier.height(12.dp))
+                            Spacer( modifier = Modifier.height(12.dp) )
 
                             Row {
                                 Surface(
@@ -287,8 +292,7 @@ fun SearchScreen(
                                                         reverseGeocoder.getName(
                                                             it.latitude,
                                                             it.longitude
-                                                        )
-                                                            ?: "Τρέχουσα τοποθεσία"
+                                                        ) ?: currentLocationString
 
                                                     fromPlace =
                                                         Place(
@@ -332,7 +336,7 @@ fun SearchScreen(
                     Spacer(modifier = Modifier.height(24.dp))
 
                     SectionTitle(
-                        title = "Πρόσφατες αναζητήσεις"
+                        title = stringResource(R.string.recent_searches_title)
                     )
 
                     AnimatedVisibility(
@@ -353,7 +357,7 @@ fun SearchScreen(
                                             Text(search.title)
                                         },
                                         supportingContent = {
-                                            Text("Πρόσφατη αναζήτηση")
+                                            Text( stringResource(R.string.recent_search_subtitle) )
                                         },
                                         leadingContent = {
                                             Icon(

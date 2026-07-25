@@ -15,7 +15,6 @@ import com.example.thesstransit.ui.data.LanguagePreferences
 import io.gitlab.mitsiosm.oseth.Oseth
 import io.gitlab.mitsiosm.oseth.OsethTrackVehicle
 import io.gitlab.mitsiosm.oseth.data.Coordinates
-import io.gitlab.mitsiosm.oseth.data.DetailedRoute
 import io.gitlab.mitsiosm.oseth.data.FirstStopTime
 import io.gitlab.mitsiosm.oseth.data.Language
 import io.gitlab.mitsiosm.oseth.data.Route
@@ -50,9 +49,7 @@ class RouteDetailsViewModel(
 
     private val preferences = LanguagePreferences(application)
 
-    val _language = mutableStateOf(Language.GREEK)
-
-    private val api = Oseth(context, language = _language.value)
+    var currentLanguage = Language.GREEK
 
     var isLoading = mutableStateOf(false)
 
@@ -84,8 +81,9 @@ class RouteDetailsViewModel(
 
     init {
         viewModelScope.launch {
-            preferences.language.collect {
-                _language.value = it
+            preferences.language.collect { language ->
+                currentLanguage = language
+                reloadCurrentRoute()
             }
         }
     }
@@ -343,10 +341,7 @@ class RouteDetailsViewModel(
         date: LocalDate = selectedDate
     ){
 
-        Log.d(
-            TAG,
-            "Language = ${_language.value}"
-        )
+        val api = Oseth(context, language = currentLanguage)
 
         Log.d(
             TAG,

@@ -76,6 +76,8 @@ import androidx.compose.ui.unit.dp
 import com.example.thesstransit.ui.components.AnimatedBackground
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
+import androidx.compose.ui.res.stringResource
+import com.example.thesstransit.R
 
 @Composable
 fun LoginScreen(
@@ -231,7 +233,7 @@ fun  LoginContent(
                     enter = fadeIn()
                 ) {
                     Text(
-                        "Σύνδεση",
+                        text = stringResource(R.string.btn_login),
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -244,19 +246,12 @@ fun  LoginContent(
                     enter = fadeIn()
                 ) {
                     Text(
-                        "Συγχρονίστε τις αγαπημένες σας διαδρομές, τις ειδοποιήσεις και τις ρυθμίσεις σας σε όλες τις συσκευές.",
+                        stringResource(R.string.login_subtitle),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
-//                AnimatedVisibility(
-//                    visible = step >= 2,
-//                    enter = fadeIn()
-//                ) {
-//                    LoginBenefits()
-//                }
-
-                Spacer(Modifier.height(28.dp))
+                Spacer( modifier = Modifier.height(8.dp) )
 
                 AnimatedVisibility(
                     visible = step >= 3,
@@ -400,7 +395,7 @@ fun LoginEmailField(
     Column(modifier = Modifier.fillMaxWidth()) {
 
         Text(
-            "Email",
+            stringResource(R.string.email_label),
             style = MaterialTheme.typography.labelMedium,
             color =
                 if (focused)
@@ -446,7 +441,7 @@ fun LoginEmailField(
         },
         placeholder = {
             Text(
-                "Email",
+                stringResource(R.string.email_placeholder),
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
             )
         },
@@ -509,7 +504,7 @@ fun LoginPasswordField(
                 )
             }
         },
-        placeholder = { Text("Password") },
+        placeholder = { Text( stringResource(R.string.password_placeholder) ) },
         colors = TextFieldDefaults.colors(
             focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.85f),
             unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.65f),
@@ -526,12 +521,10 @@ fun RegisterRow() {
     Row(
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            "Δεν έχεις λογαριασμό;"
-        )
+        Text( stringResource(R.string.no_account_prompt) )
 
         Text(
-            "Εγγραφή",
+            stringResource(R.string.link_register),
             color = MaterialTheme.colorScheme.primary,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.pointerInput(Unit) {
@@ -556,7 +549,7 @@ fun LoginDivider() {
         )
 
         Text(
-            "  ή  ",
+            stringResource(R.string.divider_or),
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
@@ -574,7 +567,7 @@ fun ForgotPasswordButton() {
         onClick = {}
     ) {
         Text(
-            "Ξέχασες τον κωδικό;",
+            stringResource(R.string.btn_forgot_password),
             color = MaterialTheme.colorScheme.primary
         )
     }
@@ -709,48 +702,5 @@ fun PremiumLoginButton(
                 }
             )
         }
-    }
-}
-
-@Composable
-fun LoginBenefits() {
-
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        BenefitItem(text = "Cloud Sync")
-
-        Spacer(Modifier.height(10.dp))
-
-        BenefitItem(text = "Αγαπημένες στάσεις")
-
-        Spacer(Modifier.height(10.dp))
-
-        BenefitItem(text = "Έξυπνες ειδοποιήσεις")
-    }
-}
-
-@Composable
-fun BenefitItem(
-    text: String
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            modifier = Modifier
-                .size(6.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.7f))
-        )
-
-        Spacer(modifier = Modifier.width(10.dp))
-
-        Text(
-            text,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
     }
 }

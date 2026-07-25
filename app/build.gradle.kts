@@ -62,10 +62,10 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.material.icons.extended)
 
-    //ΑΠΙ
+    //API
     implementation("io.gitlab.mitsiosm:oseth:2.1.1")
 
-    //Help for the ΑΠΙ
+    //Help for the API
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
     implementation("androidx.datastore:datastore-preferences:1.1.1")
 

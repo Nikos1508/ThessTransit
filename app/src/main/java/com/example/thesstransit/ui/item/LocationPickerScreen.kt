@@ -34,9 +34,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.thesstransit.R
 import com.example.thesstransit.ui.components.ScreenHeader
 import com.example.thesstransit.ui.data.SavedLocations
 import com.example.thesstransit.ui.viewModels.LocationSearchViewModel
@@ -119,6 +121,10 @@ fun LocationPickerScreen(
         }
     }
 
+    val markerTitle = stringResource(R.string.marker_selected_location)
+    val homeMarkerTitle = stringResource(R.string.marker_home)
+    val workMarkerTitle = stringResource(R.string.marker_work)
+
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -127,9 +133,9 @@ fun LocationPickerScreen(
         ) {
             ScreenHeader(
                 title = if (type == "home")
-                            "Ορισμός Οικίας"
+                            stringResource(R.string.title_set_home)
                         else
-                            "Ορισμός Εργασίας",
+                            stringResource(R.string.title_set_work),
                 onProfileClick = onBackClick,
                 onBackClick = onBackClick
             )
@@ -151,7 +157,7 @@ fun LocationPickerScreen(
                 singleLine = true,
                 placeholder = {
                     Text(
-                        "Αναζήτηση δρόμου ή περιοχής"
+                        stringResource(R.string.search_location_placeholder)
                     )
                 }
             )
@@ -199,7 +205,7 @@ fun LocationPickerScreen(
                                         val newMarker = Marker(currentMap).apply {
                                             position = newPoint
                                             setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-                                            title = "Επιλογή τοποθεσίας"
+                                            title = markerTitle
                                         }
 
                                         marker.value = newMarker
@@ -282,21 +288,14 @@ fun LocationPickerScreen(
                                                 overlays.remove(it)
                                             }
 
-                                            val newMarker =
-                                                Marker(this@apply).apply {
-                                                     position = geoPoint
-
-                                                    setAnchor(
-                                                        Marker.ANCHOR_CENTER,
-                                                        Marker.ANCHOR_BOTTOM
-                                                    )
-
-                                                    title =
-                                                        if (type == "home")
-                                                            "Οικία"
-                                                        else
-                                                            "Εργασία"
-                                                }
+                                            val newMarker = Marker(this@apply).apply {
+                                                position = geoPoint
+                                                setAnchor(
+                                                    Marker.ANCHOR_CENTER,
+                                                    Marker.ANCHOR_BOTTOM
+                                                )
+                                                title = if (type == "home") homeMarkerTitle else workMarkerTitle
+                                            }
 
                                             marker.value = newMarker
 
@@ -391,9 +390,7 @@ fun LocationPickerScreen(
             },
             enabled = selectedPoint != null,
         ) {
-            Text(
-                "Επιβεβαίωση τοποθεσίας"
-            )
+            Text( stringResource(R.string.btn_confirm_location) )
         }
 
     }

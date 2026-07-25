@@ -49,7 +49,6 @@ import androidx.compose.ui.unit.sp
 import com.example.thesstransit.R
 import com.example.thesstransit.ui.components.ScreenHeader
 
-
 @Composable
 fun TicketsScreen(
     onBackClick: () -> Unit

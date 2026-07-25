@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -73,6 +74,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -106,16 +108,16 @@ import org.osmdroid.views.overlay.Polyline
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-private fun formatDay(day: LocalDate): String {
+private fun formatDay(context: Context, day: LocalDate): String {
     return when(day.dayOfWeek) {
 
-        DayOfWeek.MONDAY -> "ΔΕΥ"
-        DayOfWeek.TUESDAY -> "ΤΡΙ"
-        DayOfWeek.WEDNESDAY -> "ΤΕΤ"
-        DayOfWeek.THURSDAY -> "ΠΕΜ"
-        DayOfWeek.FRIDAY -> "ΠΑΡ"
-        DayOfWeek.SATURDAY -> "ΣΑΒ"
-        DayOfWeek.SUNDAY -> "ΚΥΡ"
+        DayOfWeek.MONDAY -> context.getString(R.string.day_mon)
+        DayOfWeek.TUESDAY -> context.getString(R.string.day_tue)
+        DayOfWeek.WEDNESDAY -> context.getString(R.string.day_wed)
+        DayOfWeek.THURSDAY -> context.getString(R.string.day_thu)
+        DayOfWeek.FRIDAY -> context.getString(R.string.day_fri)
+        DayOfWeek.SATURDAY -> context.getString(R.string.day_sat)
+        DayOfWeek.SUNDAY -> context.getString(R.string.day_sun)
     }
 }
 
@@ -128,7 +130,7 @@ fun RouteDetailsScreen(
     viewModel: RouteDetailsViewModel = viewModel()
 ) {
     val context = LocalContext.current
-    val api = Oseth(context, language = viewModel._language.value)
+    val api = Oseth(context, language = viewModel.currentLanguage)
 
     var selectedTab by remember {
         mutableIntStateOf(0)
@@ -163,7 +165,7 @@ fun RouteDetailsScreen(
         it.first.shapeId == viewModel.selectedShapeId.value
     }
 
-    val currentDirection = selectedTrip?.first?.headsign ?: "Επιλογή κατεύθυνσης"
+    val currentDirection = selectedTrip?.first?.headsign ?: stringResource(R.string.direction_select_default)
 
     LaunchedEffect(route) {
         viewModel.loadRoute(route)
@@ -225,7 +227,7 @@ fun RouteDetailsScreen(
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Επιλογή Κατεύθυνσης",
+                                text = stringResource(R.string.direction_select_default),
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.ExtraBold,
                                 style = MaterialTheme.typography.labelMedium,
@@ -299,7 +301,7 @@ fun RouteDetailsScreen(
                         unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                         text = {
                             Text(
-                                "Στάσεις",
+                                stringResource(R.string.tab_stops),
                                 fontWeight =
                                     if (selectedTab == 0)
                                         FontWeight.Bold
@@ -316,7 +318,7 @@ fun RouteDetailsScreen(
                         unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                         text = {
                             Text(
-                                "Δρομολόγια",
+                                stringResource(R.string.tab_schedules),
                                 fontWeight =
                                     if (selectedTab == 1)
                                         FontWeight.Bold
@@ -333,7 +335,7 @@ fun RouteDetailsScreen(
                         unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                         text = {
                             Text(
-                                "Χάρτης",
+                                stringResource(R.string.tab_map),
                                 fontWeight =
                                     if (selectedTab == 2)
                                         FontWeight.Bold
@@ -456,12 +458,12 @@ fun RouteInfoCard(
             ) {
                 RouteStatChip(
                     Icons.Default.LocationOn,
-                    "$stopCount στάσεις"
+                    text = stringResource(R.string.stat_stops_count, stopCount)
                 )
 
                 RouteStatChip( /* TODO: Change it for smt else */
                     Icons.Default.SwapHoriz,
-                    "2 κατευθύνσεις"
+                    text = stringResource(R.string.stat_directions_count)
                 )
             }
         }
@@ -510,17 +512,17 @@ private fun StopsTab(
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 24.dp)
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         itemsIndexed(vm.stops) { index, stop ->
 
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-                    .clickable {
-                        onStopClick(stop)
-                    }
+                    .clip(RoundedCornerShape(12.dp))
+                    .padding(horizontal = 8.dp, vertical = 6.dp)
+                    .clickable { onStopClick(stop) }
             ) {
                 Column(
                     modifier = Modifier.width(24.dp),
@@ -528,23 +530,24 @@ private fun StopsTab(
                 ) {
                     Box(
                         modifier = Modifier
+                            .width(32.dp)
                             .height(
                                 if (index != vm.stops.lastIndex)
                                     86.dp
                                 else
                                     14.dp
                             ),
-                        contentAlignment = Alignment.TopCenter
+                        contentAlignment = Alignment.Center
                     ) {
                         if (index != vm.stops.lastIndex) {
                             Box(
                                 modifier = Modifier
                                     .width(3.dp)
-                                    .height(72.dp)
+                                    .fillMaxHeight()
                                     .align(Alignment.TopCenter)
-                                    .offset(y = 14.dp)
+                                    .offset(y = 16.dp)
                                     .background(
-                                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)
+                                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)
                                     )
                             )
                         }
@@ -566,21 +569,17 @@ private fun StopsTab(
                             if (stopIndex == index) {
                                 Surface(
                                     modifier = Modifier
-                                        .offset(
-                                            y = 14.dp + (72.dp * progress)
-                                        )
-                                        .size(22.dp),
+                                        .offset( y = (32.dp * progress) )
+                                        .size(24.dp),
                                     shape = CircleShape,
                                     color = MaterialTheme.colorScheme.primary,
-                                    shadowElevation = 6.dp
+                                    shadowElevation = 4.dp
                                 ) {
-                                    Box(
-                                        contentAlignment = Alignment.Center
-                                    ) {
+                                    Box(contentAlignment = Alignment.Center) {
                                         Icon(
                                             Icons.Default.DirectionsBus,
                                             contentDescription = null,
-                                            modifier = Modifier.size(12.dp),
+                                            modifier = Modifier.size(14.dp),
                                             tint = MaterialTheme.colorScheme.onPrimary
                                         )
                                     }
@@ -589,23 +588,24 @@ private fun StopsTab(
                         }
                     }
 
-                    Spacer(modifier = Modifier.width(16.dp))
+                    Spacer(modifier = Modifier.width(12.dp))
 
                     Column(
-                        modifier = Modifier.padding(bottom = 4.dp)
+                        modifier = Modifier.weight(1f)
                     ) {
 
                         Text(
                             text = stop.name,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface,
                             maxLines = 1
                         )
 
-                        Spacer(modifier = Modifier.width(4.dp))
+                        Spacer( modifier = Modifier.height(2.dp) )
 
                         Text(
-                            text = "Κωδικός στάσης: ${stop.id.value}",
+                            text = stringResource(R.string.stop_code_format, stop.id.value),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -614,7 +614,8 @@ private fun StopsTab(
                     Icon(
                         Icons.AutoMirrored.Filled.KeyboardArrowRight,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.outline
+                        tint = MaterialTheme.colorScheme.outline,
+                        modifier = Modifier.size(24.dp)
                     )
                 }
             }
@@ -984,6 +985,7 @@ private fun RouteMapTab(
 private fun TimetableTab(
     vm: RouteDetailsViewModel
 ){
+    val context = LocalContext.current
     LazyRow(
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         modifier = Modifier.padding(
@@ -1015,9 +1017,9 @@ private fun TimetableTab(
                 label = {
                     Text(
                         if (day == vm.weekDays.first())
-                            "ΣΗΜ"
+                            stringResource(R.string.chip_today)
                         else
-                            formatDay(day)
+                            formatDay(context, day)
                     )
                 }
             )
@@ -1121,7 +1123,7 @@ private fun TimetableTab(
                         )
 
                         Text(
-                            text = "Αναχώρηση",
+                            text = stringResource(R.string.departure_label),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.primary
                         )
@@ -1143,7 +1145,7 @@ private fun TimetableTab(
                             )
 
                             Text(
-                                text = "Άφιξη: ",
+                                text = stringResource(R.string.arrival_label_prefix),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )

@@ -87,6 +87,7 @@ import com.example.thesstransit.ui.viewModels.FavoritesViewModel
 import io.gitlab.mitsiosm.oseth.Oseth
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
+import androidx.compose.ui.res.stringResource
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -110,13 +111,15 @@ fun HomeScreen(
     animatedContentScope: AnimatedContentScope
 ){
 
+    val defaultSubtitle = stringResource(R.string.quick_set_location)
+
     val tiles = listOf(
-        FeatureTile("Εισιτήρια\n& Τιμές", "", Icons.Outlined.LocalActivity, onTicketsClick),
-        FeatureTile("Αγορά\nΕισιτηρίου", "", Icons.Outlined.QrCode2, onBuyTicketClick),
-        FeatureTile("Γραμμές\nΜετρό", "", Icons.Outlined.Train, onLinesClick),
-        FeatureTile("Αγαπημένες\nΔιαδρομές", "", Icons.Outlined.Favorite, onFavouritesClick),
-        FeatureTile("Ειδοποιήσεις", "", Icons.Outlined.Notifications, onNotificationsClick),
-        FeatureTile("Ρυθμίσεις", "", Icons.Outlined.Settings, onSettingsClick)
+        FeatureTile(stringResource(R.string.tile_tickets), "", Icons.Outlined.LocalActivity, onTicketsClick),
+        FeatureTile(stringResource(R.string.tile_buy_ticket), "", Icons.Outlined.QrCode2, onBuyTicketClick),
+        FeatureTile(stringResource(R.string.tile_metro_lines), "", Icons.Outlined.Train, onLinesClick),
+        FeatureTile(stringResource(R.string.tile_favorite_routes), "", Icons.Outlined.Favorite, onFavouritesClick),
+        FeatureTile(stringResource(R.string.tile_notifications), "", Icons.Outlined.Notifications, onNotificationsClick),
+        FeatureTile(stringResource(R.string.tile_settings), "", Icons.Outlined.Settings, onSettingsClick)
     )
 
     var showFilters by remember { mutableStateOf(false) }
@@ -188,8 +191,8 @@ fun HomeScreen(
                     onHomeClick = onHomeClick,
                     onWorkClick = onWorkClick,
                     onFavouritesClick = onFavouritesClick,
-                    homeSubtitle = home.first ?: "Καθόρισε",
-                    workSubtitle = work.first ?: "Καθόρισε"
+                    homeSubtitle = home.first ?: defaultSubtitle,
+                    workSubtitle = work.first ?: defaultSubtitle
                 )
             }
             item {
@@ -205,7 +208,7 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 SectionTitle(
-                    title = "Ενημερώσεις / Νέα"
+                    title = stringResource(R.string.section_updates_news)
                 )
             }
             item {
@@ -215,7 +218,7 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 SectionTitle(
-                    title = "Επιπλέον λειτουργίες"
+                    title = stringResource(R.string.section_extra_features)
                 )
             }
             item {
@@ -320,7 +323,7 @@ fun HeaderSection(
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    text = "Login",
+                    text = stringResource(R.string.login),
                     fontSize = 13.sp,
                     color = MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.Medium
@@ -335,7 +338,7 @@ fun HeaderSection(
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = "Καλωσόρισες στο",
+                    text = stringResource(R.string.welcome_to),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 15.sp
                 )
@@ -388,7 +391,7 @@ fun HeaderSection(
                 Spacer(modifier = Modifier.height(6.dp))
 
                 Text(
-                    text = "Η έξυπνη μετακίνηση στη Θεσσαλονίκη",
+                    text = stringResource(R.string.app_subtitle),
                     fontSize = 13.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     lineHeight = 18.sp
@@ -412,7 +415,7 @@ fun QuickAccessRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         QuickAccessItem(
-            title = "Οικία",
+            title = stringResource(R.string.quick_home),
             subtitle = homeSubtitle,
             icon = Icons.Outlined.Home,
             iconColor = Color.White,
@@ -421,7 +424,7 @@ fun QuickAccessRow(
         )
 
         QuickAccessItem(
-            title = "Εργασία",
+            title = stringResource(R.string.quick_work),
             subtitle = workSubtitle,
             icon = Icons.Outlined.Work,
             iconColor = MaterialTheme.colorScheme.primary,
@@ -430,8 +433,8 @@ fun QuickAccessRow(
         )
 
         QuickAccessItem(
-            title = "Αγαπημένα",
-            subtitle = "$favoriteCount διαδρομές",
+            title = stringResource(R.string.quick_favorites),
+            subtitle = stringResource(R.string.routes_count_format, favoriteCount),
             icon = Icons.Outlined.Star,
             iconColor = Color(0xFFFFD700),
             onClick = onFavouritesClick,
@@ -494,15 +497,15 @@ fun MainFeatureGrid(
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             MainFeatureCard(
                 modifier = Modifier.weight(1f),
-                title = "Πώς να πάω;",
-                subtitle = "Βρες την καλύτερη διαδρομή",
+                title = stringResource(R.string.feature_how_to_go_title),
+                subtitle = stringResource(R.string.feature_how_to_go_subtitle),
                 icon = Icons.Outlined.Route,
                 onClick = onHowToGoClick
             )
             MainFeatureCard(
                 modifier = Modifier.weight(1f),
-                title = "Γραμμές &\nΔρομολόγια",
-                subtitle = "Δες όλες τις γραμμές και τα δρομολόγια",
+                title = stringResource(R.string.feature_lines_title),
+                subtitle = stringResource(R.string.feature_lines_subtitle),
                 icon = Icons.Outlined.DirectionsBus,
                 onClick = onLinesClick
             )
@@ -513,15 +516,15 @@ fun MainFeatureGrid(
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             MainFeatureCard(
                 modifier = Modifier.weight(1f),
-                title = "Στάσεις κοντά\nμου",
-                subtitle = "Στάσεις λεωφορείου και μετρό κοντά σου",
+                title = stringResource(R.string.feature_nearby_stops_title),
+                subtitle = stringResource(R.string.feature_nearby_stops_subtitle),
                 icon = Icons.Outlined.LocationOn,
                 onClick = onNearbyStopsClick
             )
             MainFeatureCard(
                 modifier = Modifier.weight(1f),
-                title = "Αναχωρήσεις\nτώρα",
-                subtitle = "Ζωντανά δεδομένα των αναχωρήσεων και αφίξεων λεωφορείων και μετρό",
+                title = stringResource(R.string.feature_live_departures_title),
+                subtitle = stringResource(R.string.feature_live_departures_subtitle),
                 icon = Icons.Outlined.AccessTime,
                 onClick = onLiveDeparturesClick
             )
@@ -621,34 +624,34 @@ data class AIUpdate(
     val icon: ImageVector
 )
 
-val aiUpdates = listOf(
-
-    AIUpdate(
-        title = "Κυκλοφορία",
-        description = "Αυξημένη κίνηση στην Εγνατία Οδό",
-        icon = Icons.Outlined.DirectionsCar
-    ),
-
-    AIUpdate(
-        title = "Έργα & Διακοπές",
-        description = "Γραμμή 3K: Καθυστέρηση 10 λεπτών",
-        icon = Icons.Outlined.Notifications
+@Composable
+fun getAiUpdates(): List<AIUpdate> {
+    return listOf(
+        AIUpdate(
+            title = stringResource(R.string.update_traffic_title),
+            description = stringResource(R.string.update_traffic_desc),
+            icon = Icons.Outlined.DirectionsCar
+        ),
+        AIUpdate(
+            title = stringResource(R.string.update_works_title),
+            description = stringResource(R.string.update_works_desc),
+            icon = Icons.Outlined.Notifications
+        )
     )
-
-)
+}
 
 @Composable
-fun  AIUpdateSection(){
+fun AIUpdateSection(){
+    val updates = getAiUpdates()
     Column(
         modifier = Modifier.padding(horizontal = 20.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        aiUpdates.forEach {
+        updates.forEach {
             AIUpdateCard(update = it)
         }
     }
 }
-
 @Composable
 fun AIUpdateCard(
     update: AIUpdate

@@ -2,5 +2,139 @@
 
     <string name="app_name">ThessTransit</string>
     <string name="tickets">Εισητήρια</string>
+    <string name="language">Γλώσσα</string>
+    <string name="greek">Ελληνικά</string>
+    <string name="english">English</string>
+    <string name="settings">Ρυθμίσεις</string>
+    <string name="home">Οικία</string>
+
+    <!-- GROUPED ROUTES SCREEN -->
+    <string name="route_group_title">Ομάδα γραμμών %1$s</string>
+    <string name="available_routes_count">%1$d διαθέσιμες διαδρομές</string>
+
+    <!-- GROUPED ROUTES DETAILS SCREEN -->
+    <string name="route_header_title">Γραμμή %1$s</string>
+    <string name="direction_label">Κατεύθυνση</string>
+    <string name="direction_start">Αφετηρία</string>
+    <string name="direction_end">Τέρμα</string>
+    <string name="tab_schedules">Δρομολόγια</string>
+    <string name="tab_stops">Στάσεις</string>
+    <string name="stop_code_format">Κωδικός: %1$s</string>
+
+    <!-- HOME SCREEN -->
+    <!-- Header Section -->
+    <string name="login">Login</string>
+    <string name="welcome_to">Καλωσόρισες στο</string>
+    <string name="app_subtitle">Η έξυπνη μετακίνηση στη Θεσσαλονίκη</string>
+
+    <!-- Quick Access -->
+    <string name="quick_home">Οικία</string>
+    <string name="quick_work">Εργασία</string>
+    <string name="quick_favorites">Αγαπημένα</string>
+    <string name="quick_set_location">Καθόρισε</string>
+    <string name="routes_count_format">%1$d διαδρομές</string>
+
+    <!-- Main Features -->
+    <string name="feature_how_to_go_title">Πώς να πάω;</string>
+    <string name="feature_how_to_go_subtitle">Βρες την καλύτερη διαδρομή</string>
+    <string name="feature_lines_title">Γραμμές &amp;\nΔρομολόγια</string>
+    <string name="feature_lines_subtitle">Δες όλες τις γραμμές και τα δρομολόγια</string>
+    <string name="feature_nearby_stops_title">Στάσεις κοντά\nμου</string>
+    <string name="feature_nearby_stops_subtitle">Στάσεις λεωφορείου και μετρό κοντά σου</string>
+    <string name="feature_live_departures_title">Αναχωρήσεις\nτώρα</string>
+    <string name="feature_live_departures_subtitle">Ζωντανά δεδομένα των αναχωρήσεων και αφίξεων λεωφορείων και μετρό</string>
+
+    <!-- Section Titles -->
+    <string name="section_updates_news">Ενημερώσεις / Νέα</string>
+    <string name="section_extra_features">Επιπλέον λειτουργίες</string>
+
+    <!-- AI Updates Mock Data -->
+    <string name="update_traffic_title">Κυκλοφορία</string>
+    <string name="update_traffic_desc">Αυξημένη κίνηση στην Εγνατία Οδό</string>
+    <string name="update_works_title">Έργα &amp; Διακοπές</string>
+    <string name="update_works_desc">Γραμμή 3K: Καθυστέρηση 10 λεπτών</string>
+
+    <!-- Feature Tiles -->
+    <string name="tile_tickets">Εισιτήρια\n&amp; Τιμές</string>
+    <string name="tile_buy_ticket">Αγορά\nΕισιτηρίου</string>
+    <string name="tile_metro_lines">Γραμμές\nΜετρό</string>
+    <string name="tile_favorite_routes">Αγαπημένες\nΔιαδρομές</string>
+    <string name="tile_notifications">Ειδοποιήσεις</string>
+    <string name="tile_settings">Ρυθμίσεις</string>
+
+    <!-- LOCATION PICKER SCREEN -->
+    <string name="title_set_home">Ορισμός Οικίας</string>
+    <string name="title_set_work">Ορισμός Εργασίας</string>
+    <string name="search_location_placeholder">Αναζήτηση δρόμου ή περιοχής</string>
+    <string name="marker_selected_location">Επιλογή τοποθεσίας</string>
+    <string name="marker_home">Οικία</string>
+    <string name="marker_work">Εργασία</string>
+    <string name="btn_confirm_location">Επιβεβαίωση τοποθεσίας</string>
+
+    <!-- -->
+    <string name="login_title">Σύνδεση</string>
+    <string name="login_subtitle">Συγχρονίστε τις αγαπημένες σας διαδρομές, τις ειδοποιήσεις και τις ρυθμίσεις σας σε όλες τις συσκευές.</string>
+    <string name="email_label">EMAIL</string>
+    <string name="email_placeholder">Email</string>
+    <string name="password_placeholder">Password</string>
+    <string name="btn_login">Σύνδεση</string>
+    <string name="btn_forgot_password">Ξέχασες τον κωδικό;</string>
+    <string name="divider_or">ή</string>
+    <string name="no_account_prompt">Δεν έχεις λογαριασμό;</string>
+    <string name="link_register">Εγγραφή</string>
+
+    <!-- ROUTE DETAILS SCREEN -->
+    <string name="day_mon">ΔΕΥ</string>
+    <string name="day_tue">ΤΡΙ</string>
+    <string name="day_wed">ΤΕΤ</string>
+    <string name="day_thu">ΠΕΜ</string>
+    <string name="day_fri">ΠΑΡ</string>
+    <string name="day_sat">ΣΑΒ</string>
+    <string name="day_sun">ΚΥΡ</string>
+
+    <string name="direction_select_default">Επιλογή κατεύθυνσης</string>
+    <string name="tab_map">Χάρτης</string>
+    <string name="stat_stops_count">%1$d στάσεις</string>
+    <string name="stat_directions_count">2 κατευθύνσεις</string>
+    <string name="chip_today">ΣΗΜ</string>
+    <string name="departure_label">Αναχώρηση</string>
+    <string name="arrival_label_prefix">Άφιξη: </string>
+
+    <!-- ROUTES SCREEN -->
+    <string name="title_routes">Διαδρομές</string>
+    <string name="tab_all_routes">Όλες</string>
+    <string name="tab_categories">Κατηγορίες</string>
+    <string name="tab_favorites">Αγαπημένα</string>
+    <string name="search_route_placeholder">Αναζήτηση γραμμής…</string>
+    <string name="header_favorite_groups">Αγαπημένες ομάδες</string>
+    <string name="header_favorite_routes">Αγαπημένες γραμμές</string>
+
+    <!-- SEARCH SCREEN -->
+    <string name="my_location">Η τοποθεσία μου</string>
+    <string name="current_location">Τρέχουσα τοποθεσία</string>
+    <string name="search_from_label">Από</string>
+    <string name="search_to_label">Προς</string>
+    <string name="recent_searches_title">Πρόσφατες αναζητήσεις</string>
+    <string name="recent_search_subtitle">Πρόσφατη αναζήτηση</string>
+
+    <!-- SETTINGS SCREEN -->
+    <string name="title_settings">Ρυθμίσεις</string>
+    <string name="settings_about_dialog_text">
+        Δημιουργήθηκε για μία εύκολη\nμετακίνηση στη Θεσσαλονίκη.\n\nVersion 0.8
+    </string>
+    <string name="ok">OK</string>
+    <string name="section_general">Γενικά</string>
+    <string name="settings_language">Γλώσσα</string>
+    <string name="section_appearance">Εμφάνιση</string>
+    <string name="settings_contact_title">Στοιχεία επικοινωνίας</string>
+    <string name="settings_contact_subtitle">Επικοινωνήστε μαζί μας</string>
+    <string name="settings_about_title">Σχετικά</string>
+    <string name="settings_about_subtitle">Έκδοση 0.8</string>
+    <string name="settings_header_subtitle">Προσωποποίησε την εμπειρία σου στο ThessTransit</string>
+    <string name="theme_title">Θέμα εφαρμογής</string>
+    <string name="theme_subtitle">Διάλεξε εμφάνιση</string>
+    <string name="theme_system">Σύστημα</string>
+    <string name="theme_light">Φωτεινό</string>
+    <string name="theme_dark">Σκούρο</string>
 
 </resources>
