@@ -11,130 +11,243 @@
     <string name="home">Home</string>
 
     <!-- GROUPED ROUTES SCREEN -->
-    <string name="route_group_title">Ομάδα γραμμών %1$s</string>
-    <string name="available_routes_count">%1$d διαθέσιμες διαδρομές</string>
+    <string name="route_group_title">Route group %1$s</string>
+    <string name="available_routes_count">%1$d available routes</string>
 
     <!-- GROUPED ROUTES DETAILS SCREEN -->
-    <string name="route_header_title">Γραμμή %1$s</string>
-    <string name="direction_label">Κατεύθυνση</string>
-    <string name="direction_start">Αφετηρία</string>
-    <string name="direction_end">Τέρμα</string>
-    <string name="tab_schedules">Δρομολόγια</string>
-    <string name="tab_stops">Στάσεις</string>
-    <string name="stop_code_format">Κωδικός: %1$s</string>
+    <string name="route_header_title">Line %1$s</string>
+    <string name="direction_label">Direction</string>
+    <string name="direction_start">Origin</string>
+    <string name="direction_end">Destination</string>
+    <string name="tab_schedules">Schedules</string>
+    <string name="tab_stops">Stops</string>
 
     <!-- HOME SCREEN -->
     <!-- Header Section -->
     <string name="login">Login</string>
-    <string name="welcome_to">Καλωσόρισες στο</string>
-    <string name="app_subtitle">Η έξυπνη μετακίνηση στη Θεσσαλονίκη</string>
+    <string name="welcome_to">Welcome to</string>
+    <string name="app_subtitle">Smart transit in Thessaloniki</string>
 
     <!-- Quick Access -->
-    <string name="quick_home">Οικία</string>
-    <string name="quick_work">Εργασία</string>
-    <string name="quick_favorites">Αγαπημένα</string>
-    <string name="quick_set_location">Καθόρισε</string>
-    <string name="routes_count_format">%1$d διαδρομές</string>
+    <string name="quick_home">Home</string>
+    <string name="quick_work">Work</string>
+    <string name="quick_favorites">Favorites</string>
+    <string name="quick_set_location">Set</string>
+    <string name="routes_count_format">%1$d routes</string>
 
     <!-- Main Features -->
-    <string name="feature_how_to_go_title">Πώς να πάω;</string>
-    <string name="feature_how_to_go_subtitle">Βρες την καλύτερη διαδρομή</string>
-    <string name="feature_lines_title">Γραμμές &amp;\nΔρομολόγια</string>
-    <string name="feature_lines_subtitle">Δες όλες τις γραμμές και τα δρομολόγια</string>
-    <string name="feature_nearby_stops_title">Στάσεις κοντά\nμου</string>
-    <string name="feature_nearby_stops_subtitle">Στάσεις λεωφορείου και μετρό κοντά σου</string>
-    <string name="feature_live_departures_title">Αναχωρήσεις\nτώρα</string>
-    <string name="feature_live_departures_subtitle">Ζωντανά δεδομένα των αναχωρήσεων και αφίξεων λεωφορείων και μετρό</string>
+    <string name="feature_how_to_go_title">How to go?</string>
+    <string name="feature_how_to_go_subtitle">Find the best route</string>
+    <string name="feature_lines_title">Lines &amp;\nSchedules</string>
+    <string name="feature_lines_subtitle">View all lines and timetables</string>
+    <string name="feature_nearby_stops_title">Stops near\nme</string>
+    <string name="feature_nearby_stops_subtitle">Bus and metro stops nearby</string>
+    <string name="feature_live_departures_title">Departures\nnow</string>
+    <string name="feature_live_departures_subtitle">Live departure and arrival data for bus and metro</string>
 
     <!-- Section Titles -->
-    <string name="section_updates_news">Ενημερώσεις / Νέα</string>
-    <string name="section_extra_features">Επιπλέον λειτουργίες</string>
+    <string name="section_updates_news">Updates / News</string>
+    <string name="section_extra_features">Extra features</string>
 
     <!-- AI Updates Mock Data -->
-    <string name="update_traffic_title">Κυκλοφορία</string>
-    <string name="update_traffic_desc">Αυξημένη κίνηση στην Εγνατία Οδό</string>
-    <string name="update_works_title">Έργα &amp; Διακοπές</string>
-    <string name="update_works_desc">Γραμμή 3K: Καθυστέρηση 10 λεπτών</string>
+    <string name="update_traffic_title">Traffic</string>
+    <string name="update_traffic_desc">Heavy traffic on Egnatia Street</string>
+    <string name="update_works_title">Works &amp; Delays</string>
+    <string name="update_works_desc">Line 3K: 10-minute delay</string>
 
     <!-- Feature Tiles -->
-    <string name="tile_tickets">Εισιτήρια\n&amp; Τιμές</string>
-    <string name="tile_buy_ticket">Αγορά\nΕισιτηρίου</string>
-    <string name="tile_metro_lines">Γραμμές\nΜετρό</string>
-    <string name="tile_favorite_routes">Αγαπημένες\nΔιαδρομές</string>
-    <string name="tile_notifications">Ειδοποιήσεις</string>
-    <string name="tile_settings">Ρυθμίσεις</string>
+    <string name="tile_tickets">Tickets\n&amp; Prices</string>
+    <string name="tile_buy_ticket">Buy\nTicket</string>
+    <string name="tile_metro_lines">Metro\nLines</string>
+    <string name="tile_favorite_routes">Favorite\nRoutes</string>
+    <string name="tile_notifications">Notifications</string>
+    <string name="tile_settings">Settings</string>
 
     <!-- LOCATION PICKER SCREEN -->
-    <string name="title_set_home">Ορισμός Οικίας</string>
-    <string name="title_set_work">Ορισμός Εργασίας</string>
-    <string name="search_location_placeholder">Αναζήτηση δρόμου ή περιοχής</string>
-    <string name="marker_selected_location">Επιλογή τοποθεσίας</string>
-    <string name="marker_home">Οικία</string>
-    <string name="marker_work">Εργασία</string>
-    <string name="btn_confirm_location">Επιβεβαίωση τοποθεσίας</string>
+    <string name="title_set_home">Set Home Location</string>
+    <string name="title_set_work">Set Work Location</string>
+    <string name="search_location_placeholder">Search for street or area</string>
+    <string name="marker_selected_location">Selected location</string>
+    <string name="marker_home">Home</string>
+    <string name="marker_work">Work</string>
+    <string name="btn_confirm_location">Confirm location</string>
 
-    <!-- -->
-    <string name="login_title">Σύνδεση</string>
-    <string name="login_subtitle">Συγχρονίστε τις αγαπημένες σας διαδρομές, τις ειδοποιήσεις και τις ρυθμίσεις σας σε όλες τις συσκευές.</string>
+    <!-- LOGIN -->
+    <string name="login_title">Log In</string>
+    <string name="login_subtitle">Sync your favorite routes, notifications, and settings across all your devices.</string>
     <string name="email_label">EMAIL</string>
     <string name="email_placeholder">Email</string>
     <string name="password_placeholder">Password</string>
-    <string name="btn_login">Σύνδεση</string>
-    <string name="btn_forgot_password">Ξέχασες τον κωδικό;</string>
-    <string name="divider_or">ή</string>
-    <string name="no_account_prompt">Δεν έχεις λογαριασμό;</string>
-    <string name="link_register">Εγγραφή</string>
+    <string name="btn_login">Log In</string>
+    <string name="btn_forgot_password">Forgot password?</string>
+    <string name="divider_or">or</string>
+    <string name="no_account_prompt">Don\'t have an account?</string>
+    <string name="link_register">Register</string>
 
     <!-- ROUTE DETAILS SCREEN -->
-    <string name="day_mon">ΔΕΥ</string>
-    <string name="day_tue">ΤΡΙ</string>
-    <string name="day_wed">ΤΕΤ</string>
-    <string name="day_thu">ΠΕΜ</string>
-    <string name="day_fri">ΠΑΡ</string>
-    <string name="day_sat">ΣΑΒ</string>
-    <string name="day_sun">ΚΥΡ</string>
+    <string name="day_mon">MON</string>
+    <string name="day_tue">TUE</string>
+    <string name="day_wed">WED</string>
+    <string name="day_thu">THU</string>
+    <string name="day_fri">FRI</string>
+    <string name="day_sat">SAT</string>
+    <string name="day_sun">SUN</string>
 
-    <string name="direction_select_default">Επιλογή κατεύθυνσης</string>
-    <string name="tab_map">Χάρτης</string>
-    <string name="stat_stops_count">%1$d στάσεις</string>
-    <string name="stat_directions_count">2 κατευθύνσεις</string>
-    <string name="chip_today">ΣΗΜ</string>
-    <string name="departure_label">Αναχώρηση</string>
-    <string name="arrival_label_prefix">Άφιξη: </string>
+    <string name="direction_select_default">Select direction</string>
+    <string name="tab_map">Map</string>
+    <string name="stat_stops_count">%1$d stops</string>
+    <string name="stat_directions_count">2 directions</string>
+    <string name="chip_today">TODAY</string>
+    <string name="arrival_label_prefix">Arrival: </string>
 
     <!-- ROUTES SCREEN -->
-    <string name="title_routes">Διαδρομές</string>
-    <string name="tab_all_routes">Όλες</string>
-    <string name="tab_categories">Κατηγορίες</string>
-    <string name="tab_favorites">Αγαπημένα</string>
-    <string name="search_route_placeholder">Αναζήτηση γραμμής…</string>
-    <string name="header_favorite_groups">Αγαπημένες ομάδες</string>
-    <string name="header_favorite_routes">Αγαπημένες γραμμές</string>
+    <string name="title_routes">Routes</string>
+    <string name="tab_all_routes">All</string>
+    <string name="tab_categories">Categories</string>
+    <string name="tab_favorites">Favorites</string>
+    <string name="search_route_placeholder">Search line…</string>
+    <string name="header_favorite_groups">Favorite groups</string>
+    <string name="header_favorite_routes">Favorite lines</string>
 
     <!-- SEARCH SCREEN -->
-    <string name="my_location">Η τοποθεσία μου</string>
-    <string name="current_location">Τρέχουσα τοποθεσία</string>
-    <string name="search_from_label">Από</string>
-    <string name="search_to_label">Προς</string>
-    <string name="recent_searches_title">Πρόσφατες αναζητήσεις</string>
-    <string name="recent_search_subtitle">Πρόσφατη αναζήτηση</string>
+    <string name="my_location">My location</string>
+    <string name="current_location">Current location</string>
+    <string name="search_from_label">From</string>
+    <string name="search_to_label">To</string>
+    <string name="recent_searches_title">Recent searches</string>
+    <string name="recent_search_subtitle">Recent search</string>
 
     <!-- SETTINGS SCREEN -->
-    <string name="title_settings">Ρυθμίσεις</string>
-    <string name="settings_about_dialog_text">Δημιουργήθηκε για μία εύκολη\nμετακίνηση στη Θεσσαλονίκη.\n\nVersion 0.8</string>
+    <string name="title_settings">Settings</string>
+    <string name="settings_about_dialog_text">
+        Created for easy\ntransit in Thessaloniki.\n\nVersion 0.8
+    </string>
     <string name="ok">OK</string>
-    <string name="section_general">Γενικά</string>
-    <string name="settings_language">Γλώσσα</string>
-    <string name="section_appearance">Εμφάνιση</string>
-    <string name="settings_contact_title">Στοιχεία επικοινωνίας</string>
-    <string name="settings_contact_subtitle">Επικοινωνήστε μαζί μας</string>
-    <string name="settings_about_title">Σχετικά</string>
-    <string name="settings_about_subtitle">Έκδοση 0.8</string>
-    <string name="settings_header_subtitle">Προσωποποίησε την εμπειρία σου στο ThessTransit</string>
-    <string name="theme_title">Θέμα εφαρμογής</string>
-    <string name="theme_subtitle">Διάλεξε εμφάνιση</string>
-    <string name="theme_system">Σύστημα</string>
-    <string name="theme_light">Φωτεινό</string>
-    <string name="theme_dark">Σκούρο</string>
+    <string name="section_general">General</string>
+    <string name="settings_language">Language</string>
+    <string name="section_appearance">Appearance</string>
+    <string name="settings_contact_title">Contact Information</string>
+    <string name="settings_contact_subtitle">Get in touch with us</string>
+    <string name="settings_about_title">About</string>
+    <string name="settings_about_subtitle">Version 0.8</string>
+    <string name="settings_header_subtitle">Personalize your ThessTransit experience</string>
+    <string name="theme_title">App Theme</string>
+    <string name="theme_subtitle">Choose appearance</string>
+    <string name="theme_system">System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+
+    <!-- STOP DETAILS SCREEN -->
+    <string name="stop_code_format">Stop code • %1$s</string>
+    <string name="routes_serving_stop_format">%1$d lines serve this stop</string>
+    <string name="tab_arrivals">Arrivals</string>
+    <string name="empty_arrivals_message">No scheduled arrivals found for the next 2 hours.</string>
+    <string name="next_bus_header">Next bus</string>
+    <string name="departure_time_format">Departure %1$s</string>
+    <string name="live_tracking_label">Vehicle tracked live</string>
+    <string name="scheduled_arrival_label">Scheduled arrival</string>
+    <string name="regular_route_label">Regular route</string>
+    <string name="departure_label">Departure</string>
+    <string name="terminus_label">Terminus</string>
+    <string name="minutes_format">%1$d mins</string>
+    <string name="live_badge">● Live</string>
+    <string name="live_text">Live</string>
+    <string name="no_arrivals_title">No arrivals</string>
+
+    <!-- TICKETS SCREEN -->
+    <string name="tickets_screen_title">Tickets</string>
+    <string name="tickets_header_title">Tickets &amp; Passes</string>
+    <string name="tickets_header_subtitle">Information for your commute in Thessaloniki</string>
+
+    <!-- Tabs -->
+    <string name="tab_prices_and_types">Prices &amp; Types</string>
+    <string name="tab_discounts">Discounts</string>
+    <string name="tab_sales_points">Where to Buy</string>
+    <string name="tab_fines">Fines</string>
+
+    <!-- Tab 0: Prices & Types -->
+    <string name="section_bus_tickets">Transit Tickets &amp; Passes</string>
+    <string name="table_header_ticket_type">Ticket Type</string>
+    <string name="table_header_regular">Regular</string>
+    <string name="table_header_reduced">Reduced</string>
+
+    <string name="ticket_urban_zone">Urban Zone (70\')</string>
+    <string name="ticket_suburban_zone">Suburban Zone (70\')</string>
+    <string name="ticket_airport">Express Lines (X1/X2, 50)</string>
+    <string name="ticket_daily">24-Hour Pass</string>
+    <string name="ticket_10_plus_1_urban">10+1 Urban Zone</string>
+    <string name="ticket_10_plus_1_suburban">10+1 Suburban Zone</string>
+    <string name="ticket_30_days">30-Day Pass</string>
+    <string name="ticket_90_days">90-Day Pass</string>
+    <string name="ticket_180_days">180-Day Pass</string>
+
+    <string name="price_0_60">€0.60</string>
+    <string name="price_0_30">€0.30</string>
+    <string name="price_0_80">€0.80</string>
+    <string name="price_0_40">€0.40</string>
+    <string name="price_2_00">€2.00</string>
+    <string name="price_1_00">€1.00</string>
+    <string name="price_2_50">€2.50</string>
+    <string name="price_5_80">€5.80</string>
+    <string name="price_2_90">€2.90</string>
+    <string name="price_7_80">€7.80</string>
+    <string name="price_3_90">€3.90</string>
+    <string name="price_16_00">€16.00</string>
+    <string name="price_8_00">€8.00</string>
+    <string name="price_45_00">€45.00</string>
+    <string name="price_22_50">€22.50</string>
+    <string name="price_85_00">€85.00</string>
+    <string name="price_42_50">€42.50</string>
+
+    <string name="tickets_info_note">
+        Time-limited tickets allow transfers within 70 minutes from first validation.
+        Bus payment can also be made contactlessly using a bank card or smartphone.
+    </string>
+
+    <!-- Tab 1: Discounts -->
+    <string name="section_reduced_fare_beneficiaries">Reduced Fare &amp; Free Travel Eligible Users</string>
+    <string name="title_who_pays_reduced">Eligible for Reduced Fare (50%)</string>
+    <string name="desc_who_pays_reduced">
+        • Students of Greek public universities (with academic ID)\n
+        • Primary &amp; Secondary Education students\n
+        • Youth aged 7 to 18\n
+        • Seniors over 65 years old (with national ID)\n
+        • Large families / parents of 3+ children (with special ID/card)
+    </string>
+
+    <string name="title_who_travels_free">Eligible for Free Travel</string>
+    <string name="desc_who_travels_free">
+        • Children up to 6 years old (accompanied by an adult)\n
+        • Unemployed individuals registered with DYPA (with recent digital certificate)\n
+        • Persons with Disabilities (PwD) upon presenting special pass
+    </string>
+
+    <!-- Tab 2: Sales Points -->
+    <string name="section_where_to_buy">Where to buy tickets or passes</string>
+    <string name="title_thesscard">Personalized &amp; Anonymous Card (ThessCard / ThessTicket)</string>
+    <string name="desc_thesscard">
+        Personalized ThessCard issuance at OASTH ticket offices and Metro stations with ID,
+        SSN (AMKA), and discount supporting documents. Top up via ATVMs, ticket offices, or contactlessly on buses.
+    </string>
+
+    <string name="title_physical_points">Physical Sales Outlets &amp; Ticket Offices</string>
+    <string name="desc_physical_points">
+        OASTH ticket offices (Aristotelous Sq., New Railway Station, Airport, etc.), Thessaloniki
+        Metro ticket offices, as well as selected retail locations (kiosks, convenience stores).
+    </string>
+
+    <!-- Tab 3: Fines -->
+    <string name="section_fines_title">Ticket Inspection &amp; Fines</string>
+    <string name="title_no_ticket_fine">Failure to validate ticket / pass</string>
+    <string name="desc_no_ticket_fine">
+        The fine for non-possession or non-validation of a ticket equals 60 times
+        the standard ticket price (€60.00 for regular, €30.00 for reduced).
+    </string>
+
+    <string name="title_fine_discount">50% discount on payment</string>
+    <string name="desc_fine_discount">
+        The fine is reduced by 50% if paid within 10 business days from the date of issue
+        at the Agency\'s ticket offices or via bank deposit.
+    </string>
 
 </resources>

@@ -28,7 +28,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -69,15 +68,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import com.example.thesstransit.R
 import com.example.thesstransit.ui.components.AnimatedBackground
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
-import androidx.compose.ui.res.stringResource
-import com.example.thesstransit.R
 
 @Composable
 fun LoginScreen(
@@ -393,16 +392,6 @@ fun LoginEmailField(
     }
 
     Column(modifier = Modifier.fillMaxWidth()) {
-
-        Text(
-            stringResource(R.string.email_label),
-            style = MaterialTheme.typography.labelMedium,
-            color =
-                if (focused)
-                    MaterialTheme.colorScheme.primary
-                else
-                    MaterialTheme.colorScheme.onSurfaceVariant
-        )
 
         BasicTextField(
             value = value,

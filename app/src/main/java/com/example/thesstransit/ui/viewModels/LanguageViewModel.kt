@@ -5,7 +5,6 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.thesstransit.ui.data.AppLanguagePreferences
 import com.example.thesstransit.ui.data.LanguagePreferences
 import io.gitlab.mitsiosm.oseth.data.Language
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,7 +15,6 @@ import java.util.Locale
 class LanguageViewModel(
     application: Application
 ): AndroidViewModel(application) {
-
     private val apiPreferences = LanguagePreferences(application)
 
     private val _language = MutableStateFlow(Language.GREEK)
@@ -25,29 +23,24 @@ class LanguageViewModel(
 
     init {
         viewModelScope.launch {
-            apiPreferences.language.collect { savedLanguage ->
-                _language.value = savedLanguage
+            apiPreferences.language.collect {
+                _language.value = it
             }
         }
     }
 
     fun toggleLanguage() {
-
         viewModelScope.launch {
-
-
             val newLanguage =
                 if (_language.value == Language.GREEK)
                     Language.ENGLISH
                 else
                     Language.GREEK
 
-
             apiPreferences.save(newLanguage)
 
-
             val locale =
-                if(newLanguage == Language.ENGLISH)
+                if (newLanguage == Language.ENGLISH)
                     "en"
                 else
                     "el"
@@ -55,34 +48,6 @@ class LanguageViewModel(
             AppCompatDelegate.setApplicationLocales(
                 LocaleListCompat.forLanguageTags(locale)
             )
-
-            _language.value = newLanguage
-
-            println(
-                "CURRENT APP LOCALE = ${
-                    AppCompatDelegate
-                        .getApplicationLocales()
-                }"
-            )
-
-            println(
-                AppCompatDelegate.getApplicationLocales()
-            )
-
-            println(Locale.getDefault())
-
-            println(
-                "Chosen locale: $locale"
-            )
-
-            println(
-                "App locales: ${AppCompatDelegate.getApplicationLocales()}"
-            )
         }
     }
-
-    fun currentLanguage(): Language {
-        return _language.value
-    }
-
 }

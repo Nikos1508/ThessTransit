@@ -431,31 +431,40 @@ fun RouteInfoCard(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
         )
     ) {
-        Column( Modifier.padding(22.dp) ) {
+        Column(Modifier.padding(20.dp)) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer
+                ) {
                     Text(
                         text = route.shortName,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        maxLines = 2
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
                     )
+                }
 
-                    Spacer( modifier = Modifier.height(6.dp) )
-
-                    Text(
-                        text = direction,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.primary
-                    )
+                Text(
+                    text = direction,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.weight(1f),
+                    maxLines = 2
+                )
             }
 
-            Spacer( modifier = Modifier.height(18.dp) )
+            Spacer( modifier = Modifier.height(16.dp) )
 
             Row(
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
+
                 RouteStatChip(
                     Icons.Default.LocationOn,
                     text = stringResource(R.string.stat_stops_count, stopCount)
@@ -465,6 +474,7 @@ fun RouteInfoCard(
                     Icons.Default.SwapHoriz,
                     text = stringResource(R.string.stat_directions_count)
                 )
+
             }
         }
     }
@@ -521,103 +531,94 @@ private fun StopsTab(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp))
-                    .padding(horizontal = 8.dp, vertical = 6.dp)
                     .clickable { onStopClick(stop) }
+                    .padding(horizontal = 8.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(
-                    modifier = Modifier.width(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                Box(
+                    modifier = Modifier
+                        .width(28.dp)
+                        .height(54.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .width(32.dp)
-                            .height(
-                                if (index != vm.stops.lastIndex)
-                                    86.dp
-                                else
-                                    14.dp
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        if (index != vm.stops.lastIndex) {
-                            Box(
-                                modifier = Modifier
-                                    .width(3.dp)
-                                    .fillMaxHeight()
-                                    .align(Alignment.TopCenter)
-                                    .offset(y = 16.dp)
-                                    .background(
-                                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)
-                                    )
-                            )
-                        }
-
+                    if (index != vm.stops.lastIndex) {
                         Box(
                             modifier = Modifier
-                                .size(12.dp)
+                                .width(3.dp)
+                                .fillMaxHeight()
+                                .align(Alignment.TopCenter)
+                                .offset(y = 14.dp)
                                 .background(
-                                    MaterialTheme.colorScheme.primary,
-                                    CircleShape
+                                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)
                                 )
                         )
+                    }
 
-                        vm.vehiclePositions.forEach { position ->
+                    Box(
+                        modifier = Modifier
+                            .size(12.dp)
+                            .background(
+                                MaterialTheme.colorScheme.primary,
+                                CircleShape
+                            )
+                    )
 
-                            val stopIndex = position.first
-                            val progress = position.second
+                    vm.vehiclePositions.forEach { position ->
 
-                            if (stopIndex == index) {
-                                Surface(
-                                    modifier = Modifier
-                                        .offset( y = (32.dp * progress) )
-                                        .size(24.dp),
-                                    shape = CircleShape,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    shadowElevation = 4.dp
-                                ) {
-                                    Box(contentAlignment = Alignment.Center) {
-                                        Icon(
-                                            Icons.Default.DirectionsBus,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(14.dp),
-                                            tint = MaterialTheme.colorScheme.onPrimary
-                                        )
-                                    }
+                        val stopIndex = position.first
+                        val progress = position.second
+
+                        if (stopIndex == index) {
+                            Surface(
+                                modifier = Modifier
+                                    .offset( y = (27.dp * progress) )
+                                    .size(22.dp),
+                                shape = CircleShape,
+                                color = MaterialTheme.colorScheme.primary,
+                                shadowElevation = 4.dp
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        Icons.Default.DirectionsBus,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(12.dp),
+                                        tint = MaterialTheme.colorScheme.onPrimary
+                                    )
                                 }
                             }
                         }
                     }
+                }
 
-                    Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(12.dp))
 
-                    Column(
-                        modifier = Modifier.weight(1f)
-                    ) {
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
 
-                        Text(
-                            text = stop.name,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            maxLines = 1
-                        )
+                    Text(
+                        text = stop.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1
+                    )
 
-                        Spacer( modifier = Modifier.height(2.dp) )
+                    Spacer( modifier = Modifier.height(2.dp) )
 
-                        Text(
-                            text = stringResource(R.string.stop_code_format, stop.id.value),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-
-                    Icon(
-                        Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.outline,
-                        modifier = Modifier.size(24.dp)
+                    Text(
+                        text = stringResource(R.string.stop_code_format, stop.id.value),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+
+                Icon(
+                    Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.outline,
+                    modifier = Modifier.size(22.dp)
+                )
             }
         }
     }
@@ -1122,12 +1123,6 @@ private fun TimetableTab(
                             fontWeight = FontWeight.Bold
                         )
 
-                        Text(
-                            text = stringResource(R.string.departure_label),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-
                         Box(
                             modifier = Modifier
                                 .padding(horizontal = 12.dp)
@@ -1149,22 +1144,14 @@ private fun TimetableTab(
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                        }
 
-                        if (isNextTrip) {
-                            Icon(
-                                Icons.Default.Timer,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(20.dp)
-                            )
                         }
 
                     }
 
                 }
             }
-            HorizontalDivider() //Remove it maybe later
+            HorizontalDivider()
         }
     }
 }

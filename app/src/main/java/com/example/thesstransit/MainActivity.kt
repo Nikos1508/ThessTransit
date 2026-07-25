@@ -27,7 +27,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import com.example.thesstransit.ui.data.AppLanguagePreferences
 import com.example.thesstransit.ui.data.AppThemePreferences
 import com.example.thesstransit.ui.item.GroupRouteDetailsScreen
 import com.example.thesstransit.ui.item.HomeScreen
@@ -138,16 +137,6 @@ val CustomStopType = object : NavType<Stop>(isNullableAllowed = false) {
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
-
-        val prefs = AppLanguagePreferences(this)
-
-        lifecycleScope.launch {
-            val language = prefs.language.first()
-
-            AppCompatDelegate.setApplicationLocales(
-                LocaleListCompat.forLanguageTags(language)
-            )
-        }
 
         super.onCreate(savedInstanceState)
 

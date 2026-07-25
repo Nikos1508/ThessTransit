@@ -9,7 +9,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,7 +28,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.DirectionsBus
-import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.Navigation
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.Card
@@ -56,11 +54,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.thesstransit.R
 import com.example.thesstransit.ui.components.AnimatedBackground
 import com.example.thesstransit.ui.components.ScreenHeader
 import com.example.thesstransit.ui.viewModels.StopArrivalUi
@@ -167,7 +166,7 @@ fun StopDetailsScreen(
                             Spacer(modifier = Modifier.height(4.dp))
 
                             Text (
-                                text = "Κωδικός στάσης • ${stop.id.value}",
+                                text = stringResource(R.string.stop_code_format, stop.id.value),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -175,7 +174,7 @@ fun StopDetailsScreen(
                             Spacer(modifier = Modifier.height(2.dp))
 
                             Text(
-                                "${routes.size} γραμμές εξυπηρετούν τη στάση",
+                                text = stringResource(R.string.routes_serving_stop_format, routes.size),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -205,7 +204,7 @@ fun StopDetailsScreen(
                             unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                             text = {
                                 Text(
-                                    "Αφίξεις",
+                                    stringResource(R.string.tab_arrivals),
                                     fontWeight =
                                         if (selectedTab == 0)
                                             FontWeight.Bold
@@ -222,7 +221,7 @@ fun StopDetailsScreen(
                             unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                             text = {
                                 Text(
-                                    "Δρομολόγια",
+                                    stringResource(R.string.tab_schedules),
                                     fontWeight =
                                         if (selectedTab == 1)
                                             FontWeight.Bold
@@ -259,7 +258,7 @@ private fun ArrivalsTab(
     arrivals: List<StopArrivalUi>
 ) {
     if (arrivals.isEmpty()) {
-        EmptyState(message = "Δεν βρέθηκαν προγραμματισμένες αφίξεις για τις επόμενες 2 ώρες.")
+        EmptyState(message = stringResource(R.string.empty_arrivals_message))
         return
     }
 
@@ -302,7 +301,7 @@ private fun NextArrivalCard(
             )
         ) {
             Text(
-                "Επόμενο λεωφορείο",
+                text = stringResource(R.string.next_bus_header),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold
@@ -333,7 +332,7 @@ private fun NextArrivalCard(
                     Spacer( modifier = Modifier.height(4.dp) )
 
                     Text(
-                        "Αναχώρηση ${arrival.departureTime.toString().substring(0,5)}",
+                        text = stringResource(R.string.departure_time_format, arrival.departureTime.toString().substring(0, 5)),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
@@ -341,9 +340,9 @@ private fun NextArrivalCard(
 
                     Text(
                         if(arrival.isLive)
-                            "Το όχημα παρακολουθείται ζωντανά"
+                            stringResource(R.string.live_tracking_label)
                         else
-                            "Προγραμματισμένη άφιξη",
+                            stringResource(R.string.scheduled_arrival_label),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -411,7 +410,7 @@ private fun ArrivalItem(
                         )
 
                         Text(
-                            text = "Κανονικό δρομολόγιο",
+                            text = stringResource(R.string.regular_route_label),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -435,7 +434,7 @@ private fun ArrivalItem(
                 ) {
                     InfoItem(
                         icon = Icons.Default.AccessTime,
-                        title = "Αναχώρηση",
+                        title = stringResource(R.string.departure_label),
                         value = arrival.departureTime
                             .toString()
                             .substring(0,5)
@@ -443,12 +442,12 @@ private fun ArrivalItem(
 
                     InfoItem(
                         icon = Icons.Default.Timer,
-                        title = "Τέρμα",
+                        title = stringResource(R.string.terminus_label),
                         value =
                             if (arrival.isLive)
-                                "Live"
+                                stringResource(R.string.live_text)
                             else
-                                "${arrival.minutes} λεπτά"
+                                stringResource(R.string.minutes_format, arrival.minutes!!)
                     )
                 }
 
@@ -469,7 +468,7 @@ private fun ArrivalItem(
                     Column {
 
                         Text(
-                            "Κατεύθυνση",
+                            stringResource(R.string.direction_label),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -540,9 +539,9 @@ fun ArrivalChip(
         Text(
             text =
                 if (arrival.isLive)
-                    "● Live"
+                    stringResource(R.string.live_badge)
                 else
-                    "${arrival.minutes} λεπτά",
+                    stringResource(R.string.minutes_format, arrival.minutes!!),
             modifier = Modifier
                 .padding(
                     horizontal = 11.dp,
@@ -653,7 +652,7 @@ private fun EmptyState(message: String) {
             Spacer(modifier = Modifier.height(20.dp))
 
             Text(
-                "Δεν υπάρχουν αφίξεις",
+                text = stringResource(R.string.no_arrivals_title),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )

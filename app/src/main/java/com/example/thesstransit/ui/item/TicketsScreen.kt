@@ -56,10 +56,16 @@ fun TicketsScreen(
 
     var selectedTab by remember { mutableIntStateOf(0) }
 
-    val tabs = listOf("Τιμές & Είδη", "Εκπτώσεις", "Πού αγοράζω εισιτήρια", "Πρόστιμα")
+    val tabs = listOf(
+        stringResource(R.string.tab_prices_and_types),
+        stringResource(R.string.tab_discounts),
+        stringResource(R.string.tab_sales_points),
+        stringResource(R.string.tab_fines)
+    )
+
     Column {
         ScreenHeader(
-            title = "Εισητήρια",
+            title = stringResource(R.string.tickets_screen_title),
             onBackClick = onBackClick,
             onProfileClick = onBackClick
         )
@@ -86,13 +92,13 @@ fun TicketsScreen(
                     )
                 ) {
                     Text(
-                        text = stringResource(R.string.tickets),
+                        text = stringResource(R.string.tickets_header_title),
                         fontSize = 28.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "Πληροφορίες για τη μετακίνησή σου στη Θεσσαλονίκη",
+                        text = stringResource(R.string.tickets_header_subtitle),
                         fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -133,7 +139,7 @@ fun TicketsScreen(
                         item {
                             Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                                 Text(
-                                    text = "Εισητήρια λεωφορείου",
+                                    text = stringResource(R.string.section_bus_tickets),
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     color = MaterialTheme.colorScheme.primary,
@@ -161,18 +167,18 @@ fun TicketsScreen(
                                                 .padding(14.dp)
                                         ) {
                                             Text(
-                                                "Τύπος Εισητήριου",
+                                                text = stringResource(R.string.table_header_ticket_type),
                                                 modifier = Modifier.weight(1.8f)
                                             )
                                             Text(
-                                                "Κανονικό",
+                                                text = stringResource(R.string.table_header_regular),
                                                 modifier = Modifier.weight(1f),
                                                 fontWeight = FontWeight.Bold,
                                                 textAlign = TextAlign.End,
                                                 fontSize = 14.sp
                                             )
                                             Text(
-                                                "Μειωμένο",
+                                                text = stringResource(R.string.table_header_reduced),
                                                 modifier = Modifier.weight(1f),
                                                 fontWeight = FontWeight.Bold,
                                                 textAlign = TextAlign.End,
@@ -180,53 +186,76 @@ fun TicketsScreen(
                                             )
                                         }
 
-                                        TableRow("Αστικής Ζώνης", "0,60€", "0,30€")
-                                        HorizontalDivider(
-                                            color = MaterialTheme.colorScheme.outlineVariant.copy(
-                                                alpha = 0.2f
-                                            )
+                                        TableRow(
+                                            title = stringResource(R.string.ticket_urban_zone),
+                                            normalPrice = stringResource(R.string.price_0_60),
+                                            reducedPrice = stringResource(R.string.price_0_30)
                                         )
-                                        TableRow("Περιαστικής Ζώνης", "0,60€", "0,30€")
                                         HorizontalDivider(
-                                            color = MaterialTheme.colorScheme.outlineVariant.copy(
-                                                alpha = 0.2f
-                                            )
+                                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
                                         )
-                                        TableRow("Αεροδρόμιο (1Χ)", "0,60€", "0,30€")
-                                        HorizontalDivider(
-                                            color = MaterialTheme.colorScheme.outlineVariant.copy(
-                                                alpha = 0.2f
-                                            )
+                                        TableRow(
+                                            title = stringResource(R.string.ticket_suburban_zone),
+                                            normalPrice = stringResource(R.string.price_0_80),
+                                            reducedPrice = stringResource(R.string.price_0_40)
                                         )
-                                        TableRow("10+1 Αστικής Ζώνης", "0,60€", "0,30€")
                                         HorizontalDivider(
-                                            color = MaterialTheme.colorScheme.outlineVariant.copy(
-                                                alpha = 0.2f
-                                            )
+                                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
                                         )
-                                        TableRow("10+1 Περιαστικής Ζώνης", "0,60€", "0,30€")
-                                        HorizontalDivider(
-                                            color = MaterialTheme.colorScheme.outlineVariant.copy(
-                                                alpha = 0.2f
-                                            )
+                                        TableRow(
+                                            title = stringResource(R.string.ticket_airport),
+                                            normalPrice = stringResource(R.string.price_2_00),
+                                            reducedPrice = stringResource(R.string.price_1_00)
                                         )
-                                        TableRow("30 Ημερών", "0,60€", "0,30€")
                                         HorizontalDivider(
-                                            color = MaterialTheme.colorScheme.outlineVariant.copy(
-                                                alpha = 0.2f
-                                            )
+                                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
                                         )
-                                        TableRow("60 Ημερών", "0,60€", "0,30€")
-                                        HorizontalDivider(
-                                            color = MaterialTheme.colorScheme.outlineVariant.copy(
-                                                alpha = 0.2f
-                                            )
+                                        TableRow(
+                                            title = stringResource(R.string.ticket_daily),
+                                            normalPrice = stringResource(R.string.price_2_50),
+                                            reducedPrice = stringResource(R.string.price_2_50)
                                         )
-                                        TableRow("90 Ημερών", "0,60€", "0,30€")
                                         HorizontalDivider(
-                                            color = MaterialTheme.colorScheme.outlineVariant.copy(
-                                                alpha = 0.2f
-                                            )
+                                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
+                                        )
+                                        TableRow(
+                                            title = stringResource(R.string.ticket_10_plus_1_urban),
+                                            normalPrice = stringResource(R.string.price_5_80),
+                                            reducedPrice = stringResource(R.string.price_2_90))
+                                        HorizontalDivider(
+                                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
+                                        )
+                                        TableRow(
+                                            title = stringResource(R.string.ticket_10_plus_1_suburban),
+                                            normalPrice = stringResource(R.string.price_7_80),
+                                            reducedPrice = stringResource(R.string.price_3_90)
+                                        )
+                                        HorizontalDivider(
+                                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
+                                        )
+                                        TableRow(
+                                            title = stringResource(R.string.ticket_30_days),
+                                            normalPrice = stringResource(R.string.price_16_00),
+                                            reducedPrice = stringResource(R.string.price_8_00)
+                                        )
+                                        HorizontalDivider(
+                                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
+                                        )
+                                        TableRow(
+                                            title = stringResource(R.string.ticket_90_days),
+                                            normalPrice = stringResource(R.string.price_45_00),
+                                            reducedPrice = stringResource(R.string.price_22_50)
+                                        )
+                                        HorizontalDivider(
+                                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
+                                        )
+                                        TableRow(
+                                            title = stringResource(R.string.ticket_180_days),
+                                            normalPrice = stringResource(R.string.price_85_00),
+                                            reducedPrice = stringResource(R.string.price_42_50)
+                                        )
+                                        HorizontalDivider(
+                                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
                                         )
                                     }
                                 }
@@ -234,7 +263,7 @@ fun TicketsScreen(
                                 Spacer(modifier = Modifier.height(20.dp))
 
                                 InfoNoteCard(
-                                    text = "Τα χρονικά εισιτήρια επιτρέπουν την επιβίβαση σε διαφορετικά λεωφορεία ή και στο Μετρό εντός του χρονικού ορίου από την πρώτη επικύρωση."
+                                    text = stringResource(R.string.tickets_info_note)
                                 )
                             }
                         }
@@ -244,7 +273,7 @@ fun TicketsScreen(
                         item {
                             Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                                 Text(
-                                    text = "Δικαιούχοι Μειωμένου Κομίστρου",
+                                    text = stringResource(R.string.section_reduced_fare_beneficiaries),
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     color = MaterialTheme.colorScheme.primary,
@@ -253,21 +282,16 @@ fun TicketsScreen(
 
                                 InfoCard(
                                     icon = Icons.Outlined.Percent,
-                                    title = "Ποιοι πληρώνουν Μειωμένο (50%)",
-                                    description = "• Φοιτητές ελληνικών δημόσιων πανεπιστημίων (με επίδειξη ακαδημαϊκής ταυτότητας)\n" +
-                                            "• Μαθητές σχολείων Πρωτοβάθμιας & Δευτεροβάθμιας εκπαίδευσης\n" +
-                                            "• Νέοι ηλικίας 7 έως 18 ετών\n" +
-                                            "• Ηλικιωμένοι άνω των 65 ετών (με επίδειξη αστυνομικής ταυτότητας)"
+                                    title = stringResource(R.string.title_who_pays_reduced),
+                                    description = stringResource(R.string.title_who_pays_reduced)
                                 )
 
-                                Spacer(modifier = Modifier.height(16.dp))
+                                Spacer( modifier = Modifier.height(16.dp) )
 
                                 InfoCard(
                                     icon = Icons.Outlined.ConfirmationNumber,
-                                    title = "Ποιοι μετακινούνται Δωρεάν",
-                                    description = "• Παιδιά έως 6 ετών (πρέπει να συνοδεύονται από ενήλικα)\n" // +
-                                    // "• Άνεργοι εγγεγραμμένοι στη ΔΥΠΑ (με πρόσφατη ψηφιακή βεβαίωση)\n" +
-                                    // "• Άτομα με Αναπηρία (ΑμεΑ) με την επίδειξη της ειδικής κάρτας"
+                                    title = stringResource(R.string.title_who_travels_free),
+                                    description = stringResource(R.string.desc_who_travels_free)
                                 )
                             }
                         }
@@ -277,7 +301,7 @@ fun TicketsScreen(
                         item {
                             Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                                 Text(
-                                    text = "Πού θα εκδώσεις εισιτήριο ή κάρτα",
+                                    text = stringResource(R.string.section_where_to_buy),
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     color = MaterialTheme.colorScheme.primary,
@@ -286,16 +310,16 @@ fun TicketsScreen(
 
                                 InfoCard(
                                     icon = Icons.Outlined.CreditCard,
-                                    title = "Προσωποποιημένη Κάρτα (ThessCard)",
-                                    description = "Μπλα Μπλε Μπλι Μπλο" /* TODO */
+                                    title = stringResource(R.string.title_thesscard),
+                                    description = stringResource(R.string.title_thesscard),
                                 )
 
                                 Spacer(modifier = Modifier.height(16.dp))
 
                                 InfoCard(
                                     icon = Icons.Outlined.Storefront,
-                                    title = "Φυσικά σημεία & Εκδοτήρια",
-                                    description = "Μπλα Μπλε Μπλι Μπλο" /* TODO */
+                                    title = stringResource(R.string.title_physical_points),
+                                    description = stringResource(R.string.desc_physical_points)
                                 )
                             }
                         }
@@ -305,7 +329,7 @@ fun TicketsScreen(
                         item {
                             Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                                 Text(
-                                    text = "Έλεγχοι Κομίστρου & Πρόστημα",
+                                    text = stringResource(R.string.section_fines_title),
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     color = MaterialTheme.colorScheme.primary,
@@ -314,16 +338,16 @@ fun TicketsScreen(
 
                                 InfoCard(
                                     icon = Icons.Outlined.Gavel,
-                                    title = "Μη επικύρωση εισιτηρίου",
-                                    description = "Μπλα Μπλε Μπλι Μπλο"
+                                    title = stringResource(R.string.title_no_ticket_fine),
+                                    description = stringResource(R.string.desc_no_ticket_fine)
                                 )
 
                                 Spacer(modifier = Modifier.height(16.dp))
 
                                 InfoCard(
                                     icon = Icons.Outlined.Info,
-                                    title = "Έκπτωση 50% στην εξόφλιση",
-                                    description = "Μπλα Μπλε Μπλι Μπλο"
+                                    title = stringResource(R.string.title_fine_discount),
+                                    description = stringResource(R.string.desc_fine_discount)
                                 )
                             }
                         }

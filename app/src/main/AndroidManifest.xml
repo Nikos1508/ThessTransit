@@ -12,6 +12,7 @@
         android:name="org.osmdroid.config.userAgentValue"
         android:value="${applicationId}" />
 
+
     <application
         android:localeConfig="@xml/locales_config"
         android:allowBackup="true"

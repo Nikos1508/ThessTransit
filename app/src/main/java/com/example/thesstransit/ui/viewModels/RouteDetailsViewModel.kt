@@ -554,7 +554,7 @@ class RouteDetailsViewModel(
                     "===== ERROR ====="
                 )
 
-                errorMessage.value = e.message ?: "Άγνωστο σφαλμα"
+                errorMessage.value = e.message ?: "Άγνωστο σφάλμα"
 
             } finally {
                 isLoading.value = false
@@ -596,7 +596,7 @@ class RouteRepository(
     val context: Context
 ) {
     @OptIn(ExperimentalTime::class)
-    suspend fun loadRoute(
+    fun loadRoute(
         routeId: RouteId,
         date: LocalDate
     ): Pair<List<Stop>, List<FirstStopTime>> {

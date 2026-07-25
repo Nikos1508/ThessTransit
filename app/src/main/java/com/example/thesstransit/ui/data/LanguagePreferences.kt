@@ -16,13 +16,11 @@ class LanguagePreferences(
     private val context: Context
 ) {
     companion object {
-        private val LANGUAGE =
-            stringPreferencesKey("language")
+        private val LANGUAGE = stringPreferencesKey("language")
     }
 
     val language: Flow<Language> =
         context.languageDataStore.data.map { pref ->
-
             when (pref[LANGUAGE]) {
                 "EN" -> Language.ENGLISH
                 else -> Language.GREEK

@@ -72,6 +72,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -85,11 +86,14 @@ import com.example.thesstransit.ui.data.SavedLocations
 import com.example.thesstransit.ui.utils.SharedKeys
 import com.example.thesstransit.ui.viewModels.FavoritesViewModel
 import io.gitlab.mitsiosm.oseth.Oseth
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.time.Duration.Companion.milliseconds
-import androidx.compose.ui.res.stringResource
 
-@OptIn(ExperimentalSharedTransitionApi::class)
+
+@OptIn(ExperimentalSharedTransitionApi::class, ExperimentalAtomicApi::class)
 @Composable
 fun HomeScreen(
     onLoginClick: () -> Unit = {},
@@ -132,7 +136,9 @@ fun HomeScreen(
     val api = Oseth(context)
 
     LaunchedEffect(api) {
-        api.sync()
+        withContext(Dispatchers.Default) {
+            api.sync()
+        }
     }
 
     val savedLocations = remember(context) {

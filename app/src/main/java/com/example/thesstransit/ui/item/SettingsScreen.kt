@@ -61,6 +61,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -134,17 +135,15 @@ fun SettingsScreen(
                 },
 
                 title = {
-                    Text("ThessTransit")
+                    Text(
+                        "ThessTransit"
+                    )
                 },
 
                 text = {
                     Text(
-                        """
-                        Δημιουργήθηκε για μία εύκολη
-                        μετακίνηση στη Θεσσαλονίκη.
-                        
-                        Version 0.8
-                        """
+                        stringResource(R.string.settings_about_dialog_text),
+                        textAlign = TextAlign.Center
                     )
                 },
 
@@ -152,7 +151,7 @@ fun SettingsScreen(
                     TextButton(
                         onClick = { showAbout = false }
                     ) {
-                        Text("OK")
+                        Text( stringResource(R.string.ok) )
                     }
                 }
             )
@@ -185,7 +184,7 @@ private fun SettingsContent(
         modifier = Modifier.fillMaxSize()
     ) {
         ScreenHeader(
-            title = "Ρυθμίσεις",
+            title = stringResource(R.string.title_settings),
             onBackClick = onBackClick,
             onProfileClick = {}
         )
@@ -205,7 +204,7 @@ private fun SettingsContent(
             }
 
             item {
-                SectionTitle( "Γενικά" )
+                SectionTitle( stringResource(R.string.section_general) )
             }
 
             item {
@@ -215,7 +214,7 @@ private fun SettingsContent(
                 ) {
                     SettingsCard(
                         icon = Icons.Default.Language,
-                        title = "Γλώσσα",
+                        title = stringResource(R.string.settings_language),
                         subtitle =
                             if (language == Language.GREEK)
                                 stringResource(R.string.greek)
@@ -232,7 +231,7 @@ private fun SettingsContent(
             }
 
             item {
-                SectionTitle( "Εμφάνιση" )
+                SectionTitle( stringResource(R.string.section_appearance) )
             }
 
             item {
@@ -256,8 +255,8 @@ private fun SettingsContent(
                 ) {
                     SettingsCard(
                         icon = Icons.Default.Call,
-                        title = "Στοιχεία επικοινωνίας",
-                        subtitle = "Επικοινωνήστε μαζί μας"
+                        title = stringResource(R.string.settings_contact_title),
+                        subtitle = stringResource(R.string.settings_contact_subtitle)
                     )
                 }
             }
@@ -269,8 +268,8 @@ private fun SettingsContent(
                 ) {
                     SettingsCard(
                         icon = Icons.Default.Info,
-                        title = "Σχετικά",
-                        subtitle = "'Εκδοση 0.8",
+                        title = stringResource(R.string.settings_about_title),
+                        subtitle = stringResource(R.string.settings_about_subtitle),
                         onClick = showAbout
                     )
                 }
@@ -322,7 +321,7 @@ private fun SettingsHeader() {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 34.dp),
+                .padding(vertical = 28.dp, horizontal = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Box(
@@ -353,7 +352,7 @@ private fun SettingsHeader() {
             Spacer(modifier = Modifier.height(18.dp))
 
             Text(
-                text = "Ρυθμίσεις",
+                text = stringResource(R.string.title_settings),
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -361,11 +360,10 @@ private fun SettingsHeader() {
             Spacer(modifier = Modifier.height(6.dp))
 
             Text(
-                text = "Προσωποποίησε την εμπειρία σου στο ThessTransit",
+                text = stringResource(R.string.settings_header_subtitle),
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-
     }
 }
 
@@ -482,12 +480,12 @@ private fun ThemeCard(
 
                 Column {
                     Text(
-                        "Θέμα εφαρμογής",
+                        stringResource(R.string.theme_title),
                         fontWeight = FontWeight.SemiBold
                     )
 
                     Text(
-                        "Διάλεξε εμφάνιση",
+                        stringResource(R.string.theme_subtitle),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -504,7 +502,7 @@ private fun ThemeCard(
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 ThemeOption(
-                    text = "Σύστημα",
+                    text = stringResource(R.string.theme_system),
                     selected = selected == AppTheme.SYSTEM
                 ) {
                     onThemeSelected(
@@ -513,7 +511,7 @@ private fun ThemeCard(
                 }
 
                 ThemeOption(
-                    text = "Φωτεινό",
+                    text = stringResource(R.string.theme_light),
                     selected = selected == AppTheme.LIGHT
                 ) {
                     onThemeSelected(
@@ -522,7 +520,7 @@ private fun ThemeCard(
                 }
 
                 ThemeOption(
-                    text = "Σκούρο",
+                    text = stringResource(R.string.theme_dark),
                     selected = selected == AppTheme.DARK
                 ) {
                     onThemeSelected(
