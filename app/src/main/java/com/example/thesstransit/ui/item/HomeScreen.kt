@@ -2,6 +2,7 @@ package com.example.thesstransit.ui.item
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentScope
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.SizeTransform
@@ -16,6 +17,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -48,6 +50,7 @@ import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material.icons.outlined.Train
 import androidx.compose.material.icons.outlined.Work
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -85,13 +88,19 @@ import com.example.thesstransit.ui.components.RouteFiltersDialog
 import com.example.thesstransit.ui.data.SavedLocations
 import com.example.thesstransit.ui.utils.SharedKeys
 import com.example.thesstransit.ui.viewModels.FavoritesViewModel
+import com.example.thesstransit.ui.viewModels.HomeViewModel
 import io.gitlab.mitsiosm.oseth.Oseth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.time.Duration.Companion.milliseconds
 
+object Guard {
+    @OptIn(ExperimentalAtomicApi::class)
+    val busy = AtomicBoolean(false)
+}
 
 @OptIn(ExperimentalSharedTransitionApi::class, ExperimentalAtomicApi::class)
 @Composable
@@ -110,6 +119,7 @@ fun HomeScreen(
     onHomeClick: () -> Unit = {},
     onWorkClick: () -> Unit = {},
     favoritesViewModel: FavoritesViewModel = viewModel(),
+    homeViewModel: HomeViewModel = viewModel(),
 
     sharedTransitionScope: SharedTransitionScope,
     animatedContentScope: AnimatedContentScope
@@ -135,9 +145,23 @@ fun HomeScreen(
     val context = LocalContext.current
     val api = Oseth(context)
 
-    LaunchedEffect(api) {
-        withContext(Dispatchers.Default) {
-            api.sync()
+    LaunchedEffect(Unit) {
+
+        if (homeViewModel.hasSynced)
+            return@LaunchedEffect
+
+        if (!Guard.busy.compareAndSet(false, true))
+            return@LaunchedEffect
+
+        homeViewModel.startLoading()
+
+        try {
+            withContext(Dispatchers.IO) {
+                api.sync()
+            }
+        } finally {
+            Guard.busy.store(false)
+            homeViewModel.stopLoading()
         }
     }
 
@@ -243,6 +267,31 @@ fun HomeScreen(
                     println("Applied Filters: $filterResults")
                 }
             )
+        }
+
+        AnimatedVisibility(
+            visible = homeViewModel.isLoading.value
+        ) {
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Color.Gray.copy(alpha = 0.28f)
+                    )
+                    .clickable(
+                        enabled = true,
+                        indication = null,
+                        interactionSource = remember {
+                            androidx.compose.foundation.interaction.MutableInteractionSource()
+                        }
+                    ) {},
+                contentAlignment = Alignment.Center
+            ) {
+
+                CircularProgressIndicator()
+
+            }
         }
     }
 }

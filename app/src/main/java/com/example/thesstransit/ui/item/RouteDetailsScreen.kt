@@ -522,8 +522,7 @@ private fun StopsTab(
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        contentPadding = PaddingValues(horizontal = 16.dp),
     ) {
         itemsIndexed(vm.stops) { index, stop ->
 
@@ -532,22 +531,20 @@ private fun StopsTab(
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp))
                     .clickable { onStopClick(stop) }
-                    .padding(horizontal = 8.dp, vertical = 6.dp),
+                    .padding(horizontal = 8.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(
-                    modifier = Modifier
-                        .width(28.dp)
-                        .height(54.dp),
+                    modifier = Modifier.width(28.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     if (index != vm.stops.lastIndex) {
                         Box(
                             modifier = Modifier
                                 .width(3.dp)
-                                .fillMaxHeight()
+                                .height(56.dp)
                                 .align(Alignment.TopCenter)
-                                .offset(y = 14.dp)
+                                .offset(y = 12.dp)
                                 .background(
                                     color = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)
                                 )
@@ -571,7 +568,7 @@ private fun StopsTab(
                         if (stopIndex == index) {
                             Surface(
                                 modifier = Modifier
-                                    .offset( y = (27.dp * progress) )
+                                    .offset( y = (28.dp * progress) )
                                     .size(22.dp),
                                 shape = CircleShape,
                                 color = MaterialTheme.colorScheme.primary,
@@ -1121,14 +1118,6 @@ private fun TimetableTab(
                             text = departure.time.toString().substring(0,5),
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold
-                        )
-
-                        Box(
-                            modifier = Modifier
-                                .padding(horizontal = 12.dp)
-                                .width(1.dp)
-                                .height(30.dp)
-                                .background(MaterialTheme.colorScheme.outlineVariant)
                         )
 
                         Column(modifier = Modifier.weight(1f)) {
