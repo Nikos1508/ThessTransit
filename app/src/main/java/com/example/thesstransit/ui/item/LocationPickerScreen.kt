@@ -50,6 +50,10 @@ import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.Overlay
+import org.osmdroid.tileprovider.tilesource.XYTileSource
+import org.osmdroid.util.BoundingBox
+import android.graphics.Color
+import android.view.ViewGroup.LayoutParams
 
 data class SearchResult(
     val title: String,
@@ -77,6 +81,10 @@ fun LocationPickerScreen(
         mutableStateOf<Marker?>(null)
     }
 
+    val mapReady = remember {
+        mutableStateOf(false)
+    }
+
     var query by remember { mutableStateOf("") }
 
     val scope = rememberCoroutineScope()
@@ -92,7 +100,23 @@ fun LocationPickerScreen(
     val searchViewModel: LocationSearchViewModel =
         viewModel()
 
-    LaunchedEffect(Unit) {
+    DisposableEffect(Unit) {
+        onDispose {
+            mapView.value?.onDetach()
+            mapView.value = null
+        }
+    }
+
+    val markerTitle = stringResource(R.string.marker_selected_location)
+    val homeMarkerTitle = stringResource(R.string.marker_home)
+    val workMarkerTitle = stringResource(R.string.marker_work)
+
+    LaunchedEffect(mapReady.value) {
+
+        if (!mapReady.value)
+            return@LaunchedEffect
+
+        val map = mapView.value ?: return@LaunchedEffect
 
         val savedTriple =
             if (type == "home") {
@@ -109,21 +133,35 @@ fun LocationPickerScreen(
             selectedPoint = point
             query = name
 
-            mapView.value?.controller?.setCenter(point)
-            mapView.value?.controller?.setZoom(16.0)
+            marker.value?.let {
+                map.overlays.remove(it)
+            }
+
+            marker.value = Marker(map).apply {
+                position = point
+
+                setAnchor(
+                    Marker.ANCHOR_CENTER,
+                    Marker.ANCHOR_BOTTOM
+                )
+
+                title =
+                    if (type == "home")
+                        homeMarkerTitle
+                    else
+                        workMarkerTitle
+            }
+
+            map.overlays.add(marker.value)
+
+            map.controller.setCenter(point)
+            map.controller.setZoom(16.0)
+
+            map.invalidate()
+
         }
 
     }
-
-    DisposableEffect(Unit) {
-        onDispose {
-            mapView.value?.onDetach()
-        }
-    }
-
-    val markerTitle = stringResource(R.string.marker_selected_location)
-    val homeMarkerTitle = stringResource(R.string.marker_home)
-    val workMarkerTitle = stringResource(R.string.marker_work)
 
     Box(
         modifier = Modifier.fillMaxSize()
@@ -184,11 +222,15 @@ fun LocationPickerScreen(
                                 },
 
                                 headlineContent = {
-                                    Text( item.title.substringBefore(","))
+                                    Text( item.title.substringBefore(",") )
                                 },
 
                                 supportingContent = {
-                                    Text( item.title.substringAfter(",", "") )
+                                    val subtitle = item.title.substringAfter(",", "")
+
+                                    if ( subtitle.isNotBlank() ) {
+                                        Text(subtitle)
+                                    }
                                 },
 
                                 modifier = Modifier.clickable {
@@ -248,12 +290,29 @@ fun LocationPickerScreen(
                             )
                         )
 
+                        Configuration.getInstance().userAgentValue =
+                            "${context.packageName}/1.0"
+
+                        Configuration.getInstance().tileDownloadThreads = 2
+                        Configuration.getInstance().tileFileSystemThreads = 2
+
 
                         MapView(context).apply {
 
-                            setTileSource(
-                                TileSourceFactory.MAPNIK
+                            val tileSource = XYTileSource(
+                                "CartoLight",
+                                0,
+                                20,
+                                256,
+                                ".png",
+                                arrayOf(
+                                    "https://a.basemaps.cartocdn.com/light_all/",
+                                    "https://b.basemaps.cartocdn.com/light_all/",
+                                    "https://c.basemaps.cartocdn.com/light_all/"
+                                )
                             )
+
+                            setTileSource(tileSource)
 
                             setMultiTouchControls(true)
 
@@ -319,8 +378,25 @@ fun LocationPickerScreen(
                                 }
                             )
 
+                            layoutParams =
+                                LayoutParams(
+                                    LayoutParams.MATCH_PARENT,
+                                    LayoutParams.MATCH_PARENT
+                                )
+
                             minZoomLevel = 7.0
-                            maxZoomLevel = 20.0
+                            maxZoomLevel = 24.0
+
+                            setScrollableAreaLimitDouble(
+                                BoundingBox(
+                                    41.9,
+                                    29.8,
+                                    34.5,
+                                    19.2
+                                )
+                            )
+
+                            setBackgroundColor(Color.TRANSPARENT)
 
                             controller.setZoom(13.5)
 
@@ -332,6 +408,8 @@ fun LocationPickerScreen(
                             )
 
                             mapView.value = this
+                            mapReady.value = true
+
 
                             selectedPoint?.let {
                                 val existingMarker =

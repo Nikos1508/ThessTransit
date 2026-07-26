@@ -432,6 +432,7 @@ fun RouteInfoCard(
         )
     ) {
         Column(Modifier.padding(20.dp)) {
+
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -459,57 +460,6 @@ fun RouteInfoCard(
                 )
             }
 
-            Spacer( modifier = Modifier.height(16.dp) )
-
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-
-                RouteStatChip(
-                    Icons.Default.LocationOn,
-                    text = stringResource(R.string.stat_stops_count, stopCount)
-                )
-
-                RouteStatChip( /* TODO: Change it for smt else */
-                    Icons.Default.SwapHoriz,
-                    text = stringResource(R.string.stat_directions_count)
-                )
-
-            }
-        }
-    }
-}
-
-@Composable
-private fun RouteStatChip(
-    icon: ImageVector,
-    text: String
-) {
-    Surface(
-        shape = RoundedCornerShape(50),
-        color = MaterialTheme.colorScheme.primary.copy(0.08f)
-    ) {
-        Row(
-            modifier = Modifier.padding(
-                horizontal = 12.dp,
-                vertical = 8.dp
-            ),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                modifier = Modifier.size(16.dp),
-                tint = MaterialTheme.colorScheme.primary
-            )
-
-            Spacer( modifier = Modifier.width(6.dp) )
-
-            Text(
-                text = text,
-                style = MaterialTheme.typography.labelLarge
-            )
         }
     }
 }

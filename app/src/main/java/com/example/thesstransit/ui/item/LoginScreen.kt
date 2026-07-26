@@ -391,22 +391,6 @@ fun LoginEmailField(
         mutableStateOf(false)
     }
 
-    Column(modifier = Modifier.fillMaxWidth()) {
-
-        BasicTextField(
-            value = value,
-            onValueChange = onValueChange,
-            modifier = Modifier
-                .fillMaxWidth()
-                .onFocusChanged{
-                    focused = it.isFocused
-                },
-            singleLine = true,
-            textStyle = MaterialTheme.typography.bodyLarge.copy(
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        )
-    }
     TextField(
         value = value,
         onValueChange = onValueChange,
