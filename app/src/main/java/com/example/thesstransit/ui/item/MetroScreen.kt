@@ -46,7 +46,7 @@ fun MetroScreen(
     val vm: MetroViewModel = viewModel()
 
     ScreenHeader(
-        title = "Μετρό Θεσσαλονίκης",
+        title = "UNDER CONSTRUCTION",
         onBackClick = onBackClick,
         onProfileClick = onBackClick
     )
@@ -205,12 +205,12 @@ private fun MetroStationCard(
         ) {
             Text(
                 title,
-                style = MaterialTheme.typography.headlineSmall
+                style = MaterialTheme.typography.labelMedium
             )
 
             Text(
                 subtitle,
-                style = MaterialTheme.typography.titleSmall,
+                style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
