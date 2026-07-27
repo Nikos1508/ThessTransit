@@ -117,6 +117,7 @@ fun HomeScreen(
     onNotificationsClick: () -> Unit = {},
     onSettingsClick: () -> Unit = {},
     onHomeClick: () -> Unit = {},
+    onMetroClick: () -> Unit,
     onWorkClick: () -> Unit = {},
     favoritesViewModel: FavoritesViewModel = viewModel(),
     homeViewModel: HomeViewModel = viewModel(),
@@ -130,7 +131,7 @@ fun HomeScreen(
     val tiles = listOf(
         FeatureTile(stringResource(R.string.tile_tickets), "", Icons.Outlined.LocalActivity, onTicketsClick),
         FeatureTile(stringResource(R.string.tile_buy_ticket), "", Icons.Outlined.QrCode2, onBuyTicketClick),
-        FeatureTile(stringResource(R.string.tile_metro_lines), "", Icons.Outlined.Train, onLinesClick),
+        FeatureTile(stringResource(R.string.tile_metro_lines), "", Icons.Outlined.Train, onMetroClick),
         FeatureTile(stringResource(R.string.tile_favorite_routes), "", Icons.Outlined.Favorite, onFavouritesClick),
         FeatureTile(stringResource(R.string.tile_notifications), "", Icons.Outlined.Notifications, onNotificationsClick),
         FeatureTile(stringResource(R.string.tile_settings), "", Icons.Outlined.Settings, onSettingsClick)

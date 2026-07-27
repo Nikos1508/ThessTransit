@@ -29,6 +29,7 @@ import com.example.thesstransit.ui.item.GroupRouteDetailsScreen
 import com.example.thesstransit.ui.item.HomeScreen
 import com.example.thesstransit.ui.item.LocationPickerScreen
 import com.example.thesstransit.ui.item.LoginScreen
+import com.example.thesstransit.ui.item.MetroScreen
 import com.example.thesstransit.ui.item.RouteDetailsScreen
 import com.example.thesstransit.ui.item.RoutesScreen
 import com.example.thesstransit.ui.item.SearchScreen
@@ -53,11 +54,7 @@ data class RoutesRoute(
 )
 @Serializable object TicketsRoute
 
-@Serializable object LinesRoute
-
 @Serializable object LoginRoute
-@Serializable object NearbyStopsRoute
-@Serializable object LiveDeparturesRoute
 
 @Serializable
 data class LocationPickerRoute(
@@ -76,6 +73,9 @@ data class GroupDetailsRoute(
 
 @Serializable
 object SettingsRoute
+
+@Serializable
+object MetroRoute
 
 @Serializable
 data class StopDetailsRoute(
@@ -174,7 +174,6 @@ class MainActivity : ComponentActivity() {
                                 HomeScreen(
                                     sharedTransitionScope = this@SharedTransitionLayout,
                                     animatedContentScope = this,
-
                                     onLoginClick = {
                                         navController.navigate(LoginRoute)
                                     },
@@ -223,6 +222,9 @@ class MainActivity : ComponentActivity() {
                                     },
                                     onSettingsClick = {
                                         navController.navigate(SettingsRoute)
+                                    },
+                                    onMetroClick = {
+                                        navController.navigate(MetroRoute)
                                     }
                                 )
                             }
@@ -259,6 +261,12 @@ class MainActivity : ComponentActivity() {
                                     onBackClick = {
                                         navController.popBackStack()
                                     }
+                                )
+                            }
+
+                            composable<MetroRoute> {
+                                MetroScreen(
+                                    onBackClick = { navController.popBackStack() }
                                 )
                             }
 
