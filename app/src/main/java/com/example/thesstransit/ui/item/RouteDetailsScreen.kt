@@ -475,26 +475,28 @@ private fun StopsTab(
         contentPadding = PaddingValues(horizontal = 16.dp),
     ) {
         itemsIndexed(vm.stops) { index, stop ->
-
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .height(60.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .clickable { onStopClick(stop) }
-                    .padding(horizontal = 8.dp, vertical = 10.dp),
+                    .padding(horizontal = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(
-                    modifier = Modifier.width(28.dp),
-                    contentAlignment = Alignment.Center
+                    modifier = Modifier
+                        .width(36.dp)
+                        .fillMaxHeight(),
+                    contentAlignment = Alignment.TopCenter
                 ) {
                     if (index != vm.stops.lastIndex) {
                         Box(
                             modifier = Modifier
-                                .width(3.dp)
-                                .height(56.dp)
+                                .width(4.dp)
+                                .height(72.dp)
                                 .align(Alignment.TopCenter)
-                                .offset(y = 12.dp)
+                                .offset(y = 14.dp)
                                 .background(
                                     color = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)
                                 )
@@ -503,6 +505,7 @@ private fun StopsTab(
 
                     Box(
                         modifier = Modifier
+                            .padding(top = 6.dp)
                             .size(12.dp)
                             .background(
                                 MaterialTheme.colorScheme.primary,
@@ -540,7 +543,9 @@ private fun StopsTab(
                 Spacer(modifier = Modifier.width(12.dp))
 
                 Column(
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(vertical = 2.dp)
                 ) {
 
                     Text(
