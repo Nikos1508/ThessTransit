@@ -14,7 +14,7 @@
 
 To download the application:
 
-1) Download the latest release APK (version 0.9.1) from **[HERE](https://github.com/Nikos1508/ThessTransit/releases/download/v0.9.1/app-debug.apk)**.
+1) Download the latest release APK (version 0.9.2-alpha) from **[HERE](https://github.com/Nikos1508/ThessTransit/releases/download/v0.9.2-alpha/app-debug.apk)**.
 2. Open the app and wait approximately **2–3 minutes** while all routes, stops, and timetable information are downloaded and stored locally.
 3) Enjoy the application! More updates and features will be announced here as development continues.
 
@@ -22,19 +22,19 @@ To download the application:
 
 ## About the Project
 
-The project is mainly focused on creating a modern transportation application for Thessaloniki that combines both the bus and metro systems while incorporating LLMs and AI agents to improve the user experience. The long-term goal fot the project is to provide more reliable route suggestions, adjusted arrival times, live news updates, and all the information a passenger may need in one place (including guides on various different aspects)
+The project is mainly focused on creating a modern transportation application for Thessaloniki that combines both the bus and metro systems while incorporating LLMs and AI agents to improve the user experience. The long-term goal for the project is to provide more reliable route suggestions, adjusted arrival times, live news updates, and all the information a passenger may need in one place (including guides on various aspects)
 
-The application is primarily developed by me, for now, (Hallooo), with AI being used only as a development assistant for tasks such as generating XML string resources, debugging errors, and speeding up parts of the development process with the repeating parts of the code with minimal changes between them.
+The application is primarily developed by me, for now (Hallooo), with AI being used only as a development assistant for tasks such as generating XML string resources, debugging errors, and speeding up parts of the development process with the repeating parts of the code with minimal changes between them.
 
 ---
 
 ## Features available in Version 0.9
 
-- Fully working **offline mode**, providing access to all routes and stops without an internet connection.
+- Fully working **offline mode** (not yet fully integrated), providing access to all routes and stops without an internet connection.
 - Local storage of user preferences (theme, language, favourite routes, home, work, etc.).
 - Fully functional Home Screen UI.
 - Detailed ticket information on the Tickets screen.
-- Maps for selecting your home and work locations to easily compare nearby bus stops *(partially unavailable due to map access issues)*.
+- Maps for selecting your home and work locations to easily compare nearby bus stops.
 - Complete route information, including stops, timetables, and their locations on the map.
 - Settings page with options for changing the application theme and language.
 - Grouped routes (based on route numbers) for easier navigation towards different areas of Thessaloniki.
