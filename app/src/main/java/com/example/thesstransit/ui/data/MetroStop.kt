@@ -11,6 +11,6 @@ data class MetroStop(
     val mainName: String,
     val secName: String,
     val branch: MetroBranch,
-    val x: Float,
-    val y: Float
+
+    val travelSeconds: Int
 )

@@ -478,7 +478,7 @@ private fun StopsTab(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(60.dp)
+                    .height(80.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .clickable { onStopClick(stop) }
                     .padding(horizontal = 8.dp),
@@ -490,13 +490,13 @@ private fun StopsTab(
                         .fillMaxHeight(),
                     contentAlignment = Alignment.TopCenter
                 ) {
+
                     if (index != vm.stops.lastIndex) {
                         Box(
                             modifier = Modifier
                                 .width(4.dp)
-                                .height(72.dp)
-                                .align(Alignment.TopCenter)
-                                .offset(y = 14.dp)
+                                .height(80.dp)
+                                .offset(y = 12.dp)
                                 .background(
                                     color = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)
                                 )
@@ -505,8 +505,8 @@ private fun StopsTab(
 
                     Box(
                         modifier = Modifier
-                            .padding(top = 6.dp)
                             .size(12.dp)
+                            .offset(y = 6.dp)
                             .background(
                                 MaterialTheme.colorScheme.primary,
                                 CircleShape
@@ -519,15 +519,20 @@ private fun StopsTab(
                         val progress = position.second
 
                         if (stopIndex == index) {
+
                             Surface(
                                 modifier = Modifier
-                                    .offset( y = (28.dp * progress) )
+                                    .offset(
+                                        y = 6.dp + (80.dp * progress)
+                                    )
                                     .size(22.dp),
                                 shape = CircleShape,
                                 color = MaterialTheme.colorScheme.primary,
                                 shadowElevation = 4.dp
                             ) {
+
                                 Box(contentAlignment = Alignment.Center) {
+
                                     Icon(
                                         Icons.Default.DirectionsBus,
                                         contentDescription = null,
