@@ -27,7 +27,7 @@ class TransitSearchViewModel : ViewModel() {
 
         searchJob = viewModelScope.launch {
 
-            delay(500.milliseconds) //Μπορεί να γινει και delay(300)
+            delay(400.milliseconds)
 
             try {
                 val results = NominatimClient.api.search( query = query )
@@ -35,7 +35,7 @@ class TransitSearchViewModel : ViewModel() {
                 onResult(
                     results.map {
                         SearchResult(
-                            title = it.display_name,
+                            title = it.displayName,
 
                             latitude = it.lat.toDouble(),
 

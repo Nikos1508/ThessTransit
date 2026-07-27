@@ -4,11 +4,24 @@ import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Query
 
+data class NominatimAddress(
+    val road: String? = null,
+    val houseNumber: String? = null,
+    val neighbourhood: String? = null,
+    val suburb: String? = null,
+    val village: String? = null,
+    val town: String? = null,
+    val city: String? = null,
+    val municipality: String? = null,
+    val county: String? = null,
+    val state: String? = null
+)
 
 data class NominatimPlace(
-    val display_name: String,
+    val displayName: String,
     val lat: String,
-    val lon: String
+    val lon: String,
+    val address: NominatimAddress? = null
 )
 
 
@@ -30,11 +43,22 @@ interface NominatimService {
         @Query("countrycodes")
         country: String = "gr",
 
+        @Query("dedupe")
+        dedupe: Int = 1,
+
+        @Query("namedetails")
+        nameDetails: Int = 1,
+
+        @Query("extratags")
+        extraTags: Int = 1,
+
+        @Query("addressdetails")
+        addressDetails: Int = 1,
+
         @Header("User-Agent")
-        userAgent: String = "ThessTransit/1.0"
+        userAgent: String = "ThessTransit/0.9.1"
 
     ): List<NominatimPlace>
-
 
 
     @GET("reverse")
@@ -49,6 +73,9 @@ interface NominatimService {
         @Query("format")
         format:String = "json",
 
+        @Query("addressdetails")
+        addressDetails: Int = 1,
+
         @Header("User-Agent")
         userAgent:String = "ThessTransit/1.0"
 
@@ -57,5 +84,6 @@ interface NominatimService {
 }
 
 data class NominatimReverseResult(
-    val display_name:String?
+    val displayName: String?,
+    val address: NominatimAddress? = null
 )

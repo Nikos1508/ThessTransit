@@ -5,7 +5,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -19,8 +18,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.core.os.LocaleListCompat
-import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -32,6 +29,7 @@ import com.example.thesstransit.ui.item.GroupRouteDetailsScreen
 import com.example.thesstransit.ui.item.HomeScreen
 import com.example.thesstransit.ui.item.LocationPickerScreen
 import com.example.thesstransit.ui.item.LoginScreen
+import com.example.thesstransit.ui.item.MetroScreen
 import com.example.thesstransit.ui.item.RouteDetailsScreen
 import com.example.thesstransit.ui.item.RoutesScreen
 import com.example.thesstransit.ui.item.SearchScreen
@@ -45,8 +43,6 @@ import com.example.thesstransit.ui.viewModels.RoutesViewModel
 import com.example.thesstransit.ui.viewModels.StopDetailsViewModel
 import io.gitlab.mitsiosm.oseth.data.Route
 import io.gitlab.mitsiosm.oseth.data.Stop
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlin.reflect.typeOf
@@ -58,11 +54,7 @@ data class RoutesRoute(
 )
 @Serializable object TicketsRoute
 
-@Serializable object LinesRoute
-
 @Serializable object LoginRoute
-@Serializable object NearbyStopsRoute
-@Serializable object LiveDeparturesRoute
 
 @Serializable
 data class LocationPickerRoute(
@@ -81,6 +73,9 @@ data class GroupDetailsRoute(
 
 @Serializable
 object SettingsRoute
+
+@Serializable
+object MetroRoute
 
 @Serializable
 data class StopDetailsRoute(
@@ -179,7 +174,6 @@ class MainActivity : ComponentActivity() {
                                 HomeScreen(
                                     sharedTransitionScope = this@SharedTransitionLayout,
                                     animatedContentScope = this,
-
                                     onLoginClick = {
                                         navController.navigate(LoginRoute)
                                     },
@@ -228,6 +222,9 @@ class MainActivity : ComponentActivity() {
                                     },
                                     onSettingsClick = {
                                         navController.navigate(SettingsRoute)
+                                    },
+                                    onMetroClick = {
+                                        navController.navigate(MetroRoute)
                                     }
                                 )
                             }
@@ -264,6 +261,12 @@ class MainActivity : ComponentActivity() {
                                     onBackClick = {
                                         navController.popBackStack()
                                     }
+                                )
+                            }
+
+                            composable<MetroRoute> {
+                                MetroScreen(
+                                    onBackClick = { navController.popBackStack() }
                                 )
                             }
 

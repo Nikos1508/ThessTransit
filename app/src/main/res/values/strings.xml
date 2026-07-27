@@ -118,7 +118,7 @@
     <!-- SETTINGS SCREEN -->
     <string name="title_settings">Ρυθμίσεις</string>
     <string name="settings_about_dialog_text">
-        Δημιουργήθηκε για μία εύκολη\nμετακίνηση στη Θεσσαλονίκη.\n\nVersion 0.8
+        Δημιουργήθηκε για μία εύκολη\nμετακίνηση στη Θεσσαλονίκη.\n\nVersion 0.9.1
     </string>
     <string name="ok">OK</string>
     <string name="section_general">Γενικά</string>
@@ -127,7 +127,7 @@
     <string name="settings_contact_title">Στοιχεία επικοινωνίας</string>
     <string name="settings_contact_subtitle">Επικοινωνήστε μαζί μας</string>
     <string name="settings_about_title">Σχετικά</string>
-    <string name="settings_about_subtitle">Έκδοση 0.8</string>
+    <string name="settings_about_subtitle">Έκδοση 0.9.1</string>
     <string name="settings_header_subtitle">Προσωποποίησε την εμπειρία σου στο ThessTransit</string>
     <string name="theme_title">Θέμα εφαρμογής</string>
     <string name="theme_subtitle">Διάλεξε εμφάνιση</string>

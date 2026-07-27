@@ -23,6 +23,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.ThessTransit"
+        android:enableOnBackInvokedCallback="true"
         tools:targetApi="33">
 
         <service

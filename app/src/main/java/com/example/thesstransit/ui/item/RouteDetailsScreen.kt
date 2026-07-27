@@ -432,6 +432,7 @@ fun RouteInfoCard(
         )
     ) {
         Column(Modifier.padding(20.dp)) {
+
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -459,57 +460,6 @@ fun RouteInfoCard(
                 )
             }
 
-            Spacer( modifier = Modifier.height(16.dp) )
-
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-
-                RouteStatChip(
-                    Icons.Default.LocationOn,
-                    text = stringResource(R.string.stat_stops_count, stopCount)
-                )
-
-                RouteStatChip( /* TODO: Change it for smt else */
-                    Icons.Default.SwapHoriz,
-                    text = stringResource(R.string.stat_directions_count)
-                )
-
-            }
-        }
-    }
-}
-
-@Composable
-private fun RouteStatChip(
-    icon: ImageVector,
-    text: String
-) {
-    Surface(
-        shape = RoundedCornerShape(50),
-        color = MaterialTheme.colorScheme.primary.copy(0.08f)
-    ) {
-        Row(
-            modifier = Modifier.padding(
-                horizontal = 12.dp,
-                vertical = 8.dp
-            ),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                modifier = Modifier.size(16.dp),
-                tint = MaterialTheme.colorScheme.primary
-            )
-
-            Spacer( modifier = Modifier.width(6.dp) )
-
-            Text(
-                text = text,
-                style = MaterialTheme.typography.labelLarge
-            )
         }
     }
 }
@@ -525,25 +475,27 @@ private fun StopsTab(
         contentPadding = PaddingValues(horizontal = 16.dp),
     ) {
         itemsIndexed(vm.stops) { index, stop ->
-
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .height(80.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .clickable { onStopClick(stop) }
-                    .padding(horizontal = 8.dp, vertical = 10.dp),
+                    .padding(horizontal = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(
-                    modifier = Modifier.width(28.dp),
-                    contentAlignment = Alignment.Center
+                    modifier = Modifier
+                        .width(36.dp)
+                        .fillMaxHeight(),
+                    contentAlignment = Alignment.TopCenter
                 ) {
+
                     if (index != vm.stops.lastIndex) {
                         Box(
                             modifier = Modifier
-                                .width(3.dp)
-                                .height(56.dp)
-                                .align(Alignment.TopCenter)
+                                .width(4.dp)
+                                .height(80.dp)
                                 .offset(y = 12.dp)
                                 .background(
                                     color = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)
@@ -554,6 +506,7 @@ private fun StopsTab(
                     Box(
                         modifier = Modifier
                             .size(12.dp)
+                            .offset(y = 6.dp)
                             .background(
                                 MaterialTheme.colorScheme.primary,
                                 CircleShape
@@ -566,15 +519,20 @@ private fun StopsTab(
                         val progress = position.second
 
                         if (stopIndex == index) {
+
                             Surface(
                                 modifier = Modifier
-                                    .offset( y = (28.dp * progress) )
+                                    .offset(
+                                        y = 6.dp + (80.dp * progress)
+                                    )
                                     .size(22.dp),
                                 shape = CircleShape,
                                 color = MaterialTheme.colorScheme.primary,
                                 shadowElevation = 4.dp
                             ) {
+
                                 Box(contentAlignment = Alignment.Center) {
+
                                     Icon(
                                         Icons.Default.DirectionsBus,
                                         contentDescription = null,
@@ -590,7 +548,9 @@ private fun StopsTab(
                 Spacer(modifier = Modifier.width(12.dp))
 
                 Column(
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(vertical = 2.dp)
                 ) {
 
                     Text(
