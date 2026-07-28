@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -24,18 +25,18 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Fill
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.thesstransit.ui.components.ScreenHeader
 import com.example.thesstransit.ui.data.MetroBranch
+import com.example.thesstransit.ui.data.MetroStop
 import com.example.thesstransit.ui.viewModels.MetroViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -112,7 +113,7 @@ private fun MetroMapCanvas(
         val red = Color(0xFFD32F2F)
 
         val centerX = size.width * 0.45f
-        val splitY = size.height * 0.73f
+        val splitY = size.height * 0.62f
 
         val top = 40f
 
@@ -150,7 +151,7 @@ private fun MetroMapCanvas(
         drawLine(
             color = blue,
             start = Offset(leftX, splitY + 55f),
-            end = Offset(leftX, bottom),
+            end = Offset(leftX, bottom + 230f),
             strokeWidth = lineWidth,
             cap = StrokeCap.Round
         )
@@ -166,7 +167,7 @@ private fun MetroMapCanvas(
         drawLine(
             color = red,
             start = Offset(rightX, splitY + 55f),
-            end = Offset(rightX, bottom - 400f),
+            end = Offset(rightX, bottom - 620f),
             strokeWidth = lineWidth,
             cap = StrokeCap.Round
         )
@@ -176,14 +177,14 @@ private fun MetroMapCanvas(
 
 @Composable
 private fun MetroStationCard(
-    title: String,
-    subtitle: String,
+    station: MetroStop,
     modifier: Modifier = Modifier,
-    highlighted: Boolean = false
+    highlighted: Boolean = false,
+    alignLeft: Boolean = false
 ) {
 
     Card(
-        modifier = modifier,
+        modifier = modifier.width(175.dp),
         shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(
             containerColor =
@@ -198,21 +199,49 @@ private fun MetroStationCard(
     ) {
 
         Column(
+            horizontalAlignment =
+                if (alignLeft)
+                    Alignment.End
+                else
+                    Alignment.Start,
             modifier = Modifier.padding(
                 horizontal = 22.dp,
                 vertical = 18.dp
             )
         ) {
             Text(
-                title,
+                station.mainName,
                 style = MaterialTheme.typography.labelMedium
             )
 
             Text(
-                subtitle,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                station.secName,
+                style = MaterialTheme.typography.bodySmall
             )
+
+            Spacer( modifier = Modifier.height(8.dp) )
+
+            Text(
+                "Επόμενη στάση ${station.travelToNext}δευτ."
+            )
+
+            Text(
+                "ΝΣΣ ${station.toRailwayStation/60}λεπτά"
+            )
+
+            station.toMikra?.let {
+                Text(
+                    "Μίκρα: ${it/60} λεπτά",
+                    style = MaterialTheme.typography.labelMedium
+                )
+            }
+
+            station.toMikra?.let {
+                Text(
+                    "Νέα Ελβετία: ${it/60} λεπτά",
+                    style = MaterialTheme.typography.labelSmall
+                )
+            }
         }
     }
 }
@@ -227,7 +256,7 @@ private fun stationPosition(
     branch: MetroBranch
 ): StationPosition {
     val firstY = 0.06f
-    val spacing = 0.075f
+    val spacing = 0.01f
 
     return when (branch) {
 
@@ -270,9 +299,9 @@ private fun MetroStationsOverlay(
             )
 
             MetroStationCard(
-                title = station.mainName,
-                subtitle = station.secName,
+                station = station,
                 highlighted = index == 3,
+                alignLeft = station.branch == MetroBranch.NEA_ELVETIA,
                 modifier = Modifier.offset {
                     IntOffset(
                         x = (pos.x * width.toPx()).toInt(),
