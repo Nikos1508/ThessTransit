@@ -31,7 +31,6 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.outlined.DirectionsBus
@@ -51,6 +50,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -58,6 +58,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.onFocusChanged
@@ -75,12 +76,15 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.thesstransit.R
 import com.example.thesstransit.ui.components.AnimatedBackground
+import com.example.thesstransit.ui.viewModels.LoginViewModel
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun LoginScreen(
-    onLoginClick: () -> Unit
+    viewModel: LoginViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
+    onLoginClick: () -> Unit,
+    onRegisterClick: () -> Unit
 ) {
     var visible by remember {
         mutableStateOf(false)
@@ -112,7 +116,9 @@ fun LoginScreen(
             enter = fadeIn() + scaleIn()
         ) {
             LoginContent(
-                onLoginClick = onLoginClick
+                onLoginClick = { viewModel.login() },
+                onRegisterClick = onRegisterClick,
+                viewModel = viewModel
             )
 
         }
@@ -121,18 +127,16 @@ fun LoginScreen(
 
 @Composable
 fun  LoginContent(
-    onLoginClick: () -> Unit
+    onLoginClick: () -> Unit,
+    viewModel: LoginViewModel,
+    onRegisterClick: () -> Unit
 ) {
-    var email by remember {
-        mutableStateOf("")
-    }
+    val uiState by viewModel.uiState.collectAsState()
 
-    var password by remember {
-        mutableStateOf("")
-    }
-
-    var passwordVisible by remember {
-        mutableStateOf(false)
+    LaunchedEffect(uiState.isLoggedIn) {
+        if (uiState.isLoggedIn) {
+            onLoginClick()
+        }
     }
 
     val glowTransition = rememberInfiniteTransition(label = "glow")
@@ -258,8 +262,9 @@ fun  LoginContent(
                 ) {
                     Box(modifier = Modifier.fillMaxWidth()) {
                         LoginEmailField(
-                            value = email,
-                            onValueChange = { email = it }
+                            value = uiState.email,
+                            error = uiState.emailError,
+                            onValueChange = viewModel::onEmailChange
                         )
                     }
                 }
@@ -272,14 +277,22 @@ fun  LoginContent(
                 ) {
                     Box(modifier = Modifier.fillMaxWidth()) {
                         LoginPasswordField(
-                            value = password,
-                            onValueChange = { password = it },
-                            visible = passwordVisible,
-                            onVisibilityChange = {
-                                passwordVisible = !passwordVisible
-                            }
+                            value = uiState.password,
+                            error = uiState.passwordError,
+                            onValueChange = viewModel::onPasswordChange,
+                            visible = uiState.passwordVisible,
+                            onVisibilityChange = viewModel::togglePasswordVisibility
                         )
                     }
+                }
+
+                uiState.errorMessage?.let {
+                    Spacer( modifier = Modifier.height(12.dp) )
+
+                    Text(
+                        text= it,
+                        color = MaterialTheme.colorScheme.error
+                    )
                 }
 
                 Spacer(Modifier.height(28.dp))
@@ -289,6 +302,7 @@ fun  LoginContent(
                     enter = fadeIn()
                 ) {
                     PremiumLoginButton(
+                        enabled = !uiState.isLoading,
                         onClick = onLoginClick
                     )
                 }
@@ -317,7 +331,9 @@ fun  LoginContent(
                     visible = step >= 6,
                     enter = fadeIn()
                 ) {
-                    RegisterRow()
+                    RegisterRow(
+                        onClick = onRegisterClick
+                    )
                 }
             }
 
@@ -384,6 +400,7 @@ fun FloatingLogo() {
 @Composable
 fun LoginEmailField(
     value: String,
+    error: String?,
     onValueChange: (String) -> Unit
 ) {
 
@@ -425,11 +442,21 @@ fun LoginEmailField(
             unfocusedIndicatorColor = Color.Transparent
         )
     )
+
+    if (error != null) {
+        Text(
+            text = error,
+            color = MaterialTheme.colorScheme.error,
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.padding(start = 12.dp)
+        )
+    }
 }
 
 @Composable
 fun LoginPasswordField(
     value: String,
+    error: String?,
     onValueChange: (String) -> Unit,
     visible: Boolean,
     onVisibilityChange: () -> Unit
@@ -485,11 +512,22 @@ fun LoginPasswordField(
             unfocusedIndicatorColor = Color.Transparent
         )
     )
+
+    if (error != null) {
+        Text(
+            text = error,
+            color = MaterialTheme.colorScheme.error,
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.padding(start = 12.dp)
+        )
+    }
 }
 
 
 @Composable
-fun RegisterRow() {
+fun RegisterRow(
+    onClick: () -> Unit
+) {
 
     Row(
         verticalAlignment = Alignment.CenterVertically
@@ -502,7 +540,7 @@ fun RegisterRow() {
             fontWeight = FontWeight.Bold,
             modifier = Modifier.pointerInput(Unit) {
                 detectTapGestures {
-
+                    onClick()
                 }
             }
         )
@@ -597,6 +635,9 @@ fun PremiumLoginButton(
         modifier = Modifier
             .fillMaxWidth()
             .height(58.dp)
+            .alpha(
+                if (enabled) 1f else 0.5f
+            )
             .graphicsLayer {
                 scaleX = scale
                 scaleY = scale
@@ -611,14 +652,16 @@ fun PremiumLoginButton(
                 )
             )
             .pointerInput(Unit) {
-                detectTapGestures(
-                    onPress = {
-                        pressed = true
-                        tryAwaitRelease()
-                        pressed = false
-                        onClick()
-                    }
-                )
+                if (enabled) {
+                    detectTapGestures(
+                        onPress = {
+                            pressed = true
+                            tryAwaitRelease()
+                            pressed = false
+                            onClick()
+                        }
+                    )
+                }
             }
     ) {
 
