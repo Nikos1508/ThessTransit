@@ -17,7 +17,9 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -286,11 +288,12 @@ fun  LoginContent(
                     }
                 }
 
-                uiState.errorMessage?.let {
-                    Spacer( modifier = Modifier.height(12.dp) )
-
+                AnimatedVisibility(
+                    visible = uiState.errorMessage != null,
+                    enter = fadeIn() + scaleIn()
+                ) {
                     Text(
-                        text= it,
+                        text = uiState.errorMessage ?: "",
                         color = MaterialTheme.colorScheme.error
                     )
                 }
@@ -303,6 +306,7 @@ fun  LoginContent(
                 ) {
                     PremiumLoginButton(
                         enabled = !uiState.isLoading,
+                        loading = uiState.isLoading,
                         onClick = onLoginClick
                     )
                 }
@@ -401,47 +405,70 @@ fun FloatingLogo() {
 fun LoginEmailField(
     value: String,
     error: String?,
-    onValueChange: (String) -> Unit
+    onValueChange: (String) -> Unit,
+    viewModel: LoginViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
 ) {
+    val uiState by viewModel.uiState.collectAsState()
 
     var focused by remember {
         mutableStateOf(false)
     }
 
-    TextField(
-        value = value,
-        onValueChange = onValueChange,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(58.dp)
-            .onFocusChanged {
-                focused = it.isFocused
-            },
-        singleLine = true,
-        shape = RoundedCornerShape(20.dp),
-        leadingIcon = {
-            Icon(
-                imageVector = Icons.Outlined.Email,
-                contentDescription = null,
-                tint = if (focused)
-                    MaterialTheme.colorScheme.primary
-                else
-                    MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        },
-        placeholder = {
-            Text(
-                stringResource(R.string.email_placeholder),
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-            )
-        },
-        colors = TextFieldDefaults.colors(
-            focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.85f),
-            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.65f),
-            focusedIndicatorColor = Color.Transparent,
-            unfocusedIndicatorColor = Color.Transparent
-        )
+    val scale by animateFloatAsState(
+        targetValue = if (focused) 1.015f else 1f,
+        animationSpec = tween(220),
+        label = "fieldScale"
     )
+
+    Box(
+        modifier = Modifier
+            .shadow(
+                elevation = if (focused) 10.dp else 0.dp,
+                shape = RoundedCornerShape(20.dp),
+                ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
+                spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)
+            )
+    ) {
+        TextField(
+            value = value,
+            enabled = !uiState.isLoading,
+            onValueChange = onValueChange,
+            modifier = Modifier
+                .fillMaxWidth()
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                }
+                .height(58.dp)
+                .onFocusChanged {
+                    focused = it.isFocused
+                },
+            singleLine = true,
+            shape = RoundedCornerShape(20.dp),
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Outlined.Email,
+                    contentDescription = null,
+                    tint = if (focused)
+                        MaterialTheme.colorScheme.primary
+                    else
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            placeholder = {
+                Text(
+                    stringResource(R.string.email_placeholder),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                )
+            },
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.85f),
+                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.65f),
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent
+            )
+        )
+    }
 
     if (error != null) {
         Text(
@@ -459,17 +486,30 @@ fun LoginPasswordField(
     error: String?,
     onValueChange: (String) -> Unit,
     visible: Boolean,
-    onVisibilityChange: () -> Unit
+    onVisibilityChange: () -> Unit,
+    viewModel: LoginViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
 ) {
+    val uiState by viewModel.uiState.collectAsState()
 
     var focused by remember {
         mutableStateOf(false)
     }
 
+    val scale by animateFloatAsState(
+        targetValue = if (focused) 1.015f else 1f,
+        animationSpec = tween(220),
+        label = "fieldScale"
+    )
+
     TextField(
         value = value,
         onValueChange = onValueChange,
+        enabled = !uiState.isLoading,
         modifier = Modifier
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
             .fillMaxWidth()
             .height(58.dp)
             .onFocusChanged {
@@ -538,10 +578,11 @@ fun RegisterRow(
             stringResource(R.string.link_register),
             color = MaterialTheme.colorScheme.primary,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.pointerInput(Unit) {
-                detectTapGestures {
-                    onClick()
-                }
+            modifier = Modifier.clickable(
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() }
+            ) {
+                onClick()
             }
         )
     }
@@ -588,7 +629,8 @@ fun ForgotPasswordButton() {
 @Composable
 fun PremiumLoginButton(
     onClick: () -> Unit,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    loading: Boolean = false
 ) {
     var pressed by remember {
         mutableStateOf(false)
@@ -700,23 +742,33 @@ fun PremiumLoginButton(
         ) {
             Spacer(modifier = Modifier.weight(1f))
 
-            Text(
-                "Σύνδεση",
-                color = Color.White,
-                fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.titleMedium
-            )
+            if (loading) {
+                androidx.compose.material3.CircularProgressIndicator(
+                    modifier = Modifier.size(22.dp),
+                    strokeWidth = 2.dp,
+                    color = Color.White
+                )
+            } else {
+                Text(
+                    "Σύνδεση",
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
 
             Spacer(modifier = Modifier.weight(1f))
 
-            Icon(
-                Icons.AutoMirrored.Rounded.ArrowForward,
-                null,
-                tint = Color.White,
-                modifier = Modifier.graphicsLayer{
-                    translationX = arrowOffset
-                }
-            )
+            if (!loading) {
+                Icon(
+                    Icons.AutoMirrored.Rounded.ArrowForward,
+                    null,
+                    tint = Color.White,
+                    modifier = Modifier.graphicsLayer {
+                        translationX = arrowOffset
+                    }
+                )
+            }
         }
     }
 }
