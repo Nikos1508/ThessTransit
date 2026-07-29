@@ -31,6 +31,7 @@ import com.example.thesstransit.ui.item.GroupRouteDetailsScreen
 import com.example.thesstransit.ui.item.HomeScreen
 import com.example.thesstransit.ui.item.LocationPickerScreen
 import com.example.thesstransit.ui.item.LoginScreen
+import com.example.thesstransit.ui.item.RegisterScreen
 import com.example.thesstransit.ui.item.MetroScreen
 import com.example.thesstransit.ui.item.RouteDetailsScreen
 import com.example.thesstransit.ui.item.RoutesScreen
@@ -240,26 +241,14 @@ class MainActivity : ComponentActivity() {
 
                                 val authViewModel:AuthViewModel=viewModel()
 
-                                val user by authViewModel.user.collectAsState()
-
                                 val initialized by
                                 authViewModel.initialized.collectAsState()
 
-
-
-                                LaunchedEffect(initialized,user){
-                                    if(initialized){
-                                        if(user!=null){
-                                            navController.navigate(HomeRoute){
-                                                popUpTo(SplashRoute){
-                                                    inclusive=true
-                                                }
-                                            }
-                                        }else{
-                                            navController.navigate(LoginRoute){
-                                                popUpTo(SplashRoute){
-                                                    inclusive=true
-                                                }
+                                LaunchedEffect(initialized) {
+                                    if (initialized) {
+                                        navController.navigate(HomeRoute) {
+                                            popUpTo(SplashRoute) {
+                                                inclusive = true
                                             }
                                         }
                                     }
@@ -313,15 +302,15 @@ class MainActivity : ComponentActivity() {
 
                             composable<RegisterRoute>{
                                 RegisterScreen(
-                                    onBackClick={
-                                        navController.popBackStack()
-                                    },
-                                    onRegisterSuccess={
+                                    onRegisterSuccess = {
                                         navController.navigate(LoginRoute){
                                             popUpTo(RegisterRoute){
                                                 inclusive=true
                                             }
                                         }
+                                    },
+                                    onBackClick = {
+                                        navController.popBackStack()
                                     }
                                 )
                             }

@@ -68,7 +68,7 @@ dependencies {
     implementation("io.gitlab.mitsiosm:oseth:2.1.1")
 
     //Help for the API
-    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
     implementation("androidx.datastore:datastore-preferences:1.1.1")
 
     //Maps

@@ -10,21 +10,43 @@ class AuthRepository {
         email: String,
         password: String
     ): Result<Unit> {
-
         return try {
-            SupabaseClient.client.auth.signInWith(
-                Email
-            ) {
-                this.email = email
-                this.password = password
-            }
+            SupabaseClient
+                .client
+                .auth
+                .signInWith(
+                    Email
+                ){
+                    this.email = email
+                    this.password = password
 
+                }
             Result.success(Unit)
-
         } catch (e: Exception) {
-
             Result.failure(e)
-
         }
     }
+
+    suspend fun register(
+        email:String,
+        password:String
+    ): Result<Unit>{
+        return try {
+            SupabaseClient
+                .client
+                .auth
+                .signUpWith(
+                    Email
+                ){
+                    this.email = email
+                    this.password = password
+                }
+
+            Result.success(Unit)
+        }catch(e:Exception){
+            e.printStackTrace()
+            Result.failure(e)
+        }
+    }
+
 }

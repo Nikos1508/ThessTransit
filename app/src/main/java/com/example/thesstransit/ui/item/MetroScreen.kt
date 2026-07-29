@@ -226,7 +226,7 @@ private fun MetroStationCard(
             )
 
             Text(
-                "ΝΣΣ ${station.toRailwayStation/60}λεπτά"
+                "ΝΣΣ ${station.toRailwayStation} δευτερόλεπτα"
             )
 
             station.toMikra?.let {

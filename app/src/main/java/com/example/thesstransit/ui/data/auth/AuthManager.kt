@@ -12,23 +12,12 @@ object AuthManager {
     val currentUser = _currentUser.asStateFlow()
 
     suspend fun initialize(){
-        try {
+        _currentUser.value =
             SupabaseClient
                 .client
                 .auth
-                .refreshCurrentSession()
-            _currentUser.value =
-                SupabaseClient
-                    .client
-                    .auth
-                    .currentUserOrNull()
-        } catch (e: Exception){
-
-            _currentUser.value = null
-        }
+                .currentUserOrNull()
     }
-
-
 
     fun loadUser(){
         _currentUser.value =
@@ -38,15 +27,11 @@ object AuthManager {
                 .currentUserOrNull()
     }
 
-
-
     suspend fun signOut(){
         SupabaseClient
             .client
             .auth
             .signOut()
-
         _currentUser.value=null
     }
-
 }

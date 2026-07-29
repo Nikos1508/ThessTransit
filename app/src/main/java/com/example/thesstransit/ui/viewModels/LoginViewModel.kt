@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.thesstransit.ui.data.auth.AuthManager
 import com.example.thesstransit.ui.data.auth.LoginUiState
 import com.example.thesstransit.ui.data.repository.AuthRepository
+import com.example.thesstransit.ui.utils.SupabaseErrorMapper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -122,7 +123,7 @@ class LoginViewModel (
             }
 
             val result = repository.login(
-                email = uiState.value.email,
+                email = uiState.value.email.trim(),
                 password = uiState.value.password
             )
 
@@ -137,6 +138,11 @@ class LoginViewModel (
             }
 
             result.onFailure { error ->
+
+                println(
+                    "SUPABASE REGISTER ERROR: ${error.message}"
+                )
+
                 _uiState.update {
                     it.copy (
                         isLoading = false,
@@ -145,7 +151,7 @@ class LoginViewModel (
                                 error.message?.contains("Invalid login") == true ->
                                     "Λάθος email ή κωδικός"
                                 else ->
-                                    "Παρουσιάστηκε σφάλμα. Δοκιμάστε ξανά."
+                                    error.message ?: "Άγνωστο error"
                             }
                     )
                 }

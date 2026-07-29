@@ -32,8 +32,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.Login
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.rounded.Login
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -73,11 +76,15 @@ import com.example.thesstransit.ui.viewModels.ThemeViewModel
 import io.gitlab.mitsiosm.oseth.data.Language
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
+import io.github.jan.supabase.auth.user.UserInfo
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
+    user: UserInfo?,
     onBackClick: () -> Unit,
+    onLoginClick: () -> Unit,
+    onLogoutClick: () -> Unit,
     viewModel: LanguageViewModel = viewModel(),
     themeViewModel: ThemeViewModel = viewModel()
 ) {
@@ -117,6 +124,7 @@ fun SettingsScreen(
             }
         ) {
             SettingsContent(
+                user = user,
                 language = language,
                 languageViewModel = viewModel,
                 theme = theme,
@@ -124,7 +132,9 @@ fun SettingsScreen(
                 showAbout = {
                     showAbout = true
                 },
-                onBackClick = onBackClick
+                onBackClick = onBackClick,
+                onLoginClick = onLoginClick,
+                onLogoutClick = onLogoutClick
             )
         }
 
@@ -161,16 +171,19 @@ fun SettingsScreen(
 
 @Composable
 private fun SettingsContent(
+    user: UserInfo?,
     language: Language,
     languageViewModel: LanguageViewModel,
     theme: AppTheme,
     themeViewModel: ThemeViewModel,
     showAbout: () -> Unit,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onLoginClick: () -> Unit,
+    onLogoutClick: () -> Unit
 ) {
 
     var step by remember {
-        mutableStateOf(0)
+        androidx.compose.runtime.mutableIntStateOf(0)
     }
 
     LaunchedEffect(Unit) {
@@ -201,6 +214,14 @@ private fun SettingsContent(
                 ) {
                     SettingsHeader()
                 }
+            }
+
+            item {
+                AccountCard(
+                    user = user,
+                    onLoginClick = onLoginClick,
+                    onLogoutClick = onLogoutClick
+                )
             }
 
             item {
@@ -365,6 +386,39 @@ private fun SettingsHeader() {
             )
         }
     }
+}
+
+@Composable
+private fun AccountCard(
+    user: UserInfo?,
+    onLoginClick: () -> Unit,
+    onLogoutClick: () -> Unit
+) {
+    SettingsCard(
+        icon =
+            if (user != null)
+                Icons.Default.Person
+            else
+                Icons.Default.Login,
+        title =
+            if(user!=null)
+                "Συνδεδεμένος"
+            else
+                "Σύνδεση",
+
+        subtitle =
+            if (user != null)
+                user.email ?: "Λογαριασμός ThessTransit"
+            else
+                "Συνδεθείτε για αποθήκευση προτιμήσεων",
+
+        onClick =
+            if (user != null)
+                onLogoutClick
+            else
+                onLoginClick
+
+        )
 }
 
 @Composable
