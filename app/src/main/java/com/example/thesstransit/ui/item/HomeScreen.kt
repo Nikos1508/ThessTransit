@@ -35,6 +35,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.DirectionsBus
 import androidx.compose.material.icons.outlined.DirectionsCar
@@ -51,6 +52,7 @@ import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material.icons.outlined.Train
 import androidx.compose.material.icons.outlined.Work
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -87,8 +89,10 @@ import com.example.thesstransit.ui.components.AnimatedSearchBar
 import com.example.thesstransit.ui.components.RouteFiltersDialog
 import com.example.thesstransit.ui.data.SavedLocations
 import com.example.thesstransit.ui.utils.SharedKeys
+import com.example.thesstransit.ui.viewModels.AuthViewModel
 import com.example.thesstransit.ui.viewModels.FavoritesViewModel
 import com.example.thesstransit.ui.viewModels.HomeViewModel
+import io.github.jan.supabase.auth.user.UserInfo
 import io.gitlab.mitsiosm.oseth.Oseth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -121,6 +125,7 @@ fun HomeScreen(
     onWorkClick: () -> Unit = {},
     favoritesViewModel: FavoritesViewModel = viewModel(),
     homeViewModel: HomeViewModel = viewModel(),
+    authViewModel: AuthViewModel = viewModel(),
 
     sharedTransitionScope: SharedTransitionScope,
     animatedContentScope: AnimatedContentScope
@@ -195,7 +200,13 @@ fun HomeScreen(
             contentPadding = PaddingValues(bottom = 16.dp)
         ) {
             item {
-                HeaderSection(onLoginClick = onLoginClick)
+                HeaderSection(
+                    currentUser = authViewModel.user.collectAsState().value,
+                    onLoginClick = onLoginClick,
+                    onProfileClick = {
+                        // TODO Profile Screen
+                    }
+                )
             }
             item {
                 Spacer(modifier = Modifier.height(8.dp))
@@ -299,7 +310,9 @@ fun HomeScreen(
 
 @Composable
 fun HeaderSection(
-    onLoginClick: () -> Unit = {}
+    currentUser: UserInfo?,
+    onLoginClick: () -> Unit = {},
+    onProfileClick: () -> Unit = {}
 ) {
     var showGreekTitle: Boolean by remember {
         mutableStateOf(false)
@@ -359,31 +372,63 @@ fun HeaderSection(
                 .fillMaxSize()
                 .padding(horizontal = 20.dp, vertical = 16.dp)
         ) {
-            OutlinedButton(
-                onClick = onLoginClick,
-                shape = RoundedCornerShape(12.dp),
-                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp),
-                border = BorderStroke(
-                    1.dp,
-                    MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
-                ),
-                modifier = Modifier
-                    .height(36.dp)
-                    .align(Alignment.TopEnd)
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.Person,
-                    contentDescription = null,
-                    modifier = Modifier.size(16.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    text = stringResource(R.string.login),
-                    fontSize = 13.sp,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontWeight = FontWeight.Medium
-                )
+
+            AnimatedContent(
+                targetState = currentUser,
+                label = "account"
+            ) { user ->
+
+                if (user == null) {
+                    OutlinedButton(
+                        onClick = onLoginClick,
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(horizontal = 14.dp),
+                        border = BorderStroke(
+                            1.dp,
+                            MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
+                        ),
+                        modifier = Modifier
+                            .height(36.dp)
+                            .align(Alignment.TopEnd)
+                    ){
+                        Icon(
+                            imageVector = Icons.Outlined.Person,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+
+                        Spacer(modifier = Modifier.width(6.dp))
+
+                        Text(
+                            text = stringResource(R.string.login),
+                            fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                } else {
+                    FilledTonalButton(
+                        onClick = onProfileClick,
+                        modifier = Modifier
+                            .height(38.dp)
+                            .align(Alignment.TopEnd),
+                        shape = RoundedCornerShape(18.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.AccountCircle,
+                            null,
+                            modifier = Modifier.size(18.dp)
+                        )
+
+                        Spacer(modifier = Modifier.size(8.dp))
+
+                        Text(
+                            text = user.email ?: "Profile",
+                            maxLines = 1
+                        )
+                    }
+                }
             }
 
             Column(
@@ -467,7 +512,9 @@ fun QuickAccessRow(
     workSubtitle: String
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         QuickAccessItem(
@@ -509,13 +556,17 @@ fun QuickAccessItem(
     modifier: Modifier = Modifier
 ) {
     Surface(
-        modifier = modifier.height(82.dp).bounceClick { onClick() },
+        modifier = modifier
+            .height(82.dp)
+            .bounceClick { onClick() },
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surfaceContainer,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.15f))
     ) {
         Column(
-            modifier = Modifier.fillMaxSize().padding(6.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(6.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {

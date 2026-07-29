@@ -45,6 +45,7 @@ import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -52,6 +53,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldColors
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -73,8 +75,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentType
 import androidx.compose.ui.semantics.semantics
@@ -83,20 +87,19 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.thesstransit.R
-import com.example.thesstransit.ui.components.AnimatedBackground
 import com.example.thesstransit.ui.viewModels.LoginViewModel
+import com.example.thesstransit.ui.viewModels.RegisterViewModel
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
-import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 
 @Composable
-fun LoginScreen(
-    viewModel: LoginViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
-    onLoginClick: () -> Unit,
-    onRegisterClick: () -> Unit
-) {
+fun RegisterScreen(
+    viewModel:RegisterViewModel = viewModel(),
+    onRegisterSuccess:()->Unit,
+    onBackClick:()->Unit
+){
     var visible by remember {
         mutableStateOf(false)
     }
@@ -120,34 +123,25 @@ fun LoginScreen(
             )
             .systemBarsPadding()
     ) {
-        AnimatedBackground()
-
-        AnimatedVisibility(
-            visible = visible,
-            enter = fadeIn() + scaleIn()
-        ) {
-            LoginContent(
-                onLoginClick = { viewModel.login() },
-                onSuccess = onLoginClick,
-                onRegisterClick = onRegisterClick,
-                viewModel = viewModel
-            )
-
-        }
+        RegisterContent(
+            viewModel = viewModel,
+            onSuccess = onRegisterSuccess,
+            onBackClick = onBackClick
+        )
     }
 }
 
+
 @Composable
-fun  LoginContent(
-    onLoginClick: () -> Unit,
+fun RegisterContent(
+    viewModel: RegisterViewModel,
     onSuccess:()->Unit,
-    viewModel: LoginViewModel,
-    onRegisterClick: () -> Unit
+    onBackClick:()->Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    LaunchedEffect(uiState.isLoggedIn){
-        if(uiState.isLoggedIn){
+    LaunchedEffect(uiState.isRegistered){
+        if(uiState.isRegistered){
             onSuccess()
         }
     }
@@ -234,23 +228,23 @@ fun  LoginContent(
                     enter = fadeIn()
                 ) {
                     Text(
-                        text = stringResource(R.string.btn_login),
+                        text = "Δημιουργία λογαριασμού",
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold
                     )
                 }
 
-//                Spacer(Modifier.height(8.dp))
-//
-//                AnimatedVisibility(
-//                    visible = step >= 2,
-//                    enter = fadeIn()
-//                ) {
-//                    Text(
-//                        stringResource(R.string.login_subtitle),
-//                        color = MaterialTheme.colorScheme.onSurfaceVariant
-//                    )
-//                }
+                Spacer(Modifier.height(8.dp))
+
+                AnimatedVisibility(
+                    visible = step >= 2,
+                    enter = fadeIn()
+                ) {
+                    Text(
+                        text = "Δημιούργησε τον λογαριασμό σου στο ThessTransit",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
 
                 Spacer( modifier = Modifier.height(8.dp) )
 
@@ -282,10 +276,24 @@ fun  LoginContent(
                             onValueChange = viewModel::onPasswordChange,
                             visible = uiState.passwordVisible,
                             onVisibilityChange = viewModel::togglePasswordVisibility,
-                            onDone = onLoginClick
+                            onDone = { viewModel.register() }
                         )
                     }
                 }
+
+                Spacer(
+                    Modifier.height(20.dp)
+                )
+
+                RegisterPasswordField(
+                    value = uiState.confirmPassword,
+                    error = uiState.confirmPasswordError,
+                    loading = uiState.isLoading,
+                    visible = uiState.confirmPasswordVisible,
+                    onValueChange = viewModel::onConfirmPasswordChange,
+                    onVisibilityChange = viewModel::toggleConfirmPasswordVisibility,
+                    onDone = { viewModel.register() }
+                )
 
                 AnimatedVisibility(
                     visible = uiState.errorMessage != null,
@@ -306,9 +314,10 @@ fun  LoginContent(
                     enter = fadeIn()
                 ) {
                     PremiumLoginButton(
-                        enabled = !uiState.isLoading,
-                        loading = uiState.isLoading,
-                        onClick = onLoginClick
+                        text="Εγγραφή",
+                        enabled=!uiState.isLoading,
+                        loading=uiState.isLoading,
+                        onClick={ viewModel.register() }
                     )
                 }
 
@@ -318,9 +327,14 @@ fun  LoginContent(
                     visible = step >= 5,
                     enter = fadeIn()
                 ) {
-                    ForgotPasswordButton(
-                        enabled = !uiState.isLoading
-                    )
+                    TextButton(
+                        enabled=!uiState.isLoading,
+                        onClick=onBackClick
+                    ){
+                        Text(
+                            "Έχεις ήδη λογαριασμό; Σύνδεση"
+                        )
+                    }
                 }
 
                 Spacer(Modifier.height(24.dp))
@@ -338,9 +352,9 @@ fun  LoginContent(
                     visible = step >= 6,
                     enter = fadeIn()
                 ) {
-                    RegisterRow(
-                        enabled = !uiState.isLoading,
-                        onClick = onRegisterClick
+                    LoginRow(
+                        enabled=!uiState.isLoading,
+                        onClick = onBackClick
                     )
                 }
             }
@@ -350,211 +364,44 @@ fun  LoginContent(
 }
 
 @Composable
-fun FloatingLogo() {
-    val transition = rememberInfiniteTransition(label = "logo")
-
-    val offsetY by transition.animateFloat(
-        initialValue = -4f,
-        targetValue = 6f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(
-                durationMillis = 3500,
-                easing = FastOutSlowInEasing
-            ),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "float"
-    )
-
-    val circleColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
-    val iconColor = MaterialTheme.colorScheme.primary
-
-    Box(
-        modifier = Modifier
-            .graphicsLayer {
-                translationY = offsetY
-            }
-            .size(88.dp)
-            .clip(CircleShape)
-            .background(
-                Brush.radialGradient(
-                    listOf(
-                        MaterialTheme.colorScheme.primary.copy(0.30f),
-                        MaterialTheme.colorScheme.primary.copy(0.10f)
-                    )
-                )
-            ),
-        contentAlignment = Alignment.Center
-    ) {
-
-        Canvas(
-            modifier = Modifier.matchParentSize()
-        ) {
-            drawCircle(
-                color = circleColor,
-                radius = size.minDimension / 2.3f
-            )
-        }
-
-        Icon(
-            imageVector = Icons.Outlined.DirectionsBus,
-            contentDescription = null,
-            modifier = Modifier.size(42.dp),
-            tint = iconColor
-        )
-    }
-}
-
-@Composable
-fun LoginEmailField(
+fun RegisterPasswordField(
     value: String,
-    error:String?,
-    loading:Boolean,
-    onValueChange:(String)->Unit
+    error: String?,
+    loading: Boolean,
+    visible: Boolean,
+    onValueChange: (String) -> Unit,
+    onVisibilityChange: () -> Unit,
+    onDone: () -> Unit
 ) {
     val focusManager = LocalFocusManager.current
-
-    var focused by remember {
-        mutableStateOf(false)
-    }
-
-    val scale by animateFloatAsState(
-        targetValue = if (focused) 1.015f else 1f,
-        animationSpec = tween(220),
-        label = "fieldScale"
-    )
-
-    Box(
-        modifier = Modifier
-            .shadow(
-                elevation = if (focused) 10.dp else 0.dp,
-                shape = RoundedCornerShape(20.dp),
-                ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
-                spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)
-            )
-    ) {
-        TextField(
-            value = value,
-            enabled = !loading,
-            onValueChange = onValueChange,
-            modifier = Modifier
-                .fillMaxWidth()
-                .graphicsLayer {
-                    scaleX = scale
-                    scaleY = scale
-                }
-                .height(58.dp)
-                .onFocusChanged {
-                    focused = it.isFocused
-                }
-                .semantics {
-                    contentType = androidx.compose.ui.autofill.ContentType.EmailAddress
-                },
-            keyboardOptions = KeyboardOptions(
-                imeAction = ImeAction.Next
-            ),
-            keyboardActions = KeyboardActions(
-                onNext = {
-                    focusManager.moveFocus(
-                        androidx.compose.ui.focus.FocusDirection.Down
-                    )
-                }
-            ),
-            singleLine = true,
-            shape = RoundedCornerShape(20.dp),
-            leadingIcon = {
-                Icon(
-                    imageVector = Icons.Outlined.Email,
-                    contentDescription = null,
-                    tint = if (focused)
-                        MaterialTheme.colorScheme.primary
-                    else
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            },
-            placeholder = {
-                Text(
-                    stringResource(R.string.email_placeholder),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                )
-            },
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.85f),
-                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.65f),
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent
-            )
-        )
-    }
-
-    if (error != null) {
-        Text(
-            text = error,
-            color = MaterialTheme.colorScheme.error,
-            style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier.padding(start = 12.dp)
-        )
-    }
-}
-
-@Composable
-fun LoginPasswordField(
-    value:String,
-    error:String?,
-    loading:Boolean,
-    onValueChange:(String)->Unit,
-    visible: Boolean,
-    onDone: () -> Unit,
-    onVisibilityChange: () -> Unit,
-    viewModel: LoginViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
-) {
-    var focused by remember {
-        mutableStateOf(false)
-    }
-
-    val scale by animateFloatAsState(
-        targetValue = if (focused) 1.015f else 1f,
-        animationSpec = tween(220),
-        label = "fieldScale"
-    )
 
     TextField(
         value = value,
         onValueChange = onValueChange,
         enabled = !loading,
         modifier = Modifier
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            }
-            .fillMaxWidth()
-            .height(58.dp)
-            .onFocusChanged {
-                focused = it.isFocused
-            }
-            .semantics {
-                contentType = androidx.compose.ui.autofill.ContentType.Password
-            },
+            .fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
         singleLine = true,
+        isError = error != null,
+        visualTransformation =
+            if (visible)
+                VisualTransformation.None
+            else
+                PasswordVisualTransformation(),
         keyboardOptions = KeyboardOptions(
             imeAction = ImeAction.Done
         ),
         keyboardActions = KeyboardActions(
-            onDone = { onDone() }
+            onDone = {
+                focusManager.clearFocus()
+                onDone()
+            }
         ),
-        shape = RoundedCornerShape(size = 20.dp),
-        visualTransformation = if (visible)
-            VisualTransformation.None
-        else
-            PasswordVisualTransformation(),
         leadingIcon = {
             Icon(
-                imageVector = Icons.Outlined.Lock,
-                contentDescription = null,
-                tint = if (focused)
-                    MaterialTheme.colorScheme.primary
-                else
-                    MaterialTheme.colorScheme.onSurfaceVariant
+                Icons.Outlined.Lock,
+                contentDescription = null
             )
         },
         trailingIcon = {
@@ -562,104 +409,34 @@ fun LoginPasswordField(
                 onClick = onVisibilityChange
             ) {
                 Icon(
-                    imageVector = if (visible)
+                    if (visible)
                         Icons.Outlined.VisibilityOff
                     else
                         Icons.Outlined.Visibility,
-                    contentDescription = null
+                    null
                 )
             }
         },
-        placeholder = { Text( stringResource(R.string.password_placeholder) ) },
+        label = { Text("Επιβεβαίωση κωδικού") },
+        supportingText = {
+            if (error != null) {
+                Text(error)
+            }
+        },
         colors = TextFieldDefaults.colors(
-            focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.85f),
-            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.65f),
-            focusedIndicatorColor = Color.Transparent,
-            unfocusedIndicatorColor = Color.Transparent
+            focusedContainerColor = MaterialTheme.colorScheme.surface,
+            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+            errorContainerColor = MaterialTheme.colorScheme.surface
         )
     )
-
-    if (error != null) {
-        Text(
-            text = error,
-            color = MaterialTheme.colorScheme.error,
-            style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier.padding(start = 12.dp)
-        )
-    }
-}
-
-
-@Composable
-fun RegisterRow(
-    enabled: Boolean,
-    onClick: () -> Unit
-) {
-
-    Row(
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text( stringResource(R.string.no_account_prompt) )
-
-        Text(
-            stringResource(R.string.link_register),
-            color = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.clickable(
-                enabled = enabled,
-                indication = null,
-                interactionSource = remember { MutableInteractionSource() }
-            ) {
-                onClick()
-            }
-        )
-    }
-}
-
-@Composable
-fun LoginDivider() {
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        HorizontalDivider(
-            modifier = Modifier.weight(1f),
-            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.25f)
-        )
-
-        Text(
-            stringResource(R.string.divider_or),
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
-        HorizontalDivider(
-            modifier = Modifier.weight(1f),
-            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.25f)
-        )
-    }
-}
-
-@Composable
-fun ForgotPasswordButton(
-    enabled: Boolean = true
-) {
-    TextButton(
-        enabled = enabled,
-        onClick = {}
-    ) {
-        Text(
-            stringResource(R.string.btn_forgot_password),
-            color = MaterialTheme.colorScheme.primary
-        )
-    }
 }
 
 @Composable
 fun PremiumLoginButton(
-    onClick: () -> Unit,
-    enabled: Boolean = true,
-    loading: Boolean = false
+    text: String,
+    onClick:() -> Unit,
+    enabled:Boolean = true,
+    loading:Boolean = false
 ) {
     var pressed by remember {
         mutableStateOf(false)
@@ -776,17 +553,16 @@ fun PremiumLoginButton(
             Spacer(modifier = Modifier.weight(1f))
 
             if (loading) {
-                androidx.compose.material3.CircularProgressIndicator(
+                CircularProgressIndicator(
                     modifier = Modifier.size(22.dp),
                     strokeWidth = 2.dp,
                     color = Color.White
                 )
             } else {
                 Text(
-                    "Σύνδεση",
+                    text,
                     color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.titleMedium
+                    fontWeight = FontWeight.Bold
                 )
             }
 
@@ -803,5 +579,26 @@ fun PremiumLoginButton(
                 )
             }
         }
+    }
+}
+
+@Composable
+fun LoginRow(
+    enabled:Boolean,
+    onClick:()->Unit
+){
+    Row(
+        verticalAlignment = Alignment.CenterVertically
+    ){
+        Text(
+            "Έχεις ήδη λογαριασμό;"
+        )
+
+        Text(
+            "Σύνδεση",
+            color=MaterialTheme.colorScheme.primary,
+            fontWeight=FontWeight.Bold,
+            modifier=Modifier.clickable{ onClick() }
+        )
     }
 }

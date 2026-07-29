@@ -12,5 +12,8 @@ data class MetroStop(
     val secName: String,
     val branch: MetroBranch,
 
-    val travelSeconds: Int = 1
+    val travelToNext: Int? = null,
+    val toRailwayStation: Int? = null,
+    val toMikra: Int? = null,
+    val toNeaElvetia: Int? = null
 )
