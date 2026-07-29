@@ -14,7 +14,7 @@
 
 To download the application:
 
-1) Download the latest release APK (version 0.9.2-alpha) from **[HERE](https://github.com/Nikos1508/ThessTransit/releases/download/v0.9.2-alpha/app-debug.apk)**.
+1) Download the latest release APK (version 0.10.3) from **[HERE](https://github.com/Nikos1508/ThessTransit/releases/tag/v0.10.3)**.
 2. Open the app and wait approximately **2–3 minutes** while all routes, stops, and timetable information are downloaded and stored locally.
 3) Enjoy the application! More updates and features will be announced here as development continues.
 
