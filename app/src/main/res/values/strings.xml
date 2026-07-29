@@ -127,7 +127,7 @@
     <string name="settings_contact_title">Στοιχεία επικοινωνίας</string>
     <string name="settings_contact_subtitle">Επικοινωνήστε μαζί μας</string>
     <string name="settings_about_title">Σχετικά</string>
-    <string name="settings_about_subtitle">Έκδοση 0.9.1</string>
+    <string name="settings_about_subtitle">Έκδοση 0.10.3</string>
     <string name="settings_header_subtitle">Προσωποποίησε την εμπειρία σου στο ThessTransit</string>
     <string name="theme_title">Θέμα εφαρμογής</string>
     <string name="theme_subtitle">Διάλεξε εμφάνιση</string>

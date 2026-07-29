@@ -13,6 +13,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.slideInVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,11 +24,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Construction
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.MyLocation
 import androidx.compose.material.icons.outlined.SwapVerticalCircle
@@ -240,7 +243,14 @@ fun SearchScreen(
 
                             Row {
                                 Surface(
-                                    shape = RoundedCornerShape(14.dp)
+                                    shape = RoundedCornerShape(16.dp),
+                                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f),
+                                    tonalElevation = 6.dp,
+                                    shadowElevation = 3.dp,
+                                    border = BorderStroke(
+                                        1.dp,
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.20f)
+                                    )
                                 ) {
                                     IconButton(
                                         onClick = {
@@ -268,7 +278,14 @@ fun SearchScreen(
                                 Spacer(modifier = Modifier.width(10.dp))
 
                                 Surface(
-                                    shape = RoundedCornerShape(14.dp),
+                                    shape = RoundedCornerShape(16.dp),
+                                    color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.55f),
+                                    tonalElevation = 6.dp,
+                                    shadowElevation = 3.dp,
+                                    border = BorderStroke(
+                                        1.dp,
+                                        MaterialTheme.colorScheme.secondary.copy(alpha = 0.25f)
+                                    ),
                                     modifier = Modifier
                                         .graphicsLayer {
                                             scaleX = locationScale
@@ -334,6 +351,50 @@ fun SearchScreen(
                     }
 
                     Spacer(modifier = Modifier.height(24.dp))
+
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 18.dp),
+                        shape = RoundedCornerShape(18.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                        ),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(18.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+
+                            Icon(
+                                imageVector = Icons.Outlined.Construction,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(34.dp)
+                            )
+
+                            Spacer(modifier = Modifier.width(14.dp))
+
+                            Column {
+
+                                Text(
+                                    text = "UNDER CONSTRUCTION",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                                )
+
+                                Spacer(modifier = Modifier.height(2.dp))
+
+                                Text(
+                                    text = "Trip planning is still under development. Search results are available, but route calculation and navigation will be added in a future update.",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.85f)
+                                )
+                            }
+                        }
+                    }
 
                     SectionTitle(
                         title = stringResource(R.string.recent_searches_title)

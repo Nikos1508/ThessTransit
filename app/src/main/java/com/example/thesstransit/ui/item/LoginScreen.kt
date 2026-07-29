@@ -240,17 +240,19 @@ fun  LoginContent(
                     )
                 }
 
-//                Spacer(Modifier.height(8.dp))
-//
-//                AnimatedVisibility(
-//                    visible = step >= 2,
-//                    enter = fadeIn()
-//                ) {
-//                    Text(
-//                        stringResource(R.string.login_subtitle),
-//                        color = MaterialTheme.colorScheme.onSurfaceVariant
-//                    )
-//                }
+                Spacer(Modifier.height(8.dp))
+
+                AnimatedVisibility(
+                    visible = step >= 2,
+                    enter = fadeIn()
+                ) {
+                    Text(
+                        text = "UNDER CONSTRACTION",
+                        //stringResource(R.string.login_subtitle),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.headlineMedium
+                    )
+                }
 
                 Spacer( modifier = Modifier.height(8.dp) )
 
