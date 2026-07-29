@@ -8,6 +8,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -16,6 +17,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -39,6 +41,7 @@ import com.example.thesstransit.ui.item.TicketsScreen
 import com.example.thesstransit.ui.theme.ThessTransitTheme
 import com.example.thesstransit.ui.utils.groupRoutes
 import com.example.thesstransit.ui.viewModels.AppTheme
+import com.example.thesstransit.ui.viewModels.AuthViewModel
 import com.example.thesstransit.ui.viewModels.RoutesViewModel
 import com.example.thesstransit.ui.viewModels.StopDetailsViewModel
 import io.gitlab.mitsiosm.oseth.data.Route
@@ -53,6 +56,8 @@ data class RoutesRoute(
     val initialTab: String = "all"
 )
 @Serializable object TicketsRoute
+
+@Serializable object SplashRoute
 
 @Serializable object LoginRoute
 
@@ -70,6 +75,8 @@ data class RouteDetailsRoute(
 data class GroupDetailsRoute(
     val groupId: String
 )
+@Serializable
+object RegisterRoute
 
 @Serializable
 object SettingsRoute
@@ -167,7 +174,7 @@ class MainActivity : ComponentActivity() {
 
                         NavHost(
                             navController = navController,
-                            startDestination = HomeRoute,
+                            startDestination = SplashRoute,
                             modifier = Modifier.padding(innerPadding)
                         ) {
                             composable<HomeRoute> {
@@ -229,10 +236,58 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
 
-                            composable<LoginRoute> {
+                            composable<SplashRoute>{
+
+                                val authViewModel:AuthViewModel=viewModel()
+
+                                val user by authViewModel.user.collectAsState()
+
+                                val initialized by
+                                authViewModel.initialized.collectAsState()
+
+
+
+                                LaunchedEffect(initialized,user){
+                                    if(initialized){
+                                        if(user!=null){
+                                            navController.navigate(HomeRoute){
+                                                popUpTo(SplashRoute){
+                                                    inclusive=true
+                                                }
+                                            }
+                                        }else{
+                                            navController.navigate(LoginRoute){
+                                                popUpTo(SplashRoute){
+                                                    inclusive=true
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                Box(
+                                    modifier=Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center
+                                ){
+                                    Text(
+                                        "ThessTransit"
+                                    )
+                                }
+
+                            }
+
+                            composable<LoginRoute>{
+
                                 LoginScreen(
-                                    onLoginClick = {
-                                        /* TODO */
+                                    onLoginClick={
+                                        navController.navigate(HomeRoute){
+                                            popUpTo(LoginRoute){
+                                                inclusive=true
+                                            }
+                                        }
+                                    },
+                                    onRegisterClick={
+                                        navController.navigate(RegisterRoute)
                                     }
                                 )
                             }
@@ -256,10 +311,36 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
 
-                            composable<SettingsRoute> {
-                                SettingsScreen(
-                                    onBackClick = {
+                            composable<RegisterRoute>{
+                                RegisterScreen(
+                                    onBackClick={
                                         navController.popBackStack()
+                                    },
+                                    onRegisterSuccess={
+                                        navController.navigate(LoginRoute){
+                                            popUpTo(RegisterRoute){
+                                                inclusive=true
+                                            }
+                                        }
+                                    }
+                                )
+                            }
+
+                            composable<SettingsRoute> {
+                                val authViewModel:AuthViewModel=viewModel()
+                                val user by authViewModel.user.collectAsState()
+
+                                SettingsScreen(
+                                    user = user,
+                                    onBackClick={
+                                        navController.popBackStack()
+                                    },
+                                    onLoginClick={
+                                        navController.navigate(LoginRoute)
+                                    },
+                                    onLogoutClick={
+                                        authViewModel.logout()
+                                        navController.navigate(LoginRoute){ popUpTo(0) }
                                     }
                                 )
                             }

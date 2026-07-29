@@ -2,6 +2,7 @@ package com.example.thesstransit.ui.viewModels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.thesstransit.ui.data.auth.AuthManager
 import com.example.thesstransit.ui.data.auth.LoginUiState
 import com.example.thesstransit.ui.data.repository.AuthRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -126,10 +127,11 @@ class LoginViewModel (
             )
 
             result.onSuccess {
+                AuthManager.loadUser()
                 _uiState.update {
                     it.copy(
-                        isLoading = false,
-                        isLoggedIn = true
+                        isLoading=false,
+                        isLoggedIn=true
                     )
                 }
             }
@@ -138,7 +140,13 @@ class LoginViewModel (
                 _uiState.update {
                     it.copy (
                         isLoading = false,
-                        errorMessage = error.message?: "'Άγνωστο σφάλμα"
+                        errorMessage =
+                            when{
+                                error.message?.contains("Invalid login") == true ->
+                                    "Λάθος email ή κωδικός"
+                                else ->
+                                    "Παρουσιάστηκε σφάλμα. Δοκιμάστε ξανά."
+                            }
                     )
                 }
             }

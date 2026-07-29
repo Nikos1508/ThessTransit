@@ -13,6 +13,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.scaleIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -33,6 +34,8 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.outlined.DirectionsBus
@@ -71,8 +74,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentType
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
@@ -81,6 +88,8 @@ import com.example.thesstransit.ui.components.AnimatedBackground
 import com.example.thesstransit.ui.viewModels.LoginViewModel
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 
 @Composable
 fun LoginScreen(
@@ -119,6 +128,7 @@ fun LoginScreen(
         ) {
             LoginContent(
                 onLoginClick = { viewModel.login() },
+                onSuccess = onLoginClick,
                 onRegisterClick = onRegisterClick,
                 viewModel = viewModel
             )
@@ -130,31 +140,17 @@ fun LoginScreen(
 @Composable
 fun  LoginContent(
     onLoginClick: () -> Unit,
+    onSuccess:()->Unit,
     viewModel: LoginViewModel,
     onRegisterClick: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    LaunchedEffect(uiState.isLoggedIn) {
-        if (uiState.isLoggedIn) {
-            onLoginClick()
+    LaunchedEffect(uiState.isLoggedIn){
+        if(uiState.isLoggedIn){
+            onSuccess()
         }
     }
-
-    val glowTransition = rememberInfiniteTransition(label = "glow")
-
-    val glowScale by glowTransition.animateFloat(
-        initialValue = 0.95f,
-        targetValue = 1.08f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(
-                durationMillis = 4500,
-                easing = FastOutSlowInEasing
-            ),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "scale"
-    )
 
     var step by remember {
         mutableIntStateOf(0)
@@ -266,6 +262,7 @@ fun  LoginContent(
                         LoginEmailField(
                             value = uiState.email,
                             error = uiState.emailError,
+                            loading = uiState.isLoading,
                             onValueChange = viewModel::onEmailChange
                         )
                     }
@@ -281,16 +278,20 @@ fun  LoginContent(
                         LoginPasswordField(
                             value = uiState.password,
                             error = uiState.passwordError,
+                            loading = uiState.isLoading,
                             onValueChange = viewModel::onPasswordChange,
                             visible = uiState.passwordVisible,
-                            onVisibilityChange = viewModel::togglePasswordVisibility
+                            onVisibilityChange = viewModel::togglePasswordVisibility,
+                            onDone = onLoginClick
                         )
                     }
                 }
 
                 AnimatedVisibility(
                     visible = uiState.errorMessage != null,
-                    enter = fadeIn() + scaleIn()
+                    enter = slideInVertically {
+                        -it / 2
+                    } + fadeIn()
                 ) {
                     Text(
                         text = uiState.errorMessage ?: "",
@@ -317,7 +318,9 @@ fun  LoginContent(
                     visible = step >= 5,
                     enter = fadeIn()
                 ) {
-                    ForgotPasswordButton()
+                    ForgotPasswordButton(
+                        enabled = !uiState.isLoading
+                    )
                 }
 
                 Spacer(Modifier.height(24.dp))
@@ -336,6 +339,7 @@ fun  LoginContent(
                     enter = fadeIn()
                 ) {
                     RegisterRow(
+                        enabled = !uiState.isLoading,
                         onClick = onRegisterClick
                     )
                 }
@@ -404,11 +408,11 @@ fun FloatingLogo() {
 @Composable
 fun LoginEmailField(
     value: String,
-    error: String?,
-    onValueChange: (String) -> Unit,
-    viewModel: LoginViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
+    error:String?,
+    loading:Boolean,
+    onValueChange:(String)->Unit
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val focusManager = LocalFocusManager.current
 
     var focused by remember {
         mutableStateOf(false)
@@ -431,7 +435,7 @@ fun LoginEmailField(
     ) {
         TextField(
             value = value,
-            enabled = !uiState.isLoading,
+            enabled = !loading,
             onValueChange = onValueChange,
             modifier = Modifier
                 .fillMaxWidth()
@@ -442,7 +446,20 @@ fun LoginEmailField(
                 .height(58.dp)
                 .onFocusChanged {
                     focused = it.isFocused
+                }
+                .semantics {
+                    contentType = androidx.compose.ui.autofill.ContentType.EmailAddress
                 },
+            keyboardOptions = KeyboardOptions(
+                imeAction = ImeAction.Next
+            ),
+            keyboardActions = KeyboardActions(
+                onNext = {
+                    focusManager.moveFocus(
+                        androidx.compose.ui.focus.FocusDirection.Down
+                    )
+                }
+            ),
             singleLine = true,
             shape = RoundedCornerShape(20.dp),
             leadingIcon = {
@@ -482,15 +499,15 @@ fun LoginEmailField(
 
 @Composable
 fun LoginPasswordField(
-    value: String,
-    error: String?,
-    onValueChange: (String) -> Unit,
+    value:String,
+    error:String?,
+    loading:Boolean,
+    onValueChange:(String)->Unit,
     visible: Boolean,
+    onDone: () -> Unit,
     onVisibilityChange: () -> Unit,
     viewModel: LoginViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
 ) {
-    val uiState by viewModel.uiState.collectAsState()
-
     var focused by remember {
         mutableStateOf(false)
     }
@@ -504,7 +521,7 @@ fun LoginPasswordField(
     TextField(
         value = value,
         onValueChange = onValueChange,
-        enabled = !uiState.isLoading,
+        enabled = !loading,
         modifier = Modifier
             .graphicsLayer {
                 scaleX = scale
@@ -514,8 +531,17 @@ fun LoginPasswordField(
             .height(58.dp)
             .onFocusChanged {
                 focused = it.isFocused
+            }
+            .semantics {
+                contentType = androidx.compose.ui.autofill.ContentType.Password
             },
         singleLine = true,
+        keyboardOptions = KeyboardOptions(
+            imeAction = ImeAction.Done
+        ),
+        keyboardActions = KeyboardActions(
+            onDone = { onDone() }
+        ),
         shape = RoundedCornerShape(size = 20.dp),
         visualTransformation = if (visible)
             VisualTransformation.None
@@ -566,6 +592,7 @@ fun LoginPasswordField(
 
 @Composable
 fun RegisterRow(
+    enabled: Boolean,
     onClick: () -> Unit
 ) {
 
@@ -579,6 +606,7 @@ fun RegisterRow(
             color = MaterialTheme.colorScheme.primary,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.clickable(
+                enabled = enabled,
                 indication = null,
                 interactionSource = remember { MutableInteractionSource() }
             ) {
@@ -613,9 +641,11 @@ fun LoginDivider() {
 }
 
 @Composable
-fun ForgotPasswordButton() {
-
+fun ForgotPasswordButton(
+    enabled: Boolean = true
+) {
     TextButton(
+        enabled = enabled,
         onClick = {}
     ) {
         Text(
@@ -623,7 +653,6 @@ fun ForgotPasswordButton() {
             color = MaterialTheme.colorScheme.primary
         )
     }
-
 }
 
 @Composable
@@ -644,6 +673,7 @@ fun PremiumLoginButton(
         label = "scale"
     )
 
+    val haptic = LocalHapticFeedback.current
     val transition = rememberInfiniteTransition(label = "button")
 
     val arrowOffset by transition.animateFloat(
@@ -700,6 +730,9 @@ fun PremiumLoginButton(
                             pressed = true
                             tryAwaitRelease()
                             pressed = false
+                            haptic.performHapticFeedback(
+                                HapticFeedbackType.LongPress
+                            )
                             onClick()
                         }
                     )
