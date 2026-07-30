@@ -8,6 +8,9 @@ object SupabaseErrorMapper {
             ?: ""
 
         return when {
+            error is NoClassDefFoundError || error is ClassNotFoundException ->
+                "Σφάλμα συμβατότητας (Serialization). Δοκίμασε να καθαρίσεις το project."
+
             "already registered" in message ->
                 "Υπάρχει ήδη λογαριασμός με αυτό το email"
 

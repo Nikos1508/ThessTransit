@@ -1,9 +1,13 @@
 package com.example.thesstransit.ui.viewModels
 
+import android.app.Application
 import androidx.compose.runtime.mutableStateOf
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
+import io.gitlab.mitsiosm.oseth.Oseth
 
-class HomeViewModel : ViewModel() {
+class HomeViewModel(application: Application) : AndroidViewModel(application) {
+
+    val api = Oseth(application)
 
     val isLoading = mutableStateOf(false)
 

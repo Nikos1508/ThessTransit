@@ -140,7 +140,7 @@ class LoginViewModel (
             result.onFailure { error ->
 
                 println(
-                    "SUPABASE REGISTER ERROR: ${error.message}"
+                    "SUPABASE LOGIN ERROR: ${error.message}"
                 )
 
                 _uiState.update {
@@ -148,10 +148,12 @@ class LoginViewModel (
                         isLoading = false,
                         errorMessage =
                             when{
+                                error is NoClassDefFoundError || error is ClassNotFoundException ->
+                                    "Σφάλμα συμβατότητας (Datetime). Επικοινώνησε με τον προγραμματιστή."
                                 error.message?.contains("Invalid login") == true ->
                                     "Λάθος email ή κωδικός"
                                 else ->
-                                    error.message ?: "Άγνωστο error"
+                                    SupabaseErrorMapper.map(error)
                             }
                     )
                 }

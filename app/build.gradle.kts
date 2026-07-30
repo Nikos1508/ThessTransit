@@ -68,7 +68,6 @@ dependencies {
     implementation("io.gitlab.mitsiosm:oseth:2.1.1")
 
     //Help for the API
-    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
     implementation("androidx.datastore:datastore-preferences:1.1.1")
 
     //Maps
@@ -83,8 +82,6 @@ dependencies {
     implementation("io.github.jan-tennert.supabase:postgrest-kt:3.1.1")
     implementation("io.github.jan-tennert.supabase:auth-kt:3.1.1")
     implementation("io.github.jan-tennert.supabase:realtime-kt:3.1.1")
-
-    implementation("io.ktor:ktor-client-android:3.1.1")
 
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.androidx.navigation.compose)

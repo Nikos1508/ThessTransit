@@ -22,7 +22,8 @@ class AuthRepository {
 
                 }
             Result.success(Unit)
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            e.printStackTrace()
             Result.failure(e)
         }
     }
@@ -43,7 +44,7 @@ class AuthRepository {
                 }
 
             Result.success(Unit)
-        }catch(e:Exception){
+        }catch(e: Throwable){
             e.printStackTrace()
             Result.failure(e)
         }

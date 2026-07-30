@@ -134,7 +134,12 @@ class RegisterViewModel(
                         it.copy(
                             isLoading=false,
                             errorMessage =
-                                SupabaseErrorMapper.map(error)
+                                when{
+                                    error is NoClassDefFoundError || error is ClassNotFoundException ->
+                                        "Σφάλμα συμβατότητας (Datetime). Επικοινώνησε με τον προγραμματιστή."
+                                    else ->
+                                        SupabaseErrorMapper.map(error)
+                                }
                         )
                     }
                 }
