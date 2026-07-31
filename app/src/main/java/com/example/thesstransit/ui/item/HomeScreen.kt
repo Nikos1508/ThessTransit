@@ -86,6 +86,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.thesstransit.R
 import com.example.thesstransit.ui.components.AnimatedSearchBar
+import com.example.thesstransit.ui.components.PremiumLoadingOverlay
 import com.example.thesstransit.ui.components.RouteFiltersDialog
 import com.example.thesstransit.ui.data.SavedLocations
 import com.example.thesstransit.ui.utils.SharedKeys
@@ -281,28 +282,13 @@ fun HomeScreen(
         }
 
         AnimatedVisibility(
-            visible = homeViewModel.isLoading.value
+            visible = homeViewModel.isLoading.value,
+            enter = fadeIn(),
+            exit = fadeOut()
         ) {
 
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Color.Gray.copy(alpha = 0.28f)
-                    )
-                    .clickable(
-                        enabled = true,
-                        indication = null,
-                        interactionSource = remember {
-                            androidx.compose.foundation.interaction.MutableInteractionSource()
-                        }
-                    ) {},
-                contentAlignment = Alignment.Center
-            ) {
+            PremiumLoadingOverlay()
 
-                CircularProgressIndicator()
-
-            }
         }
     }
 }
@@ -371,61 +357,67 @@ fun HeaderSection(
                 .fillMaxSize()
                 .padding(horizontal = 20.dp, vertical = 16.dp)
         ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.TopEnd),
+                contentAlignment = Alignment.TopEnd
+            ) {
+                AnimatedContent(
+                    targetState = currentUser,
+                    label = "account"
+                ) { user ->
 
-            AnimatedContent(
-                targetState = currentUser,
-                label = "account"
-            ) { user ->
+                    if (user == null) {
+                        OutlinedButton(
+                            onClick = onLoginClick,
+                            shape = RoundedCornerShape(12.dp),
+                            contentPadding = PaddingValues(horizontal = 14.dp),
+                            border = BorderStroke(
+                                1.dp,
+                                MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
+                            ),
+                            modifier = Modifier
+                                .height(36.dp)
+                                .align(Alignment.TopEnd)
+                        ){
+                            Icon(
+                                imageVector = Icons.Outlined.Person,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
 
-                if (user == null) {
-                    OutlinedButton(
-                        onClick = onLoginClick,
-                        shape = RoundedCornerShape(12.dp),
-                        contentPadding = PaddingValues(horizontal = 14.dp),
-                        border = BorderStroke(
-                            1.dp,
-                            MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
-                        ),
-                        modifier = Modifier
-                            .height(36.dp)
-                            .align(Alignment.TopEnd)
-                    ){
-                        Icon(
-                            imageVector = Icons.Outlined.Person,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
+                            Spacer(modifier = Modifier.width(6.dp))
 
-                        Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = stringResource(R.string.login),
+                                fontSize = 13.sp,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    } else {
+                        FilledTonalButton(
+                            onClick = onProfileClick,
+                            modifier = Modifier
+                                .height(38.dp)
+                                .align(Alignment.TopEnd),
+                            shape = RoundedCornerShape(18.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.AccountCircle,
+                                null,
+                                modifier = Modifier.size(18.dp)
+                            )
 
-                        Text(
-                            text = stringResource(R.string.login),
-                            fontSize = 13.sp,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                } else {
-                    FilledTonalButton(
-                        onClick = onProfileClick,
-                        modifier = Modifier
-                            .height(38.dp)
-                            .align(Alignment.TopEnd),
-                        shape = RoundedCornerShape(18.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.AccountCircle,
-                            null,
-                            modifier = Modifier.size(18.dp)
-                        )
+                            Spacer(modifier = Modifier.size(8.dp))
 
-                        Spacer(modifier = Modifier.size(8.dp))
-
-                        Text(
-                            text = user.email ?: "Profile",
-                            maxLines = 1
-                        )
+                            Text(
+                                text = user.email ?: "Profile",
+                                maxLines = 1
+                            )
+                        }
                     }
                 }
             }
