@@ -5,12 +5,17 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.DirectionsBus
+import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.LocalActivity
 import androidx.compose.material.icons.outlined.LocationOn
+import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.QrCode2
 import androidx.compose.material.icons.outlined.Route
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Star
+import androidx.compose.material.icons.outlined.Train
 import androidx.compose.material.icons.outlined.Work
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.runtime.getValue
@@ -26,15 +31,27 @@ import androidx.compose.ui.unit.toSize
 enum class TutorialStep {
 
     SEARCH,
+
     HOME,
     WORK,
     FAVORITES,
+
     HOW_TO_GO,
     LINES,
     STOPS,
     LIVE,
+
     AI,
+
     EXTRA,
+
+    TICKETS,
+    BUY_TICKET,
+    METRO,
+    FAVORITE_ROUTES,
+    NOTIFICATIONS,
+    SETTINGS,
+
     DONE
 
 }
@@ -42,15 +59,28 @@ enum class TutorialStep {
 enum class TutorialTarget {
 
     SEARCH,
+
     HOME,
     WORK,
     FAVORITES,
+
     HOW_TO_GO,
-    STOPS,
     LINES,
+    STOPS,
     LIVE,
+
     AI,
-    EXTRA
+
+    EXTRA,
+
+    TICKETS,
+    BUY_TICKET,
+    METRO,
+    FAVORITE_ROUTES,
+    NOTIFICATIONS,
+    SETTINGS,
+
+    DONE
 
 }
 
@@ -137,10 +167,50 @@ val TutorialPages = listOf(
     ),
 
     TutorialPage(
-        TutorialStep.EXTRA,
-        TutorialTarget.EXTRA,
-        "More features",
-        "Tickets, notifications and settings.",
+        TutorialStep.TICKETS,
+        TutorialTarget.TICKETS,
+        "Tickets",
+        "Access your transport tickets quickly.",
+        Icons.Outlined.LocalActivity
+    ),
+
+    TutorialPage(
+        TutorialStep.BUY_TICKET,
+        TutorialTarget.BUY_TICKET,
+        "Buy ticket",
+        "Purchase tickets directly from the application.",
+        Icons.Outlined.QrCode2
+    ),
+
+    TutorialPage(
+        TutorialStep.METRO,
+        TutorialTarget.METRO,
+        "Metro lines",
+        "Explore Thessaloniki metro lines and stations.",
+        Icons.Outlined.Train
+    ),
+
+    TutorialPage(
+        TutorialStep.FAVORITE_ROUTES,
+        TutorialTarget.FAVORITE_ROUTES,
+        "Favourite routes",
+        "Keep your most used routes always available.",
+        Icons.Outlined.Favorite
+    ),
+
+    TutorialPage(
+        TutorialStep.NOTIFICATIONS,
+        TutorialTarget.NOTIFICATIONS,
+        "Notifications",
+        "Receive important transport updates.",
+        Icons.Outlined.Notifications
+    ),
+
+    TutorialPage(
+        TutorialStep.SETTINGS,
+        TutorialTarget.SETTINGS,
+        "Settings",
+        "Customize your ThessTransit experience.",
         Icons.Outlined.Settings
     )
 )
@@ -154,6 +224,10 @@ class TutorialState {
         rect: Rect
     ) {
         targets[target] = rect
+    }
+
+    fun reset() {
+        currentStep = 0
     }
 }
 

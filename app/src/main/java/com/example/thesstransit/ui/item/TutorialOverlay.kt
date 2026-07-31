@@ -9,12 +9,11 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
+import androidx.compose.animation.scaleIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -139,9 +138,12 @@ fun TutorialOverlay(
         AnimatedVisibility(
             visible = true,
             enter = fadeIn(
-                animationSpec = tween(400)
-            ) + slideInVertically {
-                it / 2
+                animationSpec = tween(500)
+            ) + scaleIn(
+                initialScale = 0.92f,
+                animationSpec = tween(500)
+            )+ slideInVertically {
+                it / 3
             }
         ) {
             TutorialCard(

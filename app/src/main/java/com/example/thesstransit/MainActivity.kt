@@ -1,5 +1,6 @@
 package com.example.thesstransit
 
+import android.content.Context
 import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -25,6 +26,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.example.thesstransit.ui.data.AppThemePreferences
+import com.example.thesstransit.ui.data.TutorialPreferences
+import com.example.thesstransit.ui.data.TutorialViewModelFactory
 import com.example.thesstransit.ui.item.GroupRouteDetailsScreen
 import com.example.thesstransit.ui.item.HomeScreen
 import com.example.thesstransit.ui.item.LocationPickerScreen
@@ -43,6 +46,7 @@ import com.example.thesstransit.ui.viewModels.AppTheme
 import com.example.thesstransit.ui.viewModels.AuthViewModel
 import com.example.thesstransit.ui.viewModels.RoutesViewModel
 import com.example.thesstransit.ui.viewModels.StopDetailsViewModel
+import com.example.thesstransit.ui.viewModels.TutorialViewModel
 import io.gitlab.mitsiosm.oseth.data.Route
 import io.gitlab.mitsiosm.oseth.data.Stop
 import kotlinx.serialization.Serializable
@@ -169,6 +173,13 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.fillMaxSize()
                     ) { innerPadding ->
 
+                        val tutorialViewModel: TutorialViewModel =
+                            viewModel(
+                                factory = TutorialViewModelFactory(
+                                    TutorialPreferences(this as Context)
+                                )
+                            )
+
                         NavHost(
                             navController = navController,
                             startDestination = HomeRoute,
@@ -229,7 +240,8 @@ class MainActivity : ComponentActivity() {
                                     },
                                     onMetroClick = {
                                         navController.navigate(MetroRoute)
-                                    }
+                                    },
+                                    tutorialViewModel = tutorialViewModel
                                 )
                             }
 
@@ -298,7 +310,8 @@ class MainActivity : ComponentActivity() {
                                     onLogoutClick={
                                         authViewModel.logout()
                                         navController.navigate(LoginRoute){ popUpTo(0) }
-                                    }
+                                    },
+                                    tutorialViewModel = tutorialViewModel
                                 )
                             }
 

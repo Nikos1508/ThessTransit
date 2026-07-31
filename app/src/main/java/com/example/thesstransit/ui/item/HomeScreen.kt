@@ -98,6 +98,7 @@ import com.example.thesstransit.ui.utils.SharedKeys
 import com.example.thesstransit.ui.viewModels.AuthViewModel
 import com.example.thesstransit.ui.viewModels.FavoritesViewModel
 import com.example.thesstransit.ui.viewModels.HomeViewModel
+import com.example.thesstransit.ui.viewModels.TutorialViewModel
 import io.github.jan.supabase.auth.user.UserInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -132,6 +133,7 @@ fun HomeScreen(
     favoritesViewModel: FavoritesViewModel = viewModel(),
     homeViewModel: HomeViewModel = viewModel(),
     authViewModel: AuthViewModel = viewModel(),
+    tutorialViewModel: TutorialViewModel,
 
     sharedTransitionScope: SharedTransitionScope,
     animatedContentScope: AnimatedContentScope
@@ -140,12 +142,12 @@ fun HomeScreen(
     val defaultSubtitle = stringResource(R.string.quick_set_location)
 
     val tiles = listOf(
-        FeatureTile(stringResource(R.string.tile_tickets), "", Icons.Outlined.LocalActivity, onTicketsClick),
-        FeatureTile(stringResource(R.string.tile_buy_ticket), "", Icons.Outlined.QrCode2, onBuyTicketClick),
-        FeatureTile(stringResource(R.string.tile_metro_lines), "", Icons.Outlined.Train, onMetroClick),
-        FeatureTile(stringResource(R.string.tile_favorite_routes), "", Icons.Outlined.Favorite, onFavouritesClick),
-        FeatureTile(stringResource(R.string.tile_notifications), "", Icons.Outlined.Notifications, onNotificationsClick),
-        FeatureTile(stringResource(R.string.tile_settings), "", Icons.Outlined.Settings, onSettingsClick)
+        FeatureTile(title = stringResource(R.string.tile_tickets),    subtitle = "", Icons.Outlined.LocalActivity, onClick = onTicketsClick,       target = TutorialTarget.TICKETS),
+        FeatureTile(title = stringResource(R.string.tile_buy_ticket),     subtitle = "", Icons.Outlined.QrCode2,       onClick = onBuyTicketClick,     target = TutorialTarget.BUY_TICKET),
+        FeatureTile(title = stringResource(R.string.tile_metro_lines),        subtitle = "", Icons.Outlined.Train,         onClick = onMetroClick,         target = TutorialTarget.METRO),
+        FeatureTile(title = stringResource(R.string.tile_favorite_routes), subtitle = "", Icons.Outlined.Favorite,      onClick = onFavouritesClick,    target = TutorialTarget.FAVORITE_ROUTES),
+        FeatureTile(title = stringResource(R.string.tile_notifications),         subtitle = "", Icons.Outlined.Notifications, onClick = onNotificationsClick, target = TutorialTarget.NOTIFICATIONS),
+        FeatureTile(title = stringResource(R.string.tile_settings),            subtitle = "", Icons.Outlined.Settings,      onClick = onSettingsClick,      target = TutorialTarget.SETTINGS)
     )
 
     var showFilters by remember { mutableStateOf(false) }
@@ -175,6 +177,10 @@ fun HomeScreen(
         }
     }
 
+    val tutorialCompleted by tutorialViewModel
+        .tutorialCompleted
+        .collectAsState()
+
     val savedLocations = remember(context) {
         SavedLocations(context)
     }
@@ -191,8 +197,12 @@ fun HomeScreen(
         TutorialState()
     }
 
-    var showTutorial by remember {
-        mutableStateOf(true)
+    var showTutorial = !tutorialCompleted
+
+    LaunchedEffect(showTutorial) {
+        if (showTutorial) {
+            tutorialState.reset()
+        }
     }
 
     val haptic = LocalHapticFeedback.current
@@ -290,7 +300,10 @@ fun HomeScreen(
                 )
             }
             item {
-                FeatureTilesGrid(tilesList = tiles)
+                FeatureTilesGrid(
+                    tilesList = tiles,
+                    tutorialState = tutorialState
+                )
             }
             item {
                 Spacer(modifier = Modifier.height(32.dp))
@@ -311,11 +324,11 @@ fun HomeScreen(
             TutorialOverlay(
                 tutorialState = tutorialState,
                 onSkip = {
-                    showTutorial = false
+                    tutorialViewModel.completeTutorial()
                 },
                 onNext = {
                     if (tutorialState.currentStep == TutorialPages.lastIndex) {
-                        showTutorial = false
+                        tutorialViewModel.completeTutorial()
                     } else {
                         haptic.performHapticFeedback(
                             HapticFeedbackType.TextHandleMove
@@ -887,7 +900,10 @@ fun AIUpdateCard(
 }
 
 @Composable
-fun FeatureTilesGrid(tilesList: List<FeatureTile>) {
+fun FeatureTilesGrid(
+    tilesList: List<FeatureTile>,
+    tutorialState: TutorialState
+) {
 
     val chunkedTiles = tilesList.chunked(3)
 
@@ -903,7 +919,8 @@ fun FeatureTilesGrid(tilesList: List<FeatureTile>) {
                 rowItems.forEach { tile ->
                     SmallFeatureTile(
                         modifier = Modifier.weight(1f),
-                        tile = tile
+                        tile = tile,
+                        tutorialState = tutorialState
                     )
                 }
             }
@@ -914,10 +931,15 @@ fun FeatureTilesGrid(tilesList: List<FeatureTile>) {
 @Composable
 fun SmallFeatureTile(
     modifier: Modifier = Modifier,
-    tile: FeatureTile
+    tile: FeatureTile,
+    tutorialState: TutorialState
 ) {
     Surface(
         modifier = modifier
+            .tutorialTarget(
+                tile.target,
+                tutorialState
+            )
             .height(85.dp)
             .bounceClick { tile.onClick() },
         color = MaterialTheme.colorScheme.surfaceContainer,
@@ -957,6 +979,7 @@ data class FeatureTile(
     val title: String,
     val subtitle: String,
     val icon: ImageVector,
+    val target: TutorialTarget,
     val onClick: () -> Unit
 )
 

@@ -35,7 +35,9 @@ import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Login
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.School
 import androidx.compose.material.icons.rounded.Login
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -73,6 +75,7 @@ import com.example.thesstransit.ui.components.ScreenHeader
 import com.example.thesstransit.ui.viewModels.AppTheme
 import com.example.thesstransit.ui.viewModels.LanguageViewModel
 import com.example.thesstransit.ui.viewModels.ThemeViewModel
+import com.example.thesstransit.ui.viewModels.TutorialViewModel
 import io.gitlab.mitsiosm.oseth.data.Language
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
@@ -86,7 +89,8 @@ fun SettingsScreen(
     onLoginClick: () -> Unit,
     onLogoutClick: () -> Unit,
     viewModel: LanguageViewModel = viewModel(),
-    themeViewModel: ThemeViewModel = viewModel()
+    themeViewModel: ThemeViewModel = viewModel(),
+    tutorialViewModel: TutorialViewModel
 ) {
 
     val language by viewModel.language.collectAsState()
@@ -134,7 +138,8 @@ fun SettingsScreen(
                 },
                 onBackClick = onBackClick,
                 onLoginClick = onLoginClick,
-                onLogoutClick = onLogoutClick
+                onLogoutClick = onLogoutClick,
+                tutorialViewModel = tutorialViewModel
             )
         }
 
@@ -179,7 +184,8 @@ private fun SettingsContent(
     showAbout: () -> Unit,
     onBackClick: () -> Unit,
     onLoginClick: () -> Unit,
-    onLogoutClick: () -> Unit
+    onLogoutClick: () -> Unit,
+    tutorialViewModel: TutorialViewModel
 ) {
 
     var step by remember {
@@ -292,6 +298,34 @@ private fun SettingsContent(
                         title = stringResource(R.string.settings_about_title),
                         subtitle = stringResource(R.string.settings_about_subtitle),
                         onClick = showAbout
+                    )
+                }
+            }
+
+            item {
+                AnimatedVisibility(
+                    visible = step >= 6,
+                    enter = fadeIn() + slideInVertically()
+                ) {
+                    ListItem(
+                        headlineContent = {
+                            Text("Replay tutorial")
+                        },
+                        supportingContent = {
+                            Text(
+                                "Show the ThessTransit introduction again"
+                            )
+                        },
+                        leadingContent = {
+                            Icon(
+                                Icons.Outlined.School,
+                                null
+                            )
+                        },
+                        modifier = Modifier.clickable {
+                            tutorialViewModel.replayTutorial()
+                        }
+
                     )
                 }
             }
