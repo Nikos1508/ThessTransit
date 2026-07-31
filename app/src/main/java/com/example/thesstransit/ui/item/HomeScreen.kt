@@ -17,7 +17,6 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -51,7 +50,6 @@ import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material.icons.outlined.Train
 import androidx.compose.material.icons.outlined.Work
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -73,9 +71,11 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -88,19 +88,24 @@ import com.example.thesstransit.R
 import com.example.thesstransit.ui.components.AnimatedSearchBar
 import com.example.thesstransit.ui.components.PremiumLoadingOverlay
 import com.example.thesstransit.ui.components.RouteFiltersDialog
+import com.example.thesstransit.ui.components.TutorialAnchor
 import com.example.thesstransit.ui.data.SavedLocations
+import com.example.thesstransit.ui.data.TutorialPages
+import com.example.thesstransit.ui.data.TutorialState
+import com.example.thesstransit.ui.data.TutorialTarget
+import com.example.thesstransit.ui.data.tutorialTarget
 import com.example.thesstransit.ui.utils.SharedKeys
 import com.example.thesstransit.ui.viewModels.AuthViewModel
 import com.example.thesstransit.ui.viewModels.FavoritesViewModel
 import com.example.thesstransit.ui.viewModels.HomeViewModel
 import io.github.jan.supabase.auth.user.UserInfo
-import io.gitlab.mitsiosm.oseth.Oseth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.time.Duration.Companion.milliseconds
+
 
 object Guard {
     @OptIn(ExperimentalAtomicApi::class)
@@ -150,13 +155,12 @@ fun HomeScreen(
     val totalFavorites = favoriteRoutes.size + favoriteGroups.size
 
     val context = LocalContext.current
-
     LaunchedEffect(Unit) {
 
         if (homeViewModel.hasSynced)
             return@LaunchedEffect
 
-        if (!Guard.busy.compareAndSet(false, true))
+        if (!Guard.busy.compareAndSet(expectedValue = false, newValue = true))
             return@LaunchedEffect
 
         homeViewModel.startLoading()
@@ -182,6 +186,16 @@ fun HomeScreen(
     val work by savedLocations.work.collectAsState(
         initial = Triple(null, null, null)
     )
+
+    val tutorialState = remember {
+        TutorialState()
+    }
+
+    var showTutorial by remember {
+        mutableStateOf(true)
+    }
+
+    val haptic = LocalHapticFeedback.current
 
     Box(
         modifier = Modifier
@@ -209,21 +223,26 @@ fun HomeScreen(
                 )
             }
             item {
-                Spacer(modifier = Modifier.height(8.dp))
-                with(sharedTransitionScope){
-                    AnimatedSearchBar(
-                        onClick = onSearchClick,
+                Spacer( modifier = Modifier.height(8.dp) )
 
-                        modifier = Modifier
-                            .padding(horizontal = 12.dp)
-                            .sharedElement(
-                                rememberSharedContentState(
-                                    key = SharedKeys.SEARCH_BAR
+                with(sharedTransitionScope){
+                    TutorialAnchor(
+                        target = TutorialTarget.SEARCH,
+                        tutorialState = tutorialState
+                    ) {
+                        AnimatedSearchBar(
+                            onClick = onSearchClick,
+                            modifier = Modifier
+                                .padding(horizontal = 12.dp)
+                                .sharedElement(
+                                    rememberSharedContentState(
+                                        key = SharedKeys.SEARCH_BAR
+                                    ),
+                                    animatedVisibilityScope = animatedContentScope
                                 ),
-                                animatedVisibilityScope = animatedContentScope
-                            ),
-                        onFilteredClick = { showFilters = true }
-                    )
+                            onFilteredClick = { showFilters = true }
+                        )
+                    }
                 }
             }
             item {
@@ -234,7 +253,8 @@ fun HomeScreen(
                     onWorkClick = onWorkClick,
                     onFavouritesClick = onFavouritesClick,
                     homeSubtitle = home.first ?: defaultSubtitle,
-                    workSubtitle = work.first ?: defaultSubtitle
+                    workSubtitle = work.first ?: defaultSubtitle,
+                    tutorialState = tutorialState
                 )
             }
             item {
@@ -243,7 +263,8 @@ fun HomeScreen(
                     onHowToGoClick = onHowToGoClick,
                     onLinesClick = onLinesClick,
                     onNearbyStopsClick = onNearbyStopsClick,
-                    onLiveDeparturesClick = onLiveDeparturesClick
+                    onLiveDeparturesClick = onLiveDeparturesClick,
+                    tutorialState = tutorialState
                 )
             }
             item {
@@ -254,7 +275,12 @@ fun HomeScreen(
                 )
             }
             item {
-                AIUpdateSection()
+                TutorialAnchor(
+                    target = TutorialTarget.AI,
+                    tutorialState = tutorialState
+                ) {
+                    AIUpdateSection()
+                }
             }
             item {
                 Spacer(modifier = Modifier.height(24.dp))
@@ -277,6 +303,26 @@ fun HomeScreen(
                 onApplyFilters = { filterResults ->
 
                     println("Applied Filters: $filterResults")
+                }
+            )
+        }
+
+        if (showTutorial) {
+            TutorialOverlay(
+                tutorialState = tutorialState,
+                onSkip = {
+                    showTutorial = false
+                },
+                onNext = {
+                    if (tutorialState.currentStep == TutorialPages.lastIndex) {
+                        showTutorial = false
+                    } else {
+                        haptic.performHapticFeedback(
+                            HapticFeedbackType.TextHandleMove
+                        )
+
+                        tutorialState.currentStep++
+                    }
                 }
             )
         }
@@ -500,7 +546,8 @@ fun QuickAccessRow(
     onWorkClick: () -> Unit,
     onFavouritesClick: () -> Unit,
     homeSubtitle: String,
-    workSubtitle: String
+    workSubtitle: String,
+    tutorialState: TutorialState
 ) {
     Row(
         modifier = Modifier
@@ -514,7 +561,9 @@ fun QuickAccessRow(
             icon = Icons.Outlined.Home,
             iconColor = Color.White,
             onClick = onHomeClick,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
+            tutorialTarget = TutorialTarget.HOME,
+            tutorialState = tutorialState
         )
 
         QuickAccessItem(
@@ -523,7 +572,10 @@ fun QuickAccessRow(
             icon = Icons.Outlined.Work,
             iconColor = MaterialTheme.colorScheme.primary,
             onClick = onWorkClick,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
+            tutorialTarget = TutorialTarget.WORK,
+            tutorialState = tutorialState
+
         )
 
         QuickAccessItem(
@@ -532,24 +584,38 @@ fun QuickAccessRow(
             icon = Icons.Outlined.Star,
             iconColor = Color(0xFFFFD700),
             onClick = onFavouritesClick,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
+            tutorialTarget = TutorialTarget.FAVORITES,
+            tutorialState = tutorialState
         )
     }
 }
 
 @Composable
 fun QuickAccessItem(
+    modifier: Modifier = Modifier,
     title: String,
     subtitle: String,
     icon: ImageVector,
     iconColor: Color,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    tutorialTarget: TutorialTarget? = null,
+    tutorialState: TutorialState? = null
 ) {
     Surface(
-        modifier = modifier
-            .height(82.dp)
-            .bounceClick { onClick() },
+        modifier =
+            modifier
+                .then(
+                    if (tutorialTarget != null && tutorialState != null)
+                        Modifier.tutorialTarget(
+                            tutorialTarget,
+                            tutorialState
+                        )
+                    else
+                        Modifier
+                )
+                .height(82.dp)
+                .bounceClick { onClick() },
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surfaceContainer,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.15f))
@@ -587,45 +653,68 @@ fun MainFeatureGrid(
     onHowToGoClick: () -> Unit,
     onLinesClick: () -> Unit,
     onNearbyStopsClick: () -> Unit,
-    onLiveDeparturesClick: () -> Unit
+    onLiveDeparturesClick: () -> Unit,
+    tutorialState: TutorialState
 ) {
     Column(
         modifier = Modifier.padding(horizontal = 12.dp)
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            MainFeatureCard(
-                modifier = Modifier.weight(1f),
-                title = stringResource(R.string.feature_how_to_go_title),
-                subtitle = stringResource(R.string.feature_how_to_go_subtitle),
-                icon = Icons.Outlined.Route,
-                onClick = onHowToGoClick
-            )
-            MainFeatureCard(
-                modifier = Modifier.weight(1f),
-                title = stringResource(R.string.feature_lines_title),
-                subtitle = stringResource(R.string.feature_lines_subtitle),
-                icon = Icons.Outlined.DirectionsBus,
-                onClick = onLinesClick
-            )
+            TutorialAnchor(
+                target = TutorialTarget.HOW_TO_GO,
+                tutorialState = tutorialState
+            ) {
+                MainFeatureCard(
+                    modifier = Modifier.weight(1f),
+                    title = stringResource(R.string.feature_how_to_go_title),
+                    subtitle = stringResource(R.string.feature_how_to_go_subtitle),
+                    icon = Icons.Outlined.Route,
+                    onClick = onHowToGoClick
+                )
+            }
+
+            TutorialAnchor(
+                target = TutorialTarget.LINES,
+                tutorialState = tutorialState
+            ) {
+                MainFeatureCard(
+                    modifier = Modifier.weight(1f),
+                    title = stringResource(R.string.feature_lines_title),
+                    subtitle = stringResource(R.string.feature_lines_subtitle),
+                    icon = Icons.Outlined.DirectionsBus,
+                    onClick = onLinesClick
+                )
+            }
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer( modifier = Modifier.height(12.dp) )
 
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            MainFeatureCard(
-                modifier = Modifier.weight(1f),
-                title = stringResource(R.string.feature_nearby_stops_title),
-                subtitle = stringResource(R.string.feature_nearby_stops_subtitle),
-                icon = Icons.Outlined.LocationOn,
-                onClick = onNearbyStopsClick
-            )
-            MainFeatureCard(
-                modifier = Modifier.weight(1f),
-                title = stringResource(R.string.feature_live_departures_title),
-                subtitle = stringResource(R.string.feature_live_departures_subtitle),
-                icon = Icons.Outlined.AccessTime,
-                onClick = onLiveDeparturesClick
-            )
+            TutorialAnchor(
+                target = TutorialTarget.STOPS,
+                tutorialState = tutorialState
+            ) {
+                MainFeatureCard(
+                    modifier = Modifier.weight(1f),
+                    title = stringResource(R.string.feature_nearby_stops_title),
+                    subtitle = stringResource(R.string.feature_nearby_stops_subtitle),
+                    icon = Icons.Outlined.LocationOn,
+                    onClick = onNearbyStopsClick
+                )
+            }
+
+            TutorialAnchor(
+                target = TutorialTarget.LIVE,
+                tutorialState = tutorialState
+            ) {
+                MainFeatureCard(
+                    modifier = Modifier.weight(1f),
+                    title = stringResource(R.string.feature_live_departures_title),
+                    subtitle = stringResource(R.string.feature_live_departures_subtitle),
+                    icon = Icons.Outlined.AccessTime,
+                    onClick = onLiveDeparturesClick
+                )
+            }
         }
     }
 }
