@@ -32,6 +32,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
@@ -197,15 +198,28 @@ fun HomeScreen(
         TutorialState()
     }
 
-    var showTutorial = !tutorialCompleted
-
-    LaunchedEffect(showTutorial) {
-        if (showTutorial) {
-            tutorialState.reset()
-        }
-    }
-
     val haptic = LocalHapticFeedback.current
+
+    val listState = rememberLazyListState()
+
+    val showTutorial = !tutorialCompleted
+
+    LaunchedEffect(
+        tutorialState.currentStep,
+        showTutorial
+    ) {
+
+        if (!showTutorial)
+            return@LaunchedEffect
+
+        val page = tutorialState.currentPage
+
+        listState.animateScrollToItem(
+            index = page.listIndex
+        )
+
+        delay(250.milliseconds)
+    }
 
     Box(
         modifier = Modifier
@@ -220,16 +234,15 @@ fun HomeScreen(
             )
     ){
         LazyColumn(
+            state = listState,
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(bottom = 16.dp)
         ) {
-            item {
+            item(0) {
                 HeaderSection(
                     currentUser = authViewModel.user.collectAsState().value,
                     onLoginClick = onLoginClick,
-                    onProfileClick = {
-                        // TODO Profile Screen
-                    }
+                    onProfileClick = { }
                 )
             }
             item {
@@ -238,7 +251,8 @@ fun HomeScreen(
                 with(sharedTransitionScope){
                     TutorialAnchor(
                         target = TutorialTarget.SEARCH,
-                        tutorialState = tutorialState
+                        tutorialState = tutorialState,
+                        itemIndex = 1
                     ) {
                         AnimatedSearchBar(
                             onClick = onSearchClick,
@@ -287,7 +301,8 @@ fun HomeScreen(
             item {
                 TutorialAnchor(
                     target = TutorialTarget.AI,
-                    tutorialState = tutorialState
+                    tutorialState = tutorialState,
+                    itemIndex = 5
                 ) {
                     AIUpdateSection()
                 }
@@ -622,7 +637,8 @@ fun QuickAccessItem(
                     if (tutorialTarget != null && tutorialState != null)
                         Modifier.tutorialTarget(
                             tutorialTarget,
-                            tutorialState
+                            tutorialState,
+                            itemIndex = 2
                         )
                     else
                         Modifier
@@ -675,7 +691,8 @@ fun MainFeatureGrid(
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             TutorialAnchor(
                 target = TutorialTarget.HOW_TO_GO,
-                tutorialState = tutorialState
+                tutorialState = tutorialState,
+                itemIndex = 3
             ) {
                 MainFeatureCard(
                     modifier = Modifier.weight(1f),
@@ -688,7 +705,8 @@ fun MainFeatureGrid(
 
             TutorialAnchor(
                 target = TutorialTarget.LINES,
-                tutorialState = tutorialState
+                tutorialState = tutorialState,
+                itemIndex = 3
             ) {
                 MainFeatureCard(
                     modifier = Modifier.weight(1f),
@@ -705,7 +723,8 @@ fun MainFeatureGrid(
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             TutorialAnchor(
                 target = TutorialTarget.STOPS,
-                tutorialState = tutorialState
+                tutorialState = tutorialState,
+                itemIndex = 3
             ) {
                 MainFeatureCard(
                     modifier = Modifier.weight(1f),
@@ -718,7 +737,8 @@ fun MainFeatureGrid(
 
             TutorialAnchor(
                 target = TutorialTarget.LIVE,
-                tutorialState = tutorialState
+                tutorialState = tutorialState,
+                itemIndex = 3
             ) {
                 MainFeatureCard(
                     modifier = Modifier.weight(1f),
@@ -937,8 +957,9 @@ fun SmallFeatureTile(
     Surface(
         modifier = modifier
             .tutorialTarget(
-                tile.target,
-                tutorialState
+                target = tile.target,
+                tutorialState = tutorialState,
+                itemIndex = 7
             )
             .height(85.dp)
             .bounceClick { tile.onClick() },

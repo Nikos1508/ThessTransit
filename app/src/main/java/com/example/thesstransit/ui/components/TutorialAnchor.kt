@@ -11,18 +11,18 @@ import com.example.thesstransit.ui.data.tutorialTarget
 fun TutorialAnchor(
     target: TutorialTarget,
     tutorialState: TutorialState,
+    itemIndex: Int,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
 
     Box(
-        modifier = modifier
-            .tutorialTarget(
-                target,
-                tutorialState
-            )
+        modifier = modifier.tutorialTarget(
+            target = target,
+            tutorialState = tutorialState,
+            itemIndex = itemIndex
+        )
     ) {
         content()
     }
-
 }

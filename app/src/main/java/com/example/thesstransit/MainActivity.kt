@@ -176,7 +176,7 @@ class MainActivity : ComponentActivity() {
                         val tutorialViewModel: TutorialViewModel =
                             viewModel(
                                 factory = TutorialViewModelFactory(
-                                    TutorialPreferences(this as Context)
+                                    TutorialPreferences(context)
                                 )
                             )
 

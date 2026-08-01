@@ -1,5 +1,6 @@
 package com.example.thesstransit.ui.item
 
+import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
@@ -19,10 +20,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
@@ -42,12 +45,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.thesstransit.ui.data.TutorialPages
 import com.example.thesstransit.ui.data.TutorialState
 
+@SuppressLint("ConfigurationScreenWidthHeight")
 @Composable
 fun TutorialOverlay(
     tutorialState: TutorialState,
@@ -55,8 +61,9 @@ fun TutorialOverlay(
     onNext: () -> Unit
 ) {
 
-    val page = TutorialPages[tutorialState.currentStep]
-    val targetRect = tutorialState.targets[page.target]
+    val page = tutorialState.currentPage
+    val targetInfo = tutorialState.targets[page.target]
+    val targetRect = targetInfo?.rect
     val transition = rememberInfiniteTransition(
         label = "TutorialFlow"
     )
@@ -128,23 +135,33 @@ fun TutorialOverlay(
             )
         }
 
+        val screenHeight = LocalConfiguration.current.screenHeightDp.dp
+
+        val threshold = with(LocalDensity.current) {
+            screenHeight.toPx() * 0.5f
+        }
+
+        val centerY = targetRect?.center?.y ?: 0f
+
         val cardAlignment =
-            if ( (targetRect?.top ?: 0f) < 500f ) {
+            if (centerY < threshold)
                 Alignment.BottomCenter
-            } else {
+            else
                 Alignment.TopCenter
-            }
 
         AnimatedVisibility(
             visible = true,
             enter = fadeIn(
-                animationSpec = tween(500)
+                animationSpec = tween(400)
             ) + scaleIn(
-                initialScale = 0.92f,
-                animationSpec = tween(500)
-            )+ slideInVertically {
-                it / 3
-            }
+                initialScale = 0.96f,
+                animationSpec = tween(400)
+            )+ slideInVertically (
+                animationSpec = tween(400),
+                initialOffsetY = {
+                    it / 3
+                }
+            )
         ) {
             TutorialCard(
                 modifier = Modifier
@@ -167,13 +184,29 @@ fun TutorialCard(
     onSkip: () -> Unit
 ) {
     Surface(
-        modifier = modifier,
+        shadowElevation = 18.dp,
         shape = RoundedCornerShape(28.dp),
+        modifier = modifier.fillMaxWidth(),
         tonalElevation = 10.dp
     ) {
         Column(
-            modifier = Modifier.padding(22.dp)
+            modifier = Modifier.padding(24.dp)
         ) {
+            Text(
+                text = "App introduction",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary
+            )
+
+            Spacer( modifier = Modifier.height(8.dp) )
+
+            TutorialProgress(
+                current = step,
+                total = TutorialPages.size
+            )
+
+            Spacer( modifier = Modifier.height(22.dp) )
+
             Row(
                 horizontalArrangement = Arrangement.spacedBy(5.dp)
             ) {
@@ -196,18 +229,25 @@ fun TutorialCard(
             // Spacer( modifier = Modifier.height(10.dp) )
 
             Text(
-                TutorialPages[step].description
+                text = TutorialPages[step].description,
+                lineHeight = 22.sp,
+                fontSize = 15.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Spacer( modifier = Modifier.height(24.dp) )
 
             Row{
-                TextButton(
-                    onClick = onSkip
+                AnimatedVisibility(
+                    visible = step != TutorialPages.lastIndex
                 ) {
-                    Text(
-                        "Skip"
-                    )
+                    TextButton(
+                        onClick = onSkip
+                    ) {
+                        Text(
+                            "Skip"
+                        )
+                    }
                 }
 
                 Spacer( modifier = Modifier.weight(1f) )
@@ -228,20 +268,65 @@ fun TutorialCard(
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = TutorialPages[step].icon,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(32.dp)
-            )
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.primaryContainer
+            ) {
+                Icon(
+                    imageVector = TutorialPages[step].icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier
+                        .padding(12.dp)
+                        .size(24.dp)
+                )
 
-            Spacer( modifier = Modifier.width(12.dp) )
+                Spacer( modifier = Modifier.width(14.dp) )
 
-            Text(
-                TutorialPages[step].title,
-                fontWeight = FontWeight.Bold,
-                fontSize = 23.sp
-            )
+                Column{
+                    Text(
+                        TutorialPages[step].title,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 22.sp
+                    )
+                }
+            }
+
         }
+    }
+}
+
+@Composable
+fun TutorialProgress(
+    current: Int,
+    total: Int
+) {
+    Column {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            repeat(total) { index ->
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(5.dp)
+                        .clip(RoundedCornerShape(100))
+                        .background(
+                            if (index <= current)
+                                MaterialTheme.colorScheme.primary
+                            else
+                                MaterialTheme.colorScheme.surfaceVariant
+                        )
+                )
+            }
+        }
+
+        Spacer( modifier = Modifier.height(10.dp) )
+
+        Text(
+            text = "${current + 1} / $total",
+            fontSize = 12.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
