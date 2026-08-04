@@ -64,6 +64,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
@@ -102,7 +103,9 @@ import com.example.thesstransit.ui.viewModels.HomeViewModel
 import com.example.thesstransit.ui.viewModels.TutorialViewModel
 import io.github.jan.supabase.auth.user.UserInfo
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.android.awaitFrame
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
@@ -214,11 +217,16 @@ fun HomeScreen(
 
         val page = tutorialState.currentPage
 
-        listState.animateScrollToItem(
-            index = page.listIndex
-        )
+        listState.animateScrollToItem(page.listIndex)
 
-        delay(250.milliseconds)
+        snapshotFlow {
+            listState.isScrollInProgress
+        }.first {
+            !it
+        }
+
+        awaitFrame()
+        awaitFrame()
     }
 
     Box(
@@ -240,6 +248,7 @@ fun HomeScreen(
         ) {
             item(0) {
                 HeaderSection(
+                    tutorialState = tutorialState,
                     currentUser = authViewModel.user.collectAsState().value,
                     onLoginClick = onLoginClick,
                     onProfileClick = { }
@@ -338,6 +347,7 @@ fun HomeScreen(
         if (showTutorial) {
             TutorialOverlay(
                 tutorialState = tutorialState,
+                listState = listState,
                 onSkip = {
                     tutorialViewModel.completeTutorial()
                 },
@@ -369,6 +379,7 @@ fun HomeScreen(
 
 @Composable
 fun HeaderSection(
+    tutorialState: TutorialState,
     currentUser: UserInfo?,
     onLoginClick: () -> Unit = {},
     onProfileClick: () -> Unit = {}
@@ -443,33 +454,39 @@ fun HeaderSection(
                 ) { user ->
 
                     if (user == null) {
-                        OutlinedButton(
-                            onClick = onLoginClick,
-                            shape = RoundedCornerShape(12.dp),
-                            contentPadding = PaddingValues(horizontal = 14.dp),
-                            border = BorderStroke(
-                                1.dp,
-                                MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
-                            ),
-                            modifier = Modifier
-                                .height(36.dp)
-                                .align(Alignment.TopEnd)
-                        ){
-                            Icon(
-                                imageVector = Icons.Outlined.Person,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp),
-                                tint = MaterialTheme.colorScheme.primary
-                            )
+                        TutorialAnchor(
+                            target = TutorialTarget.LOGIN,
+                            tutorialState = tutorialState,
+                            itemIndex = 0
+                        ) {
+                            OutlinedButton(
+                                onClick = onLoginClick,
+                                shape = RoundedCornerShape(12.dp),
+                                contentPadding = PaddingValues(horizontal = 14.dp),
+                                border = BorderStroke(
+                                    1.dp,
+                                    MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
+                                ),
+                                modifier = Modifier
+                                    .height(36.dp)
+                                    .align(Alignment.TopEnd)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Person,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp),
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
 
-                            Spacer(modifier = Modifier.width(6.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
 
-                            Text(
-                                text = stringResource(R.string.login),
-                                fontSize = 13.sp,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                fontWeight = FontWeight.Medium
-                            )
+                                Text(
+                                    text = stringResource(R.string.login),
+                                    fontSize = 13.sp,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
                         }
                     } else {
                         FilledTonalButton(
@@ -690,12 +707,13 @@ fun MainFeatureGrid(
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             TutorialAnchor(
+                modifier = Modifier.weight(1f),
                 target = TutorialTarget.HOW_TO_GO,
                 tutorialState = tutorialState,
                 itemIndex = 3
             ) {
                 MainFeatureCard(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.fillMaxWidth(),
                     title = stringResource(R.string.feature_how_to_go_title),
                     subtitle = stringResource(R.string.feature_how_to_go_subtitle),
                     icon = Icons.Outlined.Route,
@@ -704,12 +722,13 @@ fun MainFeatureGrid(
             }
 
             TutorialAnchor(
+                modifier = Modifier.weight(1f),
                 target = TutorialTarget.LINES,
                 tutorialState = tutorialState,
                 itemIndex = 3
             ) {
                 MainFeatureCard(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.fillMaxWidth(),
                     title = stringResource(R.string.feature_lines_title),
                     subtitle = stringResource(R.string.feature_lines_subtitle),
                     icon = Icons.Outlined.DirectionsBus,
@@ -722,12 +741,13 @@ fun MainFeatureGrid(
 
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             TutorialAnchor(
+                modifier = Modifier.weight(1f),
                 target = TutorialTarget.STOPS,
                 tutorialState = tutorialState,
                 itemIndex = 3
             ) {
                 MainFeatureCard(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.fillMaxWidth(),
                     title = stringResource(R.string.feature_nearby_stops_title),
                     subtitle = stringResource(R.string.feature_nearby_stops_subtitle),
                     icon = Icons.Outlined.LocationOn,
@@ -736,12 +756,13 @@ fun MainFeatureGrid(
             }
 
             TutorialAnchor(
+                modifier = Modifier.weight(1f),
                 target = TutorialTarget.LIVE,
                 tutorialState = tutorialState,
                 itemIndex = 3
             ) {
                 MainFeatureCard(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.fillMaxWidth(),
                     title = stringResource(R.string.feature_live_departures_title),
                     subtitle = stringResource(R.string.feature_live_departures_subtitle),
                     icon = Icons.Outlined.AccessTime,

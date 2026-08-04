@@ -9,10 +9,10 @@ import com.example.thesstransit.ui.data.tutorialTarget
 
 @Composable
 fun TutorialAnchor(
+    modifier: Modifier = Modifier,
     target: TutorialTarget,
     tutorialState: TutorialState,
     itemIndex: Int,
-    modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
 

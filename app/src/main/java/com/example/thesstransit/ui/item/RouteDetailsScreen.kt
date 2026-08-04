@@ -30,6 +30,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -37,9 +38,6 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.DirectionsBus
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.SwapHoriz
-import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
@@ -72,7 +70,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -1023,8 +1020,16 @@ private fun TimetableTab(
         }
     }
 
-    LazyColumn(state = listState){
+    LazyColumn(
+        state = listState,
+        contentPadding = PaddingValues(
+            horizontal = 16.dp,
+            vertical = 8.dp
+        ),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ){
         itemsIndexed(vm.departures) { index, departure ->
+
             val departed =
                 if (!viewingToday) {
                     false
@@ -1045,62 +1050,103 @@ private fun TimetableTab(
                 }
 
 
-            val isNextTrip = index == nextTripIndex
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 4.dp),
+            TimetableDepartureItem(
+                time = departure.time.toString().substring(0,5),
+                destination = vm.tripHeadsigns[departure.tripId] ?: "",
+                isNext = index == nextTripIndex,
+                departed = departed
+            )
+        }
+    }
+}
 
-                shape = RoundedCornerShape(16.dp),
-                border =
-                    if (isNextTrip)
-                        BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
-                    else
-                        null,
-
-                colors = CardDefaults.cardColors(
-                    containerColor =
-                        if (isNextTrip)
-                            MaterialTheme.colorScheme.primaryContainer
-                        else
-                            MaterialTheme.colorScheme.surface
+@Composable
+fun TimetableDepartureItem(
+    time: String,
+    destination: String,
+    isNext: Boolean,
+    departed: Boolean
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .alpha(if (departed) 0.45f else 1f),
+        shape = RoundedCornerShape(18.dp),
+        color =
+            if (isNext)
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
+            else
+                MaterialTheme.colorScheme.surfaceContainer,
+        border =
+            if (isNext)
+                BorderStroke(
+                    1.dp,
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
                 )
+            else
+                null
+    ) {
+
+        Row(
+            modifier = Modifier
+                .padding(
+                    horizontal = 16.dp,
+                    vertical = 12.dp
+                ),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.width(64.dp)
             ) {
-                Row(
-                    modifier = Modifier
-                        .padding(12.dp)
-                        .alpha( if(departed) 0.45f else 1f )
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = departure.time.toString().substring(0,5),
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold
-                        )
+                Text(
+                    text = time,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
 
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = vm.tripHeadsigns[departure.tripId] ?: "",
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.Medium,
-                                maxLines = 1
-                            )
+                if (isNext) {
 
-                            Text(
-                                text = stringResource(R.string.arrival_label_prefix),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-
-                        }
-
-                    }
-
+                    Text(
+                        text = "Επόμενο",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
-            HorizontalDivider()
+
+            Spacer( modifier = Modifier.width(14.dp) )
+
+            Box(
+                modifier = Modifier
+                    .width(3.dp)
+                    .height(42.dp)
+                    .clip(RoundedCornerShape(50))
+                    .background( MaterialTheme.colorScheme.primary.copy(alpha = 0.45f) )
+            )
+
+            Spacer( modifier = Modifier.width(14.dp) )
+
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = destination,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1
+                )
+
+                Spacer( modifier = Modifier.height(3.dp) )
+
+                Text(
+                    text = stringResource(R.string.arrival_label_prefix),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }

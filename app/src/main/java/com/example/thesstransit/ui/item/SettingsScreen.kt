@@ -307,6 +307,20 @@ private fun SettingsContent(
                     visible = step >= 6,
                     enter = fadeIn() + slideInVertically()
                 ) {
+                    SettingsCard(
+                        icon = Icons.Outlined.School,
+                        title = "Replay tutorial",
+                        subtitle = "Show the ThessTransit introduction again",
+                        onClick = { tutorialViewModel.replayTutorial() }
+                    )
+                }
+            }
+
+            item {
+                AnimatedVisibility(
+                    visible = step >= 6,
+                    enter = fadeIn() + slideInVertically()
+                ) {
                     ListItem(
                         headlineContent = {
                             Text("Replay tutorial")

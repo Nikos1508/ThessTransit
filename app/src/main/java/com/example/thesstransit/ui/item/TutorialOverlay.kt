@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.FilledTonalButton
@@ -52,11 +53,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.thesstransit.ui.data.TutorialPages
 import com.example.thesstransit.ui.data.TutorialState
+import com.example.thesstransit.ui.data.CardPosition
 
 @SuppressLint("ConfigurationScreenWidthHeight")
 @Composable
 fun TutorialOverlay(
     tutorialState: TutorialState,
+    listState: LazyListState,
     onSkip: () -> Unit,
     onNext: () -> Unit
 ) {
@@ -92,6 +95,12 @@ fun TutorialOverlay(
 
         val glowColor = MaterialTheme.colorScheme.primary.copy(alpha = glowAlpha)
 
+        val scrollOffset =
+            if (listState.firstVisibleItemIndex == 0)
+                listState.firstVisibleItemScrollOffset.toFloat()
+            else
+                0f
+
         Canvas(
             modifier = Modifier
                 .fillMaxSize()
@@ -106,10 +115,10 @@ fun TutorialOverlay(
 
             val padding = 10.dp.toPx()
             val spotlight = Rect(
-                left = animatedRect.left - padding,
+                left = animatedRect.left - scrollOffset - padding,
                 top = animatedRect.top - padding,
                 right = animatedRect.right + padding,
-                bottom = animatedRect.bottom + padding,
+                bottom = animatedRect.bottom - scrollOffset + padding,
             )
 
             drawRoundRect(
@@ -117,8 +126,8 @@ fun TutorialOverlay(
                 topLeft = spotlight.topLeft,
                 size = spotlight.size,
                 cornerRadius = CornerRadius(
-                    22.dp.toPx(),
-                    22.dp.toPx()
+                    28.dp.toPx(),
+                    28.dp.toPx()
                 ),
                 blendMode = BlendMode.Clear
             )
@@ -128,49 +137,72 @@ fun TutorialOverlay(
                 topLeft = spotlight.topLeft,
                 size = spotlight.size,
                 cornerRadius = CornerRadius(
-                    22.dp.toPx(),
-                    22.dp.toPx()
+                    28.dp.toPx(),
+                    28.dp.toPx()
                 ),
                 style = Stroke( width = 2.dp.toPx() )
             )
         }
 
-        val screenHeight = LocalConfiguration.current.screenHeightDp.dp
-
-        val threshold = with(LocalDensity.current) {
-            screenHeight.toPx() * 0.5f
-        }
-
-        val centerY = targetRect?.center?.y ?: 0f
+//        val screenHeight = LocalConfiguration.current.screenHeightDp.dp
+//
+//        val threshold = with(LocalDensity.current) {
+//            screenHeight.toPx() * 0.5f
+//        }
+//
+//        val centerY = targetRect?.center?.y ?: 0f
+//
+//        val cardAlignment =
+//            if (centerY < threshold)
+//                Alignment.BottomCenter
+//            else
+//                Alignment.TopCenter
 
         val cardAlignment =
-            if (centerY < threshold)
+            if (page.cardPosition == CardPosition.BOTTOM)
                 Alignment.BottomCenter
             else
                 Alignment.TopCenter
 
-        AnimatedVisibility(
-            visible = true,
-            enter = fadeIn(
-                animationSpec = tween(400)
-            ) + scaleIn(
-                initialScale = 0.96f,
-                animationSpec = tween(400)
-            )+ slideInVertically (
-                animationSpec = tween(400),
-                initialOffsetY = {
-                    it / 3
-                }
-            )
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = cardAlignment
         ) {
-            TutorialCard(
-                modifier = Modifier
-                    .align(cardAlignment)
-                    .padding(20.dp),
-                step = tutorialState.currentStep,
-                onNext = onNext,
-                onSkip = onSkip
-            )
+            AnimatedVisibility(
+                visible = true,
+                enter = fadeIn(
+                    animationSpec = tween(400)
+                ) + scaleIn(
+                    initialScale = 0.96f,
+                    animationSpec = tween(400)
+                )+ slideInVertically (
+                    animationSpec = tween(400),
+                    initialOffsetY = {
+                        it / 3
+                    }
+                )
+            ) {
+                TutorialCard(
+                    modifier = Modifier
+                        .align(cardAlignment)
+                        .padding(horizontal = 20.dp)
+                        .padding(
+                            top =
+                                if (page.cardPosition == CardPosition.TOP)
+                                    32.dp
+                                else
+                                    0.dp,
+                            bottom =
+                                if (page.cardPosition == CardPosition.BOTTOM)
+                                    32.dp
+                                else
+                                    0.dp
+                        ),
+                    step = tutorialState.currentStep,
+                    onNext = onNext,
+                    onSkip = onSkip
+                )
+            }
         }
 
     }
@@ -190,67 +222,67 @@ fun TutorialCard(
         tonalElevation = 10.dp
     ) {
         Column(
-            modifier = Modifier.padding(24.dp)
+            modifier = Modifier.padding(horizontal = 24.dp)
         ) {
-            Text(
-                text = "App introduction",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.primaryContainer
+                ) {
+                    Icon(
+                        imageVector = TutorialPages[step].icon,
+                        contentDescription = null,
+                        modifier = Modifier.padding(12.dp)
+                    )
+                }
 
-            Spacer( modifier = Modifier.height(8.dp) )
+                Spacer(modifier = Modifier.padding(12.dp))
+
+                Column {
+                    Text(
+                        TutorialPages[step].title,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 22.sp
+                    )
+
+                    Text(
+                        text = "${step + 1} / ${TutorialPages.size}",
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
 
             TutorialProgress(
                 current = step,
                 total = TutorialPages.size
             )
 
-            Spacer( modifier = Modifier.height(22.dp) )
-
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(5.dp)
-            ) {
-                repeat(TutorialPages.size) { index ->
-
-                    Box(
-                        modifier = Modifier
-                            .size(width = if (index == step) 18.dp else 6.dp, height = 6.dp)
-                            .clip( RoundedCornerShape(20.dp))
-                            .background(
-                                if (index == step)
-                                    MaterialTheme.colorScheme.primary
-                                else
-                                    MaterialTheme.colorScheme.outline
-                            )
-                    )
-                }
-            }
-
-            // Spacer( modifier = Modifier.height(10.dp) )
+            Spacer(modifier = Modifier.height(20.dp))
 
             Text(
                 text = TutorialPages[step].description,
                 lineHeight = 22.sp,
-                fontSize = 15.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                fontSize = 15.sp
             )
 
-            Spacer( modifier = Modifier.height(24.dp) )
+            Spacer(modifier = Modifier.height(24.dp))
 
-            Row{
-                AnimatedVisibility(
-                    visible = step != TutorialPages.lastIndex
-                ) {
+            Row {
+
+                if (step != TutorialPages.lastIndex) {
                     TextButton(
                         onClick = onSkip
                     ) {
-                        Text(
-                            "Skip"
-                        )
+                        Text("Skip")
                     }
                 }
 
-                Spacer( modifier = Modifier.weight(1f) )
+                Spacer(modifier = Modifier.weight(1f))
 
                 FilledTonalButton(
                     onClick = onNext
@@ -263,35 +295,6 @@ fun TutorialCard(
                     )
                 }
             }
-        }
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Surface(
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.primaryContainer
-            ) {
-                Icon(
-                    imageVector = TutorialPages[step].icon,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier
-                        .padding(12.dp)
-                        .size(24.dp)
-                )
-
-                Spacer( modifier = Modifier.width(14.dp) )
-
-                Column{
-                    Text(
-                        TutorialPages[step].title,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 22.sp
-                    )
-                }
-            }
-
         }
     }
 }
