@@ -317,34 +317,6 @@ private fun SettingsContent(
             }
 
             item {
-                AnimatedVisibility(
-                    visible = step >= 6,
-                    enter = fadeIn() + slideInVertically()
-                ) {
-                    ListItem(
-                        headlineContent = {
-                            Text("Replay tutorial")
-                        },
-                        supportingContent = {
-                            Text(
-                                "Show the ThessTransit introduction again"
-                            )
-                        },
-                        leadingContent = {
-                            Icon(
-                                Icons.Outlined.School,
-                                null
-                            )
-                        },
-                        modifier = Modifier.clickable {
-                            tutorialViewModel.replayTutorial()
-                        }
-
-                    )
-                }
-            }
-
-            item {
                 Spacer( modifier = Modifier.height(12.dp) )
             }
         }
