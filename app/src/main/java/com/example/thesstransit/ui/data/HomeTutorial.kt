@@ -1,6 +1,7 @@
 package com.example.thesstransit.ui.data
 
 import android.annotation.SuppressLint
+import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.AutoAwesome
@@ -18,17 +19,16 @@ import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material.icons.outlined.Train
 import androidx.compose.material.icons.outlined.Work
-import androidx.compose.ui.geometry.Rect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInRoot
-import androidx.compose.ui.unit.toSize
+import com.example.thesstransit.R
 
 enum class TutorialStep {
 
@@ -67,9 +67,7 @@ enum class TutorialTarget {
     METRO,
     FAVORITE_ROUTES,
     NOTIFICATIONS,
-    SETTINGS,
-
-    DONE
+    SETTINGS
 
 }
 
@@ -86,8 +84,8 @@ enum class CardPosition {
 data class TutorialPage(
     val step: TutorialStep,
     val target: TutorialTarget,
-    val title: String,
-    val description: String,
+    @param:StringRes val titleRes: Int,
+    @param:StringRes val descriptionRes: Int,
     val icon: ImageVector,
     val listIndex: Int,
     val cardPosition: CardPosition = CardPosition.TOP
@@ -98,8 +96,8 @@ val TutorialPages = listOf(
     TutorialPage(
         TutorialStep.LOGIN,
         TutorialTarget.LOGIN,
-        "Login",
-        "Sign in to synchronize favourites, tickets and settings across all your devices.",
+        titleRes = R.string.tutorial_title_login,
+        descriptionRes = R.string.tutorial_desc_login,
         Icons.Outlined.Person,
         listIndex = 0,
         cardPosition = CardPosition.BOTTOM
@@ -108,28 +106,28 @@ val TutorialPages = listOf(
     TutorialPage(
         TutorialStep.SEARCH,
         TutorialTarget.SEARCH,
-        "Search anything",
-        "Find stops, routes, destinations and useful transport information instantly.",
+        titleRes = R.string.tutorial_title_search,
+        descriptionRes = R.string.tutorial_desc_search,
         icon = Icons.Outlined.Search,
         listIndex = 1,
-        cardPosition = CardPosition.BOTTOM
+        cardPosition = CardPosition.BOTTOM,
     ),
 
     TutorialPage(
         TutorialStep.HOME,
         TutorialTarget.HOME,
-        "Home",
-        "Save your home location for faster navigation.",
-        Icons.Outlined.Home,
+        titleRes = R.string.tutorial_title_home,
+        descriptionRes = R.string.tutorial_desc_home,
         listIndex = 2,
-        cardPosition = CardPosition.BOTTOM
+        cardPosition = CardPosition.BOTTOM,
+        icon = Icons.Outlined.Home
     ),
 
     TutorialPage(
         TutorialStep.WORK,
         TutorialTarget.WORK,
-        "Work",
-        "Access your daily commute instantly.",
+        titleRes = R.string.tutorial_title_work,
+        descriptionRes = R.string.tutorial_desc_work,
         Icons.Outlined.Work,
         listIndex = 2,
         cardPosition = CardPosition.BOTTOM
@@ -138,18 +136,18 @@ val TutorialPages = listOf(
     TutorialPage(
         TutorialStep.FAVORITES,
         TutorialTarget.FAVORITES,
-        "Favorites",
-        "Keep your favourite routes nearby.",
+        titleRes = R.string.tutorial_title_favorites,
+        descriptionRes = R.string.tutorial_desc_favorites,
         Icons.Outlined.Star,
         listIndex = 2,
         cardPosition = CardPosition.BOTTOM
     ),
 
     TutorialPage(
-        TutorialStep.HOW_TO_GO,
-        TutorialTarget.HOW_TO_GO,
-        "How to go",
-        "Plan your trip with public transport.",
+        step = TutorialStep.HOW_TO_GO,
+        target = TutorialTarget.HOW_TO_GO,
+        titleRes = R.string.tutorial_title_how_to_go,
+        descriptionRes = R.string.tutorial_desc_how_to_go,
         Icons.Outlined.Route,
         listIndex = 3,
         cardPosition = CardPosition.BOTTOM
@@ -158,8 +156,8 @@ val TutorialPages = listOf(
     TutorialPage(
         TutorialStep.LINES,
         TutorialTarget.LINES,
-        "Lines",
-        "Explore all available transport lines.",
+        titleRes = R.string.tutorial_title_lines,
+        descriptionRes = R.string.tutorial_desc_lines,
         Icons.Outlined.DirectionsBus,
         listIndex = 3,
         cardPosition = CardPosition.BOTTOM
@@ -168,8 +166,8 @@ val TutorialPages = listOf(
     TutorialPage(
         TutorialStep.STOPS,
         TutorialTarget.STOPS,
-        "Nearby stops",
-        "Find stops close to your location.",
+        titleRes = R.string.tutorial_title_stops,
+        descriptionRes = R.string.tutorial_desc_stops,
         Icons.Outlined.LocationOn,
         listIndex = 3
     ),
@@ -177,8 +175,8 @@ val TutorialPages = listOf(
     TutorialPage(
         TutorialStep.LIVE,
         TutorialTarget.LIVE,
-        "Live departures",
-        "Track upcoming departures in real time.",
+        titleRes = R.string.tutorial_title_live,
+        descriptionRes = R.string.tutorial_desc_live,
         Icons.Outlined.AccessTime,
         listIndex = 3,
         cardPosition = CardPosition.BOTTOM
@@ -187,8 +185,8 @@ val TutorialPages = listOf(
     TutorialPage(
         TutorialStep.AI,
         TutorialTarget.AI,
-        "AI Updates",
-        "Receive intelligent transport information.",
+        titleRes = R.string.tutorial_title_ai,
+        descriptionRes = R.string.tutorial_desc_ai,
         Icons.Outlined.AutoAwesome,
         listIndex = 5,
         cardPosition = CardPosition.BOTTOM
@@ -197,8 +195,8 @@ val TutorialPages = listOf(
     TutorialPage(
         TutorialStep.TICKETS,
         TutorialTarget.TICKETS,
-        "Tickets",
-        "Access your transport tickets quickly.",
+        titleRes = R.string.tutorial_title_tickets,
+        descriptionRes = R.string.tutorial_desc_tickets,
         Icons.Outlined.LocalActivity,
         listIndex = 7
     ),
@@ -206,8 +204,8 @@ val TutorialPages = listOf(
     TutorialPage(
         TutorialStep.BUY_TICKET,
         TutorialTarget.BUY_TICKET,
-        "Buy ticket",
-        "Purchase tickets directly from the application.",
+        titleRes = R.string.tutorial_title_buy_ticket,
+        descriptionRes = R.string.tutorial_desc_buy_ticket,
         Icons.Outlined.QrCode2,
         listIndex = 7
     ),
@@ -215,8 +213,8 @@ val TutorialPages = listOf(
     TutorialPage(
         TutorialStep.METRO,
         TutorialTarget.METRO,
-        "Metro lines",
-        "Explore Thessaloniki metro lines and stations.",
+        titleRes = R.string.tutorial_title_metro,
+        descriptionRes = R.string.tutorial_desc_metro,
         Icons.Outlined.Train,
         listIndex = 7
     ),
@@ -224,8 +222,8 @@ val TutorialPages = listOf(
     TutorialPage(
         TutorialStep.FAVORITE_ROUTES,
         TutorialTarget.FAVORITE_ROUTES,
-        "Favourite routes",
-        "Keep your most used routes always available.",
+        titleRes = R.string.tutorial_title_favorite_routes,
+        descriptionRes = R.string.tutorial_desc_favorite_routes,
         Icons.Outlined.Favorite,
         listIndex = 7
     ),
@@ -233,8 +231,8 @@ val TutorialPages = listOf(
     TutorialPage(
         TutorialStep.NOTIFICATIONS,
         TutorialTarget.NOTIFICATIONS,
-        "Notifications",
-        "Receive important transport updates.",
+        titleRes = R.string.tutorial_title_notifications,
+        descriptionRes = R.string.tutorial_desc_notifications,
         Icons.Outlined.Notifications,
         listIndex = 7
     ),
@@ -242,8 +240,8 @@ val TutorialPages = listOf(
     TutorialPage(
         TutorialStep.SETTINGS,
         TutorialTarget.SETTINGS,
-        "Settings",
-        "Customize your ThessTransit experience.",
+        titleRes = R.string.tutorial_title_settings,
+        descriptionRes = R.string.tutorial_desc_settings,
         Icons.Outlined.Settings,
         listIndex = 7
     )
@@ -258,11 +256,7 @@ class TutorialState {
         rect: Rect,
         itemIndex: Int
     ) {
-        targets[target] =
-            TutorialAnchorInfo(
-                rect,
-                itemIndex
-            )
+        targets[target] = TutorialAnchorInfo(rect, itemIndex)
     }
 
     fun reset() {
@@ -279,13 +273,6 @@ fun Modifier.tutorialTarget(
     tutorialState: TutorialState,
     itemIndex: Int
 ): Modifier = onGloballyPositioned {
-
     val rect = it.boundsInRoot()
-
-    tutorialState.register(
-        target,
-        rect,
-        itemIndex
-    )
-
+    tutorialState.register(target, rect, itemIndex)
 }

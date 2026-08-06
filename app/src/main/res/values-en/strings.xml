@@ -250,4 +250,37 @@
         at the Agency\'s ticket offices or via bank deposit.
     </string>
 
+    <string name="tutorial_title_login">Login</string>
+    <string name="tutorial_desc_login">Sign in to synchronize favourites, tickets and settings across all your devices.</string>
+    <string name="tutorial_title_search">Search anything</string>
+    <string name="tutorial_desc_search">Find stops, routes, destinations and useful transport information instantly.</string>
+    <string name="tutorial_title_home">Home</string>
+    <string name="tutorial_desc_home">Save your home location for faster navigation.</string>
+    <string name="tutorial_title_work">Work</string>
+    <string name="tutorial_desc_work">Access your daily commute instantly.</string>
+    <string name="tutorial_title_favorites">Favorites</string>
+    <string name="tutorial_desc_favorites">Keep your favourite routes nearby.</string>
+    <string name="tutorial_title_how_to_go">How to go</string>
+    <string name="tutorial_desc_how_to_go">Plan your trip with public transport.</string>
+    <string name="tutorial_title_lines">Lines</string>
+    <string name="tutorial_desc_lines">Explore all available transport lines.</string>
+    <string name="tutorial_title_stops">Nearby stops</string>
+    <string name="tutorial_desc_stops">Find stops close to your location.</string>
+    <string name="tutorial_title_live">Live departures</string>
+    <string name="tutorial_desc_live">Track upcoming departures in real time.</string>
+    <string name="tutorial_title_ai">AI Updates</string>
+    <string name="tutorial_desc_ai">Receive intelligent transport information.</string>
+    <string name="tutorial_title_tickets">Tickets</string>
+    <string name="tutorial_desc_tickets">Access your transport tickets quickly.</string>
+    <string name="tutorial_title_buy_ticket">Buy ticket</string>
+    <string name="tutorial_desc_buy_ticket">Purchase tickets directly from the application.</string>
+    <string name="tutorial_title_metro">Metro lines</string>
+    <string name="tutorial_desc_metro">Explore Thessaloniki metro lines and stations.</string>
+    <string name="tutorial_title_favorite_routes">Favourite routes</string>
+    <string name="tutorial_desc_favorite_routes">Keep your most used routes always available.</string>
+    <string name="tutorial_title_notifications">Notifications</string>
+    <string name="tutorial_desc_notifications">Receive important transport updates.</string>
+    <string name="tutorial_title_settings">Settings</string>
+    <string name="tutorial_desc_settings">Customize your ThessTransit experience.</string>
+
 </resources>
