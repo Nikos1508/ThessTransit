@@ -127,7 +127,7 @@
     <string name="settings_contact_title">Στοιχεία επικοινωνίας</string>
     <string name="settings_contact_subtitle">Επικοινωνήστε μαζί μας</string>
     <string name="settings_about_title">Σχετικά</string>
-    <string name="settings_about_subtitle">Έκδοση 0.10.3</string>
+    <string name="settings_about_subtitle">Έκδοση 0.11.6</string>
     <string name="settings_header_subtitle">Προσωποποίησε την εμπειρία σου στο ThessTransit</string>
     <string name="theme_title">Θέμα εφαρμογής</string>
     <string name="theme_subtitle">Διάλεξε εμφάνιση</string>
@@ -247,5 +247,41 @@
         Το πρόστιμο μειώνεται κατά 50% αν εξοφληθεί εντός 10 εργάσιμων ημερών από την ημερομηνία επιβολής
         του στα εκδοτήρια του Οργανισμού ή μέσω τραπεζικής κατάθεσης.
     </string>
+
+    <!-- TUTORIAL SCREEN -->
+
+    <!-- TUTORIAL SCREEN -->
+    <string name="tutorial_title_login">Σύνδεση</string>
+    <string name="tutorial_desc_login">Συνδεθείτε για συγχρονισμό αγαπημένων, εισιτηρίων και ρυθμίσεων σε όλες τις συσκευές σας.</string>
+    <string name="tutorial_title_search">Αναζήτηση παντού</string>
+    <string name="tutorial_desc_search">Βρείτε στάσεις, γραμμές, προορισμούς και χρήσιμες πληροφορίες μετακίνησης αμέσως.</string>
+    <string name="tutorial_title_home">Οικία</string>
+    <string name="tutorial_desc_home">Αποθηκεύστε την τοποθεσία της οικίας σας για ταχύτερη πλοήγηση.</string>
+    <string name="tutorial_title_work">Εργασία</string>
+    <string name="tutorial_desc_work">Αποκτήστε άμεση πρόσβαση στην καθημερινή σας διαδρομή.</string>
+    <string name="tutorial_title_favorites">Αγαπημένα</string>
+    <string name="tutorial_desc_favorites">Κρατήστε τις αγαπημένες σας διαδρομές εύκαιρες.</string>
+    <string name="tutorial_title_how_to_go">Πώς να πάω</string>
+    <string name="tutorial_desc_how_to_go">Σχεδιάστε το ταξίδι σας με τη δημόσια συγκοινωνία.</string>
+    <string name="tutorial_title_lines">Γραμμές</string>
+    <string name="tutorial_desc_lines">Εξερευνήστε όλες τις διαθέσιμες γραμμές μεταφοράς.</string>
+    <string name="tutorial_title_stops">Κοντινές στάσεις</string>
+    <string name="tutorial_desc_stops">Βρείτε στάσεις κοντά στην τοποθεσία σας.</string>
+    <string name="tutorial_title_live">Ζωντανές αναχωρήσεις</string>
+    <string name="tutorial_desc_live">Παρακολουθήστε τις επόμενες αναχωρήσεις σε πραγματικό χρόνο.</string>
+    <string name="tutorial_title_ai">Ενημερώσεις AI</string>
+    <string name="tutorial_desc_ai">Λάβετε έξυπνες πληροφορίες και ενημερώσεις μετακίνησης.</string>
+    <string name="tutorial_title_tickets">Εισιτήρια</string>
+    <string name="tutorial_desc_tickets">Αποκτήστε γρήγορη πρόσβαση στα εισιτήριά σας.</string>
+    <string name="tutorial_title_buy_ticket">Αγορά εισιτηρίου</string>
+    <string name="tutorial_desc_buy_ticket">Αγοράστε εισιτήρια απευθείας μέσα από την εφαρμογή.</string>
+    <string name="tutorial_title_metro">Γραμμές Μετρό</string>
+    <string name="tutorial_desc_metro">Εξερευνήστε τις γραμμές και τους σταθμούς του Μετρό Θεσσαλονίκης.</string>
+    <string name="tutorial_title_favorite_routes">Αγαπημένες διαδρομές</string>
+    <string name="tutorial_desc_favorite_routes">Κρατήστε τις πιο συχνές διαδρομές σας πάντα διαθέσιμες.</string>
+    <string name="tutorial_title_notifications">Ειδοποιήσεις</string>
+    <string name="tutorial_desc_notifications">Λάβετε σημαντικές ενημερώσεις σχετικά με τις μετακινήσεις σας.</string>
+    <string name="tutorial_title_settings">Ρυθμίσεις</string>
+    <string name="tutorial_desc_settings">Προσαρμόστε την εμπειρία σας στο ThessTransit.</string>
 
 </resources>

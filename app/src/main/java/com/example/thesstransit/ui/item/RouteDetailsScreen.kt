@@ -1,5 +1,6 @@
 package com.example.thesstransit.ui.item
 
+import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -7,7 +8,16 @@ import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
 import android.util.TypedValue
 import android.view.ViewGroup.LayoutParams
+import android.view.animation.Animation
+import android.view.animation.ScaleAnimation
 import androidx.annotation.DrawableRes
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -30,16 +40,20 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.CenterFocusStrong
+import androidx.compose.material.icons.filled.CenterFocusWeak
 import androidx.compose.material.icons.filled.DirectionsBus
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.SwapHoriz
-import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material.icons.filled.Route
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
@@ -47,13 +61,16 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
@@ -72,7 +89,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -647,6 +664,22 @@ private fun RouteMapTab(
         mutableStateOf(false)
     }
 
+    val selectedStop = remember {
+        mutableStateOf<Stop?>(null)
+    }
+
+    val animatedProgress by animateFloatAsState(
+        targetValue = 1f,
+        animationSpec = tween(900),
+        label = "route_progress"
+    )
+
+    val visiblePoints = vm.routePolyline.take(
+        (vm.routePolyline.size * animatedProgress).toInt().coerceAtLeast(2)
+    )
+
+    val primaryColor = MaterialTheme.colorScheme.primary.toArgb()
+    val surfaceColor = MaterialTheme.colorScheme.surface.toArgb()
 
     Box (
         modifier = Modifier
@@ -728,8 +761,90 @@ private fun RouteMapTab(
             }
         )
 
+        Column(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            SmallFloatingActionButton(
+                elevation = FloatingActionButtonDefaults.elevation(
+                    defaultElevation = 8.dp
+                ),
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                contentColor = MaterialTheme.colorScheme.primary,
+                shape = RoundedCornerShape(18.dp),
+                onClick = {
+                    mapView.value?.controller?.animateTo(
+                        BoundingBox.fromGeoPoints(
+                            vm.stops.map {
+                                GeoPoint(it.latitude, it.longitude)
+                            }
+                        ).centerWithDateLine
+                    )
+                    mapView.value?.controller?.setZoom(14.5)
+                }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Route,
+                    contentDescription = null
+                )
+            }
+
+            SmallFloatingActionButton(
+                onClick = {
+                    val points = vm.stops.map {
+                        GeoPoint(it.latitude, it.longitude)
+                    }
+
+                    mapView.value?.zoomToBoundingBox(
+                        BoundingBox.fromGeoPoints(points),
+                        true,
+                        220
+                    )
+                }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.CenterFocusStrong,
+                    contentDescription = null
+                )
+            }
+        }
+
+//        AnimatedVisibility(
+//            visible = vm.route.value != null,
+//            modifier = Modifier
+//                .align(Alignment.BottomStart)
+//                .padding(18.dp),
+//            enter = fadeIn() + slideInVertically { it/2 },
+//            exit = fadeOut()
+//        ) {
+//            Card(
+//                shape = RoundedCornerShape(22.dp),
+//                colors = CardDefaults.cardColors(
+//                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
+//                )
+//            ) {
+//            }
+//        }
+
         LaunchedEffect(vm.stops) {
             val map = mapView.value ?: return@LaunchedEffect
+
+            val pulse = ScaleAnimation(
+                1f,
+                1.15f,
+                1f,
+                1.15f,
+                Animation.RELATIVE_TO_SELF,
+                0.5f,
+                Animation.RELATIVE_TO_SELF,
+                0.5f
+            ).apply {
+                repeatMode = Animation.REVERSE
+                repeatCount = Animation.INFINITE
+                duration = 700
+            }
 
             stopMarkers.forEach {
                 map.overlays.remove(it)
@@ -749,7 +864,7 @@ private fun RouteMapTab(
                     icon = bitmapIcon(
                         context,
                         R.drawable.bus_stop,
-                        18
+                        20
                     )
 
                     setAnchor(
@@ -758,7 +873,24 @@ private fun RouteMapTab(
                     )
 
                     setOnMarkerClickListener { _, _ ->
-                        onStopClick(stop)
+                        selectedStop.value = stop
+
+                        map.controller.animateTo(
+                            GeoPoint(
+                                stop.latitude,
+                                stop.longitude
+                            )
+                        )
+
+                        map.controller.animateTo(
+                            GeoPoint(
+                                stop.latitude,
+                                stop.longitude
+                            ),
+                            17.5,
+                            500L
+                        )
+
                         true
                     }
                 }
@@ -786,8 +918,28 @@ private fun RouteMapTab(
                 }
             )
 
-            line.outlinePaint.strokeWidth = 8f
+            line.outlinePaint.apply {
+                strokeWidth = 10f
+                color = primaryColor
+                isAntiAlias = true
+            }
 
+            val outline = Polyline().apply {
+                line.setPoints(
+                    visiblePoints.map {
+                        GeoPoint(it.latitude, it.longitude)
+                    }
+                )
+
+                outlinePaint.apply {
+                    strokeWidth = 16f
+                    color = surfaceColor
+                    alpha = 180
+                    isAntiAlias = true
+                }
+            }
+
+            map.overlays.add(outline)
             map.overlays.add(line)
 
             polylineRef.value = line
@@ -900,7 +1052,7 @@ private fun RouteMapTab(
                                 icon = bitmapIcon(
                                     context,
                                     R.drawable.bus,
-                                    14
+                                    18
                                 )
 
 
@@ -917,10 +1069,14 @@ private fun RouteMapTab(
                             )
                         } else {
 
-                            marker.position = GeoPoint(
-                                vehicle.latitude,
-                                vehicle.longitude
+                            animateMarker(
+                                marker,
+                                GeoPoint(
+                                    vehicle.latitude,
+                                    vehicle.longitude
+                                )
                             )
+
                         }
                     }
 
@@ -935,7 +1091,126 @@ private fun RouteMapTab(
                     map.invalidate()
                 }
         }
+
+        AnimatedVisibility(
+            enter = slideInVertically { -it } + fadeIn(),
+            exit = slideOutVertically { -it } + fadeOut(),
+            visible = selectedStop.value != null
+        ){
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        MaterialTheme.colorScheme.scrim.copy(alpha = 0.12f)
+                    )
+                    .clickable {
+                        selectedStop.value = null
+                    }
+            )
+        }
+
+        AnimatedVisibility(
+            visible = selectedStop.value != null,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(horizontal = 16.dp)
+        ) {
+            Card(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .fillMaxWidth(0.92f)
+                    .clickable {
+                        selectedStop.value?.let(onStopClick)
+                    },
+                shape = RoundedCornerShape(22.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                ),
+                border = BorderStroke(
+                    1.dp,
+                    MaterialTheme.colorScheme.outline.copy(alpha = 0.18f)
+                ),
+                elevation = CardDefaults.cardElevation(
+                    defaultElevation = 10.dp
+                )
+            ) {
+
+                Row(
+                    modifier = Modifier.padding(
+                        horizontal = 18.dp,
+                        vertical = 16.dp
+                    ),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Surface(
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.primary.copy(0.12f)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.LocationOn,
+                            contentDescription = null,
+                            modifier = Modifier.padding(10.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+
+                    Spacer( modifier = Modifier.width(14.dp) )
+
+                    Column(
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            text = selectedStop.value!!.name,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 2
+                        )
+
+                        Spacer( modifier = Modifier.height(4.dp) )
+
+                        Text(
+                            text = "Κωδικός ${selectedStop.value!!.id.value}",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.SemiBold
+                        )
+
+                        Surface(
+                            shape = CircleShape,
+                            color = MaterialTheme.colorScheme.primary.copy(0.12f)
+                        ) {
+                            Text(
+                                text = "Live Route",
+                                modifier = Modifier.padding(
+                                    horizontal = 10.dp,
+                                    vertical = 5.dp
+                                ),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        Spacer( modifier = Modifier.height(6.dp) )
+
+                        Text(
+                            text = "Πατήστε για λεπτομέρειες στάσης",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    FilledTonalButton(
+                        onClick = { selectedStop.value?.let(onStopClick) }
+                    ) {
+                        Text( "Άνοιγμα" )
+                    }
+                }
+
+            }
+        }
     }
+
 }
 
 @OptIn(ExperimentalTime::class)
@@ -1023,8 +1298,16 @@ private fun TimetableTab(
         }
     }
 
-    LazyColumn(state = listState){
+    LazyColumn(
+        state = listState,
+        contentPadding = PaddingValues(
+            horizontal = 16.dp,
+            vertical = 8.dp
+        ),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ){
         itemsIndexed(vm.departures) { index, departure ->
+
             val departed =
                 if (!viewingToday) {
                     false
@@ -1045,62 +1328,132 @@ private fun TimetableTab(
                 }
 
 
-            val isNextTrip = index == nextTripIndex
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 4.dp),
+            TimetableDepartureItem(
+                time = departure.time.toString().substring(0,5),
+                destination = vm.tripHeadsigns[departure.tripId] ?: "",
+                isNext = index == nextTripIndex,
+                departed = departed
+            )
+        }
+    }
+}
 
-                shape = RoundedCornerShape(16.dp),
-                border =
-                    if (isNextTrip)
-                        BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
-                    else
-                        null,
-
-                colors = CardDefaults.cardColors(
-                    containerColor =
-                        if (isNextTrip)
-                            MaterialTheme.colorScheme.primaryContainer
-                        else
-                            MaterialTheme.colorScheme.surface
+@Composable
+fun TimetableDepartureItem(
+    time: String,
+    destination: String,
+    isNext: Boolean,
+    departed: Boolean
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .alpha(if (departed) 0.45f else 1f),
+        shape = RoundedCornerShape(18.dp),
+        color =
+            if (isNext)
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
+            else
+                MaterialTheme.colorScheme.surfaceContainer,
+        border =
+            if (isNext)
+                BorderStroke(
+                    1.dp,
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
                 )
+            else
+                null
+    ) {
+
+        Row(
+            modifier = Modifier
+                .padding(
+                    horizontal = 16.dp,
+                    vertical = 12.dp
+                ),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.width(64.dp)
             ) {
-                Row(
-                    modifier = Modifier
-                        .padding(12.dp)
-                        .alpha( if(departed) 0.45f else 1f )
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = departure.time.toString().substring(0,5),
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold
-                        )
+                Text(
+                    text = time,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
 
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = vm.tripHeadsigns[departure.tripId] ?: "",
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.Medium,
-                                maxLines = 1
-                            )
+                if (isNext) {
 
-                            Text(
-                                text = stringResource(R.string.arrival_label_prefix),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-
-                        }
-
-                    }
-
+                    Text(
+                        text = "Επόμενο",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
-            HorizontalDivider()
+
+            Spacer( modifier = Modifier.width(14.dp) )
+
+            Box(
+                modifier = Modifier
+                    .width(3.dp)
+                    .height(42.dp)
+                    .clip(RoundedCornerShape(50))
+                    .background( MaterialTheme.colorScheme.primary.copy(alpha = 0.45f) )
+            )
+
+            Spacer( modifier = Modifier.width(14.dp) )
+
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = destination,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1
+                )
+
+                Spacer( modifier = Modifier.height(3.dp) )
+
+                Text(
+                    text = stringResource(R.string.arrival_label_prefix),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
+    }
+}
+
+private fun animateMarker(
+    marker: Marker,
+    target: GeoPoint
+) {
+
+    val start = marker.position
+
+    ValueAnimator.ofFloat(0f,1f).apply {
+
+        duration = 1000
+
+        addUpdateListener {
+
+            val t = it.animatedFraction
+
+            marker.position = GeoPoint(
+                start.latitude +
+                        (target.latitude-start.latitude)*t,
+
+                start.longitude +
+                        (target.longitude-start.longitude)*t
+            )
+
+        }
+
+        start()
     }
 }

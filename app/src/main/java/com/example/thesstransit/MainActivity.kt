@@ -1,5 +1,6 @@
 package com.example.thesstransit
 
+import android.content.Context
 import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -8,7 +9,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -17,7 +17,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -27,12 +26,14 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.example.thesstransit.ui.data.AppThemePreferences
+import com.example.thesstransit.ui.data.TutorialPreferences
+import com.example.thesstransit.ui.data.TutorialViewModelFactory
 import com.example.thesstransit.ui.item.GroupRouteDetailsScreen
 import com.example.thesstransit.ui.item.HomeScreen
 import com.example.thesstransit.ui.item.LocationPickerScreen
 import com.example.thesstransit.ui.item.LoginScreen
-import com.example.thesstransit.ui.item.RegisterScreen
 import com.example.thesstransit.ui.item.MetroScreen
+import com.example.thesstransit.ui.item.RegisterScreen
 import com.example.thesstransit.ui.item.RouteDetailsScreen
 import com.example.thesstransit.ui.item.RoutesScreen
 import com.example.thesstransit.ui.item.SearchScreen
@@ -45,6 +46,7 @@ import com.example.thesstransit.ui.viewModels.AppTheme
 import com.example.thesstransit.ui.viewModels.AuthViewModel
 import com.example.thesstransit.ui.viewModels.RoutesViewModel
 import com.example.thesstransit.ui.viewModels.StopDetailsViewModel
+import com.example.thesstransit.ui.viewModels.TutorialViewModel
 import io.gitlab.mitsiosm.oseth.data.Route
 import io.gitlab.mitsiosm.oseth.data.Stop
 import kotlinx.serialization.Serializable
@@ -57,8 +59,6 @@ data class RoutesRoute(
     val initialTab: String = "all"
 )
 @Serializable object TicketsRoute
-
-@Serializable object SplashRoute
 
 @Serializable object LoginRoute
 
@@ -173,9 +173,16 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.fillMaxSize()
                     ) { innerPadding ->
 
+                        val tutorialViewModel: TutorialViewModel =
+                            viewModel(
+                                factory = TutorialViewModelFactory(
+                                    TutorialPreferences(context)
+                                )
+                            )
+
                         NavHost(
                             navController = navController,
-                            startDestination = SplashRoute,
+                            startDestination = HomeRoute,
                             modifier = Modifier.padding(innerPadding)
                         ) {
                             composable<HomeRoute> {
@@ -233,36 +240,9 @@ class MainActivity : ComponentActivity() {
                                     },
                                     onMetroClick = {
                                         navController.navigate(MetroRoute)
-                                    }
+                                    },
+                                    tutorialViewModel = tutorialViewModel
                                 )
-                            }
-
-                            composable<SplashRoute>{
-
-                                val authViewModel:AuthViewModel=viewModel()
-
-                                val initialized by
-                                authViewModel.initialized.collectAsState()
-
-                                LaunchedEffect(initialized) {
-                                    if (initialized) {
-                                        navController.navigate(HomeRoute) {
-                                            popUpTo(SplashRoute) {
-                                                inclusive = true
-                                            }
-                                        }
-                                    }
-                                }
-
-                                Box(
-                                    modifier=Modifier.fillMaxSize(),
-                                    contentAlignment = Alignment.Center
-                                ){
-                                    Text(
-                                        "ThessTransit"
-                                    )
-                                }
-
                             }
 
                             composable<LoginRoute>{
@@ -330,7 +310,8 @@ class MainActivity : ComponentActivity() {
                                     onLogoutClick={
                                         authViewModel.logout()
                                         navController.navigate(LoginRoute){ popUpTo(0) }
-                                    }
+                                    },
+                                    tutorialViewModel = tutorialViewModel
                                 )
                             }
 

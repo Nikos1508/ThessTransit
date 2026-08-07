@@ -79,9 +79,13 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")
 
     //Supabase
-    implementation("io.github.jan-tennert.supabase:postgrest-kt:3.1.1")
-    implementation("io.github.jan-tennert.supabase:auth-kt:3.1.1")
-    implementation("io.github.jan-tennert.supabase:realtime-kt:3.1.1")
+    implementation(platform("io.github.jan-tennert.supabase:bom:3.1.1"))
+    implementation("io.github.jan-tennert.supabase:postgrest-kt")
+    implementation("io.github.jan-tennert.supabase:auth-kt")
+    implementation("io.github.jan-tennert.supabase:realtime-kt")
+
+    // My enemy...
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
 
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.androidx.navigation.compose)

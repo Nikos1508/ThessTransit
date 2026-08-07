@@ -17,7 +17,6 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -33,6 +32,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
@@ -51,7 +51,6 @@ import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material.icons.outlined.Train
 import androidx.compose.material.icons.outlined.Work
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -65,6 +64,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
@@ -73,9 +73,11 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -86,20 +88,29 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.thesstransit.R
 import com.example.thesstransit.ui.components.AnimatedSearchBar
+import com.example.thesstransit.ui.components.PremiumLoadingOverlay
 import com.example.thesstransit.ui.components.RouteFiltersDialog
+import com.example.thesstransit.ui.components.TutorialAnchor
 import com.example.thesstransit.ui.data.SavedLocations
+import com.example.thesstransit.ui.data.TutorialPages
+import com.example.thesstransit.ui.data.TutorialState
+import com.example.thesstransit.ui.data.TutorialTarget
+import com.example.thesstransit.ui.data.tutorialTarget
 import com.example.thesstransit.ui.utils.SharedKeys
 import com.example.thesstransit.ui.viewModels.AuthViewModel
 import com.example.thesstransit.ui.viewModels.FavoritesViewModel
 import com.example.thesstransit.ui.viewModels.HomeViewModel
+import com.example.thesstransit.ui.viewModels.TutorialViewModel
 import io.github.jan.supabase.auth.user.UserInfo
-import io.gitlab.mitsiosm.oseth.Oseth
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.android.awaitFrame
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.time.Duration.Companion.milliseconds
+
 
 object Guard {
     @OptIn(ExperimentalAtomicApi::class)
@@ -126,6 +137,7 @@ fun HomeScreen(
     favoritesViewModel: FavoritesViewModel = viewModel(),
     homeViewModel: HomeViewModel = viewModel(),
     authViewModel: AuthViewModel = viewModel(),
+    tutorialViewModel: TutorialViewModel,
 
     sharedTransitionScope: SharedTransitionScope,
     animatedContentScope: AnimatedContentScope
@@ -134,12 +146,12 @@ fun HomeScreen(
     val defaultSubtitle = stringResource(R.string.quick_set_location)
 
     val tiles = listOf(
-        FeatureTile(stringResource(R.string.tile_tickets), "", Icons.Outlined.LocalActivity, onTicketsClick),
-        FeatureTile(stringResource(R.string.tile_buy_ticket), "", Icons.Outlined.QrCode2, onBuyTicketClick),
-        FeatureTile(stringResource(R.string.tile_metro_lines), "", Icons.Outlined.Train, onMetroClick),
-        FeatureTile(stringResource(R.string.tile_favorite_routes), "", Icons.Outlined.Favorite, onFavouritesClick),
-        FeatureTile(stringResource(R.string.tile_notifications), "", Icons.Outlined.Notifications, onNotificationsClick),
-        FeatureTile(stringResource(R.string.tile_settings), "", Icons.Outlined.Settings, onSettingsClick)
+        FeatureTile(title = stringResource(R.string.tile_tickets),    subtitle = "", Icons.Outlined.LocalActivity, onClick = onTicketsClick,       target = TutorialTarget.TICKETS),
+        FeatureTile(title = stringResource(R.string.tile_buy_ticket),     subtitle = "", Icons.Outlined.QrCode2,       onClick = onBuyTicketClick,     target = TutorialTarget.BUY_TICKET),
+        FeatureTile(title = stringResource(R.string.tile_metro_lines),        subtitle = "", Icons.Outlined.Train,         onClick = onMetroClick,         target = TutorialTarget.METRO),
+        FeatureTile(title = stringResource(R.string.tile_favorite_routes), subtitle = "", Icons.Outlined.Favorite,      onClick = onFavouritesClick,    target = TutorialTarget.FAVORITE_ROUTES),
+        FeatureTile(title = stringResource(R.string.tile_notifications),         subtitle = "", Icons.Outlined.Notifications, onClick = onNotificationsClick, target = TutorialTarget.NOTIFICATIONS),
+        FeatureTile(title = stringResource(R.string.tile_settings),            subtitle = "", Icons.Outlined.Settings,      onClick = onSettingsClick,      target = TutorialTarget.SETTINGS)
     )
 
     var showFilters by remember { mutableStateOf(false) }
@@ -149,13 +161,12 @@ fun HomeScreen(
     val totalFavorites = favoriteRoutes.size + favoriteGroups.size
 
     val context = LocalContext.current
-
     LaunchedEffect(Unit) {
 
         if (homeViewModel.hasSynced)
             return@LaunchedEffect
 
-        if (!Guard.busy.compareAndSet(false, true))
+        if (!Guard.busy.compareAndSet(expectedValue = false, newValue = true))
             return@LaunchedEffect
 
         homeViewModel.startLoading()
@@ -170,6 +181,10 @@ fun HomeScreen(
         }
     }
 
+    val tutorialCompleted by tutorialViewModel
+        .tutorialCompleted
+        .collectAsState()
+
     val savedLocations = remember(context) {
         SavedLocations(context)
     }
@@ -181,6 +196,38 @@ fun HomeScreen(
     val work by savedLocations.work.collectAsState(
         initial = Triple(null, null, null)
     )
+
+    val tutorialState = remember {
+        TutorialState()
+    }
+
+    val haptic = LocalHapticFeedback.current
+
+    val listState = rememberLazyListState()
+
+    val showTutorial = !tutorialCompleted
+
+    LaunchedEffect(
+        tutorialState.currentStep,
+        showTutorial
+    ) {
+
+        if (!showTutorial)
+            return@LaunchedEffect
+
+        val page = tutorialState.currentPage
+
+        listState.animateScrollToItem(page.listIndex)
+
+        snapshotFlow {
+            listState.isScrollInProgress
+        }.first {
+            !it
+        }
+
+        awaitFrame()
+        awaitFrame()
+    }
 
     Box(
         modifier = Modifier
@@ -195,34 +242,40 @@ fun HomeScreen(
             )
     ){
         LazyColumn(
+            state = listState,
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(bottom = 16.dp)
         ) {
-            item {
+            item(0) {
                 HeaderSection(
+                    tutorialState = tutorialState,
                     currentUser = authViewModel.user.collectAsState().value,
                     onLoginClick = onLoginClick,
-                    onProfileClick = {
-                        // TODO Profile Screen
-                    }
+                    onProfileClick = { }
                 )
             }
             item {
-                Spacer(modifier = Modifier.height(8.dp))
-                with(sharedTransitionScope){
-                    AnimatedSearchBar(
-                        onClick = onSearchClick,
+                Spacer( modifier = Modifier.height(8.dp) )
 
-                        modifier = Modifier
-                            .padding(horizontal = 12.dp)
-                            .sharedElement(
-                                rememberSharedContentState(
-                                    key = SharedKeys.SEARCH_BAR
+                with(sharedTransitionScope){
+                    TutorialAnchor(
+                        target = TutorialTarget.SEARCH,
+                        tutorialState = tutorialState,
+                        itemIndex = 1
+                    ) {
+                        AnimatedSearchBar(
+                            onClick = onSearchClick,
+                            modifier = Modifier
+                                .padding(horizontal = 12.dp)
+                                .sharedElement(
+                                    rememberSharedContentState(
+                                        key = SharedKeys.SEARCH_BAR
+                                    ),
+                                    animatedVisibilityScope = animatedContentScope
                                 ),
-                                animatedVisibilityScope = animatedContentScope
-                            ),
-                        onFilteredClick = { showFilters = true }
-                    )
+                            onFilteredClick = { showFilters = true }
+                        )
+                    }
                 }
             }
             item {
@@ -233,7 +286,8 @@ fun HomeScreen(
                     onWorkClick = onWorkClick,
                     onFavouritesClick = onFavouritesClick,
                     homeSubtitle = home.first ?: defaultSubtitle,
-                    workSubtitle = work.first ?: defaultSubtitle
+                    workSubtitle = work.first ?: defaultSubtitle,
+                    tutorialState = tutorialState
                 )
             }
             item {
@@ -242,7 +296,8 @@ fun HomeScreen(
                     onHowToGoClick = onHowToGoClick,
                     onLinesClick = onLinesClick,
                     onNearbyStopsClick = onNearbyStopsClick,
-                    onLiveDeparturesClick = onLiveDeparturesClick
+                    onLiveDeparturesClick = onLiveDeparturesClick,
+                    tutorialState = tutorialState
                 )
             }
             item {
@@ -253,7 +308,13 @@ fun HomeScreen(
                 )
             }
             item {
-                AIUpdateSection()
+                TutorialAnchor(
+                    target = TutorialTarget.AI,
+                    tutorialState = tutorialState,
+                    itemIndex = 5
+                ) {
+                    AIUpdateSection()
+                }
             }
             item {
                 Spacer(modifier = Modifier.height(24.dp))
@@ -263,7 +324,10 @@ fun HomeScreen(
                 )
             }
             item {
-                FeatureTilesGrid(tilesList = tiles)
+                FeatureTilesGrid(
+                    tilesList = tiles,
+                    tutorialState = tutorialState
+                )
             }
             item {
                 Spacer(modifier = Modifier.height(32.dp))
@@ -280,35 +344,42 @@ fun HomeScreen(
             )
         }
 
+        if (showTutorial) {
+            TutorialOverlay(
+                tutorialState = tutorialState,
+                listState = listState,
+                onSkip = {
+                    tutorialViewModel.completeTutorial()
+                },
+                onNext = {
+                    if (tutorialState.currentStep == TutorialPages.lastIndex) {
+                        tutorialViewModel.completeTutorial()
+                    } else {
+                        haptic.performHapticFeedback(
+                            HapticFeedbackType.TextHandleMove
+                        )
+
+                        tutorialState.currentStep++
+                    }
+                }
+            )
+        }
+
         AnimatedVisibility(
-            visible = homeViewModel.isLoading.value
+            visible = homeViewModel.isLoading.value,
+            enter = fadeIn(),
+            exit = fadeOut()
         ) {
 
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Color.Gray.copy(alpha = 0.28f)
-                    )
-                    .clickable(
-                        enabled = true,
-                        indication = null,
-                        interactionSource = remember {
-                            androidx.compose.foundation.interaction.MutableInteractionSource()
-                        }
-                    ) {},
-                contentAlignment = Alignment.Center
-            ) {
+            PremiumLoadingOverlay()
 
-                CircularProgressIndicator()
-
-            }
         }
     }
 }
 
 @Composable
 fun HeaderSection(
+    tutorialState: TutorialState,
     currentUser: UserInfo?,
     onLoginClick: () -> Unit = {},
     onProfileClick: () -> Unit = {}
@@ -371,61 +442,73 @@ fun HeaderSection(
                 .fillMaxSize()
                 .padding(horizontal = 20.dp, vertical = 16.dp)
         ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.TopEnd),
+                contentAlignment = Alignment.TopEnd
+            ) {
+                AnimatedContent(
+                    targetState = currentUser,
+                    label = "account"
+                ) { user ->
 
-            AnimatedContent(
-                targetState = currentUser,
-                label = "account"
-            ) { user ->
+                    if (user == null) {
+                        TutorialAnchor(
+                            target = TutorialTarget.LOGIN,
+                            tutorialState = tutorialState,
+                            itemIndex = 0
+                        ) {
+                            OutlinedButton(
+                                onClick = onLoginClick,
+                                shape = RoundedCornerShape(12.dp),
+                                contentPadding = PaddingValues(horizontal = 14.dp),
+                                border = BorderStroke(
+                                    1.dp,
+                                    MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
+                                ),
+                                modifier = Modifier
+                                    .height(36.dp)
+                                    .align(Alignment.TopEnd)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Person,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp),
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
 
-                if (user == null) {
-                    OutlinedButton(
-                        onClick = onLoginClick,
-                        shape = RoundedCornerShape(12.dp),
-                        contentPadding = PaddingValues(horizontal = 14.dp),
-                        border = BorderStroke(
-                            1.dp,
-                            MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
-                        ),
-                        modifier = Modifier
-                            .height(36.dp)
-                            .align(Alignment.TopEnd)
-                    ){
-                        Icon(
-                            imageVector = Icons.Outlined.Person,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
+                                Spacer(modifier = Modifier.width(6.dp))
 
-                        Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = stringResource(R.string.login),
+                                    fontSize = 13.sp,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+                    } else {
+                        FilledTonalButton(
+                            onClick = onProfileClick,
+                            modifier = Modifier
+                                .height(38.dp)
+                                .align(Alignment.TopEnd),
+                            shape = RoundedCornerShape(18.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.AccountCircle,
+                                null,
+                                modifier = Modifier.size(18.dp)
+                            )
 
-                        Text(
-                            text = stringResource(R.string.login),
-                            fontSize = 13.sp,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                } else {
-                    FilledTonalButton(
-                        onClick = onProfileClick,
-                        modifier = Modifier
-                            .height(38.dp)
-                            .align(Alignment.TopEnd),
-                        shape = RoundedCornerShape(18.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.AccountCircle,
-                            null,
-                            modifier = Modifier.size(18.dp)
-                        )
+                            Spacer(modifier = Modifier.size(8.dp))
 
-                        Spacer(modifier = Modifier.size(8.dp))
-
-                        Text(
-                            text = user.email ?: "Profile",
-                            maxLines = 1
-                        )
+                            Text(
+                                text = user.email ?: "Profile",
+                                maxLines = 1
+                            )
+                        }
                     }
                 }
             }
@@ -508,7 +591,8 @@ fun QuickAccessRow(
     onWorkClick: () -> Unit,
     onFavouritesClick: () -> Unit,
     homeSubtitle: String,
-    workSubtitle: String
+    workSubtitle: String,
+    tutorialState: TutorialState
 ) {
     Row(
         modifier = Modifier
@@ -522,7 +606,9 @@ fun QuickAccessRow(
             icon = Icons.Outlined.Home,
             iconColor = Color.White,
             onClick = onHomeClick,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
+            tutorialTarget = TutorialTarget.HOME,
+            tutorialState = tutorialState
         )
 
         QuickAccessItem(
@@ -531,7 +617,10 @@ fun QuickAccessRow(
             icon = Icons.Outlined.Work,
             iconColor = MaterialTheme.colorScheme.primary,
             onClick = onWorkClick,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
+            tutorialTarget = TutorialTarget.WORK,
+            tutorialState = tutorialState
+
         )
 
         QuickAccessItem(
@@ -540,24 +629,39 @@ fun QuickAccessRow(
             icon = Icons.Outlined.Star,
             iconColor = Color(0xFFFFD700),
             onClick = onFavouritesClick,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
+            tutorialTarget = TutorialTarget.FAVORITES,
+            tutorialState = tutorialState
         )
     }
 }
 
 @Composable
 fun QuickAccessItem(
+    modifier: Modifier = Modifier,
     title: String,
     subtitle: String,
     icon: ImageVector,
     iconColor: Color,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    tutorialTarget: TutorialTarget? = null,
+    tutorialState: TutorialState? = null
 ) {
     Surface(
-        modifier = modifier
-            .height(82.dp)
-            .bounceClick { onClick() },
+        modifier =
+            modifier
+                .then(
+                    if (tutorialTarget != null && tutorialState != null)
+                        Modifier.tutorialTarget(
+                            tutorialTarget,
+                            tutorialState,
+                            itemIndex = 2
+                        )
+                    else
+                        Modifier
+                )
+                .height(82.dp)
+                .bounceClick { onClick() },
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surfaceContainer,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.15f))
@@ -595,45 +699,76 @@ fun MainFeatureGrid(
     onHowToGoClick: () -> Unit,
     onLinesClick: () -> Unit,
     onNearbyStopsClick: () -> Unit,
-    onLiveDeparturesClick: () -> Unit
+    onLiveDeparturesClick: () -> Unit,
+    tutorialState: TutorialState
 ) {
     Column(
         modifier = Modifier.padding(horizontal = 12.dp)
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            MainFeatureCard(
+            TutorialAnchor(
                 modifier = Modifier.weight(1f),
-                title = stringResource(R.string.feature_how_to_go_title),
-                subtitle = stringResource(R.string.feature_how_to_go_subtitle),
-                icon = Icons.Outlined.Route,
-                onClick = onHowToGoClick
-            )
-            MainFeatureCard(
+                target = TutorialTarget.HOW_TO_GO,
+                tutorialState = tutorialState,
+                itemIndex = 3
+            ) {
+                MainFeatureCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    title = stringResource(R.string.feature_how_to_go_title),
+                    subtitle = stringResource(R.string.feature_how_to_go_subtitle),
+                    icon = Icons.Outlined.Route,
+                    onClick = onHowToGoClick
+                )
+            }
+
+            TutorialAnchor(
                 modifier = Modifier.weight(1f),
-                title = stringResource(R.string.feature_lines_title),
-                subtitle = stringResource(R.string.feature_lines_subtitle),
-                icon = Icons.Outlined.DirectionsBus,
-                onClick = onLinesClick
-            )
+                target = TutorialTarget.LINES,
+                tutorialState = tutorialState,
+                itemIndex = 3
+            ) {
+                MainFeatureCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    title = stringResource(R.string.feature_lines_title),
+                    subtitle = stringResource(R.string.feature_lines_subtitle),
+                    icon = Icons.Outlined.DirectionsBus,
+                    onClick = onLinesClick
+                )
+            }
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer( modifier = Modifier.height(12.dp) )
 
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            MainFeatureCard(
+            TutorialAnchor(
                 modifier = Modifier.weight(1f),
-                title = stringResource(R.string.feature_nearby_stops_title),
-                subtitle = stringResource(R.string.feature_nearby_stops_subtitle),
-                icon = Icons.Outlined.LocationOn,
-                onClick = onNearbyStopsClick
-            )
-            MainFeatureCard(
+                target = TutorialTarget.STOPS,
+                tutorialState = tutorialState,
+                itemIndex = 3
+            ) {
+                MainFeatureCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    title = stringResource(R.string.feature_nearby_stops_title),
+                    subtitle = stringResource(R.string.feature_nearby_stops_subtitle),
+                    icon = Icons.Outlined.LocationOn,
+                    onClick = onNearbyStopsClick
+                )
+            }
+
+            TutorialAnchor(
                 modifier = Modifier.weight(1f),
-                title = stringResource(R.string.feature_live_departures_title),
-                subtitle = stringResource(R.string.feature_live_departures_subtitle),
-                icon = Icons.Outlined.AccessTime,
-                onClick = onLiveDeparturesClick
-            )
+                target = TutorialTarget.LIVE,
+                tutorialState = tutorialState,
+                itemIndex = 3
+            ) {
+                MainFeatureCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    title = stringResource(R.string.feature_live_departures_title),
+                    subtitle = stringResource(R.string.feature_live_departures_subtitle),
+                    icon = Icons.Outlined.AccessTime,
+                    onClick = onLiveDeparturesClick
+                )
+            }
         }
     }
 }
@@ -806,7 +941,10 @@ fun AIUpdateCard(
 }
 
 @Composable
-fun FeatureTilesGrid(tilesList: List<FeatureTile>) {
+fun FeatureTilesGrid(
+    tilesList: List<FeatureTile>,
+    tutorialState: TutorialState
+) {
 
     val chunkedTiles = tilesList.chunked(3)
 
@@ -822,7 +960,8 @@ fun FeatureTilesGrid(tilesList: List<FeatureTile>) {
                 rowItems.forEach { tile ->
                     SmallFeatureTile(
                         modifier = Modifier.weight(1f),
-                        tile = tile
+                        tile = tile,
+                        tutorialState = tutorialState
                     )
                 }
             }
@@ -833,10 +972,16 @@ fun FeatureTilesGrid(tilesList: List<FeatureTile>) {
 @Composable
 fun SmallFeatureTile(
     modifier: Modifier = Modifier,
-    tile: FeatureTile
+    tile: FeatureTile,
+    tutorialState: TutorialState
 ) {
     Surface(
         modifier = modifier
+            .tutorialTarget(
+                target = tile.target,
+                tutorialState = tutorialState,
+                itemIndex = 7
+            )
             .height(85.dp)
             .bounceClick { tile.onClick() },
         color = MaterialTheme.colorScheme.surfaceContainer,
@@ -876,6 +1021,7 @@ data class FeatureTile(
     val title: String,
     val subtitle: String,
     val icon: ImageVector,
+    val target: TutorialTarget,
     val onClick: () -> Unit
 )
 
