@@ -48,6 +48,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -215,6 +216,9 @@ fun TutorialCard(
     onNext: () -> Unit,
     onSkip: () -> Unit
 ) {
+
+    val page = TutorialPages[step]
+
     Surface(
         shadowElevation = 18.dp,
         shape = RoundedCornerShape(28.dp),
@@ -242,7 +246,7 @@ fun TutorialCard(
 
                 Column {
                     Text(
-                        TutorialPages[step].title,
+                        text = stringResource(page.titleRes),
                         fontWeight = FontWeight.Bold,
                         fontSize = 22.sp
                     )
@@ -265,7 +269,7 @@ fun TutorialCard(
             Spacer(modifier = Modifier.height(20.dp))
 
             Text(
-                text = TutorialPages[step].description,
+                text = stringResource(page.descriptionRes),
                 lineHeight = 22.sp,
                 fontSize = 15.sp
             )

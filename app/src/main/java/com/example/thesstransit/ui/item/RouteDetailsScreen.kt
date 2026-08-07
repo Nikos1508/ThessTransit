@@ -811,23 +811,22 @@ private fun RouteMapTab(
             }
         }
 
-        AnimatedVisibility(
-            visible = vm.route.value != null,
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(18.dp),
-            enter = fadeIn() + slideInVertically { it/2 },
-            exit = fadeOut()
-        ) {
-            Card(
-                shape = RoundedCornerShape(22.dp),
-                colors = CardDefaults.cardColors(
-                    contianerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
-                )
-            ) {
-
-            }
-        }
+//        AnimatedVisibility(
+//            visible = vm.route.value != null,
+//            modifier = Modifier
+//                .align(Alignment.BottomStart)
+//                .padding(18.dp),
+//            enter = fadeIn() + slideInVertically { it/2 },
+//            exit = fadeOut()
+//        ) {
+//            Card(
+//                shape = RoundedCornerShape(22.dp),
+//                colors = CardDefaults.cardColors(
+//                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
+//                )
+//            ) {
+//            }
+//        }
 
         LaunchedEffect(vm.stops) {
             val map = mapView.value ?: return@LaunchedEffect
@@ -1453,7 +1452,6 @@ private fun animateMarker(
                         (target.longitude-start.longitude)*t
             )
 
-            marker.mapView.invalidate()
         }
 
         start()
