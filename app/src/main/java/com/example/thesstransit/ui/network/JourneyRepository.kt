@@ -2,9 +2,7 @@ package com.example.thesstransit.ui.network
 
 import io.gitlab.mitsiosm.oseth.Oseth
 import io.gitlab.mitsiosm.oseth.data.Route
-import io.gitlab.mitsiosm.oseth.data.RouteId
 import io.gitlab.mitsiosm.oseth.data.Stop
-import io.gitlab.mitsiosm.oseth.data.TripId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
@@ -259,5 +257,37 @@ class JourneyRepository(
         val c = 2 * atan2(sqrt(a), sqrt(1 - a))
 
         return earthRadius * c
+    }
+
+    private fun parseTime(value: String): LocalTime {
+        return try {
+            LocalTime.parse(
+                value,
+                DateTimeFormatter.ISO_LOCAL_TIME
+            )
+        } catch (_: Exception) {
+            LocalTime.now()
+        }
+    }
+
+    private fun formatTime(time: LocalTime): String {
+        return time.format(
+            DateTimeFormatter.ofPattern("HH:mm")
+        )
+    }
+
+    private fun minutesBetween(
+        start: LocalTime,
+        end: LocalTime
+    ):Int {
+        var seconds = java.time.Duration
+            .between(start, end)
+            .seconds
+
+        if (seconds < 0) {
+            seconds += 24 * 60 * 60
+        }
+
+        return (seconds / 60).toInt()
     }
 }
