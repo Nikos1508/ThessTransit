@@ -35,6 +35,7 @@ import androidx.compose.material.icons.outlined.Construction
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.MyLocation
 import androidx.compose.material.icons.outlined.SwapVerticalCircle
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -82,6 +83,7 @@ import kotlin.time.Duration.Companion.milliseconds
 @Composable
 fun SearchScreen(
     onBackClick: () -> Unit,
+    onFindRouteClick: (Place, Place) -> Unit,
     sharedTransitionScope: SharedTransitionScope,
     animatedContentScope: AnimatedContentScope,
     viewModel: TransitSearchViewModel = viewModel()
@@ -92,19 +94,12 @@ fun SearchScreen(
     val myLocationSting = stringResource(R.string.my_location)
     val currentLocationString = stringResource(R.string.current_location)
 
-    var fromQuery by remember {
-        mutableStateOf(myLocationSting)
+    var fromPlace by remember {
+        mutableStateOf<Place?>(null)
     }
 
-    var fromPlace by remember {
-        mutableStateOf<Place?>(
-            Place(
-                name = myLocationSting,
-                latitude = 0.0,
-                longitude = 0.0,
-                type = PlaceType.CURRENT_LOCATION
-            )
-        )
+    var fromQuery by remember {
+        mutableStateOf(myLocationSting)
     }
 
     val locationProvider = remember {
@@ -313,7 +308,6 @@ fun SearchScreen(
                                         onClick = {
                                             scope.launch {
                                                 val location = locationProvider.getCurrentLocation()
-
                                                 location?.let {
                                                     val name =
                                                         reverseGeocoder.getName(
@@ -328,7 +322,6 @@ fun SearchScreen(
                                                             longitude = it.longitude,
                                                             type = PlaceType.CURRENT_LOCATION
                                                         )
-
                                                     fromQuery = name
                                                 }
                                             }
@@ -357,6 +350,33 @@ fun SearchScreen(
                                 delay(300.milliseconds)
                                 keyboard?.show()
                             }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    AnimatedVisibility(
+                        visible = fromPlace != null && toPlace != null
+                    ) {
+
+                        Button(
+                            onClick = {
+
+                                val from = fromPlace
+                                val to = toPlace
+
+                                if (from != null && to != null) {
+                                    onFindRouteClick(
+                                        from,
+                                        to
+                                    )
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 12.dp)
+                        ) {
+                            Text(text = "Βρες διαδρομή")
                         }
                     }
 

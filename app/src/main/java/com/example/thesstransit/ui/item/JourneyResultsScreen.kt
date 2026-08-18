@@ -135,9 +135,87 @@ private fun JourneyCard(
                 Text(
                     text = "${option.durationMinutes} min",
                     style = MaterialTheme.typography.titleMedium
+                )
+            }
 
+            Spacer( modifier = Modifier.height(4.dp) )
+
+            Text(
+                text = "${option.numTransfers} αλλαγές · " +
+                        "${option.totalWalkSeconds / 60} λεπτά περπάτημα",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            option.reliabilityNote?.let {
+                Spacer( modifier = Modifier.height(4.dp) )
+
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+
+            Spacer( modifier = Modifier.height(12.dp) )
+
+            option.legs.forEach { leg ->
+                LegRow(leg)
+            }
+        }
+    }
+}
+
+@Composable
+private fun LegRow(
+    leg: JourneyLeg
+) {
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+
+        when (leg.mode) {
+            "transit" -> {
+                Text(
+                    text = leg.routeShortName ?: "",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.width(48.dp)
+                )
+
+                Text(
+                    text = "${leg.boardStopName} ->" +
+                            leg.alightStopName,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            "walk" -> {
+                Text(
+                    text = "Περπάτημα",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.width(80.dp)
+                )
+
+                Text(
+                    text = "${leg.fromStopName} -> " +
+                            "${leg.toStopName} " +
+                            "(${leg.walkSeconds ?: 0} sec)",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.weight(1f)
                 )
             }
         }
+
+        Text(
+            text = leg.arrival,
+            style = MaterialTheme.typography.labelMedium
+        )
     }
 }
