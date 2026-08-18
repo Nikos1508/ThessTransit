@@ -5,23 +5,24 @@ import io.gitlab.mitsiosm.oseth.data.Route
 import io.gitlab.mitsiosm.oseth.data.Stop
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.time.LocalDate
-import java.time.LocalTime
-import java.time.format.DateTimeFormatter
+import kotlinx.datetime.LocalDate
+import kotlin.time.Clock
+import kotlinx.datetime.LocalTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
+import kotlin.time.ExperimentalTime
 
 class JourneyRepository(
     private val oseth: Oseth = Oseth()
 ) {
-
     private data class RouteData(
         val route: Route,
         val stops: List<Stop>
     )
-
     private var cachedRoutes: List<RouteData>? = null
 
     private suspend fun loadRoutes(): List<RouteData> =
@@ -53,18 +54,21 @@ class JourneyRepository(
             }
 
             cachedRoutes = data
-
             data
         }
 
+    @OptIn(ExperimentalTime::class)
     suspend fun findJourneys(
         originLat: Double,
         originLon: Double,
         destLat: Double,
         destLon: Double,
         departTime: String,
+        @Suppress("UNUSED_PARAMETER")
         optimizeFor: String = "arrival_time",
+        @Suppress("UNUSED_PARAMETER")
         walkPenalty: Double = 1.0,
+        @Suppress("UNUSED_PARAMETER")
         maxTransfers: Int = 3
     ): Result<List<JourneyOption>> = runCatching {
 
@@ -75,15 +79,15 @@ class JourneyRepository(
         }
 
         val originStops = findNearestStops(
-            originLat,
-            originLon,
+            latitude = originLat,
+            longitude = originLon,
             routes,
             limit = 6
         )
 
         val destinationStops = findNearestStops(
-            destLat,
-            destLon,
+            latitude = destLat,
+            longitude = destLon,
             routes,
             limit = 6
         )
@@ -98,6 +102,10 @@ class JourneyRepository(
 
         val departure = parseTime(departTime)
 
+        val now = Clock.System.now()
+        val localDateTime = now.toLocalDateTime(TimeZone.currentSystemDefault())
+
+        val today = localDateTime.date
         val results = mutableListOf<JourneyOption>()
 
         for ((originStop, originDistance) in originStops) {
@@ -112,10 +120,10 @@ class JourneyRepository(
 
                 val times = try {
                     oseth.getStopTimesAfterTimeFromRoute(
-                        LocalDate.now(),
-                        routeData.route.id,
-                        originStop.id,
-                        departure
+                        date = today,
+                        route = routeData.route.id,
+                        stop = originStop.id,
+                        after = departure
                     )
                 } catch (_: Exception) {
                     emptyList()
@@ -129,13 +137,13 @@ class JourneyRepository(
                         emptyList()
                     }
 
-                    if (tripStops.isEmpty()) continue
+                    if (tripStops.isEmpty()) { continue }
 
                     val originIndex = tripStops.indexOfFirst {
                         it.stop.id == originStop.id
                     }
 
-                    if (originIndex < 0) continue
+                    if (originIndex < 0) { continue }
 
                     val destinationStop = tripStops
                         .drop(originIndex + 1)
@@ -222,7 +230,8 @@ class JourneyRepository(
         limit: Int
     ): List<Pair<Stop, Double>> {
         return routes
-            .flatMap { it.stops }
+            .asSequence()
+            .flatMap { it.stops.asSequence() }
             .distinctBy { it.id }
             .map {
                 it to distanceMeters(
@@ -234,6 +243,7 @@ class JourneyRepository(
             }
             .sortedBy { it.second }
             .take(limit)
+            .toList()
     }
 
     private fun distanceMeters(
@@ -259,20 +269,21 @@ class JourneyRepository(
         return earthRadius * c
     }
 
+    @OptIn(ExperimentalTime::class)
     private fun parseTime(value: String): LocalTime {
         return try {
-            LocalTime.parse(
-                value,
-                DateTimeFormatter.ISO_LOCAL_TIME
-            )
+            LocalTime.parse(value)
         } catch (_: Exception) {
-            LocalTime.now()
+            val now = Clock.System.now()
+            now.toLocalDateTime(TimeZone.currentSystemDefault()).time
         }
     }
 
+
     private fun formatTime(time: LocalTime): String {
-        return time.format(
-            DateTimeFormatter.ofPattern("HH:mm")
+        return "%02d:%02d".format(
+            time.hour,
+            time.minute
         )
     }
 
@@ -280,14 +291,22 @@ class JourneyRepository(
         start: LocalTime,
         end: LocalTime
     ):Int {
-        var seconds = java.time.Duration
-            .between(start, end)
-            .seconds
+        val startSeconds =
+            start.hour * 60 * 60 +
+            start.minute * 60 +
+            start.second
+
+        val endSeconds =
+            end.hour * 60 * 60 +
+            end.minute * 60 +
+            end.second
+
+        var seconds = endSeconds - startSeconds
 
         if (seconds < 0) {
             seconds += 24 * 60 * 60
         }
 
-        return (seconds / 60).toInt()
+        return seconds/60
     }
 }
