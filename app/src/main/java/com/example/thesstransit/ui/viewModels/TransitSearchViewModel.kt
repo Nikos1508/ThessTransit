@@ -17,11 +17,12 @@ class TransitSearchViewModel : ViewModel() {
         query: String,
         onResult: (List<SearchResult>) -> Unit
     ) {
-
         searchJob?.cancel()
 
-        if (query.trim().length < 2) {
-            onResult( emptyList() )
+        val cleanQuery = query.trim()
+
+        if (cleanQuery.length < 2) {
+            onResult(emptyList())
             return
         }
 
@@ -30,21 +31,19 @@ class TransitSearchViewModel : ViewModel() {
             delay(400.milliseconds)
 
             try {
-                val results = NominatimClient.api.search( query = query )
+                val results = NominatimClient.api.search(query = cleanQuery)
 
-                onResult(
+                val mappedResults =
                     results.map {
                         SearchResult(
                             title = it.displayName,
-
                             latitude = it.lat.toDouble(),
-
                             longitude = it.lon.toDouble()
                         )
                     }
-
-                )
-            } catch(e: Exception) {
+                onResult(mappedResults)
+            } catch (e: Exception) {
+                e.printStackTrace()
                 onResult(emptyList())
             }
         }

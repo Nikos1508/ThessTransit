@@ -1,6 +1,5 @@
 package com.example.thesstransit
 
-import android.content.Context
 import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -421,7 +420,6 @@ class MainActivity : ComponentActivity() {
                                     },
 
                                     onFindRouteClick = { from, to ->
-
                                         navController.navigate(
                                             JourneyResultsRoute(
                                                 originLat = from.latitude,
@@ -430,7 +428,9 @@ class MainActivity : ComponentActivity() {
                                                 destLon = to.longitude,
                                                 departTime = java.time.LocalTime
                                                     .now()
-                                                    .toString()
+                                                    .format(
+                                                        java.time.format.DateTimeFormatter.ofPattern("HH:mm")
+                                                    )
                                             )
                                         )
                                     }
