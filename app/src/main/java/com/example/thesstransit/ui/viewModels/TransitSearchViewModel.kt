@@ -24,6 +24,8 @@ class TransitSearchViewModel : ViewModel() {
         onResult: (List<SearchResult>) -> Unit
     ) {
         val cleanQuery = query.trim()
+
+        Log.d(TAG, "================================")
         Log.d(TAG, "Search requested: `$cleanQuery`")
 
         searchJob?.cancel()
@@ -35,35 +37,48 @@ class TransitSearchViewModel : ViewModel() {
         }
 
         searchJob = viewModelScope.launch {
-
             delay(400.milliseconds)
 
             try {
-                Log.d(TAG, "Calling Nominatim for: '$cleanQuery'")
+                Log.d(TAG, "Calling Nominatim...")
+                val apiResults = NominatimClient.api.search(query = cleanQuery)
 
-                val results = NominatimClient.api.search(query = cleanQuery)
+                Log.d(TAG, "Nominatim returned ${apiResults.size} results")
 
-                Log.d(TAG, "Nominatim returned ${results.size} results")
+                val mappedResults = apiResults.mapNotNull { result ->
 
-                val mappedResults = results.mapNotNull { result ->
-                    try{
-                        SearchResult(
-                            title = result.displayName,
-                            latitude = result.lat.toDouble(),
-                            longitude = result.lon.toDouble()
-                        )
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Failed to parse result: $result", e)
+                    Log.d(TAG,
+                        "RAW RESULT -> displayName=${result.displayName}, " +
+                                "lat=${result.lat}, lon=${result.lon}"
+                    )
+
+                    val title = result.displayName
+                    val latitude = result.lat?.toDoubleOrNull()
+                    val longitude = result.lon?.toDoubleOrNull()
+
+                    if (
+                        title.isNullOrBlank() ||
+                        latitude == null ||
+                        longitude == null
+                    ) {
+                        Log.w(TAG, "Skipping invalid result: $result")
                         null
+                    } else {
+                        SearchResult(
+                            title = title,
+                            latitude = latitude,
+                            longitude = longitude
+                        )
                     }
                 }
                 Log.d(TAG, "Mapped ${mappedResults.size} valid results")
                 onResult(mappedResults)
+
             } catch (e: CancellationException) {
                 Log.d(TAG, "Search cancelled: `$cleanQuery`")
                 throw e
             } catch (e: Exception) {
-                Log.e(TAG, "Nominatim search failed for `$cleanQuery`", e)
+                Log.e(TAG, "Nominatim search FAILED for `$cleanQuery`", e)
                 onResult(emptyList())
             }
         }

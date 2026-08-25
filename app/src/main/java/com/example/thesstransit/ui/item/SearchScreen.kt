@@ -1,5 +1,6 @@
 package com.example.thesstransit.ui.item
 
+import android.util.Log
 import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
@@ -175,6 +176,36 @@ fun SearchScreen(
 
     LaunchedEffect(Unit) {
         showContent = true
+
+        scope.launch {
+            try {
+                Log.d("SearchScreen", "Getting current location...")
+                val location = locationProvider.getCurrentLocation()
+
+                if (location != null) {
+                    Log.d("SearchScreen", "Current location: " + "${location.latitude}, ${location.longitude}")
+
+                    val name = reverseGeocoder.getName(
+                        location.latitude,
+                        location.longitude
+                    ) ?: currentLocationString
+
+                    fromPlace =
+                        Place(
+                            name = name,
+                            latitude = location.latitude,
+                            longitude = location.longitude,
+                            type = PlaceType.CURRENT_LOCATION
+                        )
+
+                    fromQuery = name
+                } else {
+                    Log.w("SearchScreen", "Could not get current location")
+                }
+            } catch (e: Exception) {
+                Log.e("SearchScreen", "Failed to get current location", e)
+            }
+        }
         delay(300.milliseconds)
 
         destinationFocus.requestFocus()

@@ -30,21 +30,22 @@ data class NominatimAddress(
 
 data class NominatimPlace(
     @SerializedName("display_name")
-    val displayName: String,
+    val displayName: String? = null,
+
     @SerializedName("lat")
-    val lat: String,
+    val lat: String? = null,
+
     @SerializedName("lon")
-    val lon: String,
+    val lon: String? = null,
+
     @SerializedName("address")
     val address: NominatimAddress? = null
 )
-
 
 interface NominatimService {
 
     @GET("search")
     suspend fun search(
-
         @Query("q")
         query: String,
 
@@ -71,13 +72,10 @@ interface NominatimService {
 
         @Header("User-Agent")
         userAgent: String = "ThessTransit/1.0 (Android)"
-
     ): List<NominatimPlace>
-
 
     @GET("reverse")
     suspend fun reverse(
-
         @Query("lat")
         lat: Double,
 
@@ -85,21 +83,20 @@ interface NominatimService {
         lon: Double,
 
         @Query("format")
-        format:String = "json",
+        format: String = "json",
 
         @Query("addressdetails")
         addressDetails: Int = 1,
 
         @Header("User-Agent")
         userAgent: String = "ThessTransit/1.0 (Android)"
-
     ): NominatimReverseResult
-
 }
 
 data class NominatimReverseResult(
     @SerializedName("display_name")
-    val displayName: String?,
+    val displayName: String? = null,
+
     @SerializedName("address")
     val address: NominatimAddress? = null
 )

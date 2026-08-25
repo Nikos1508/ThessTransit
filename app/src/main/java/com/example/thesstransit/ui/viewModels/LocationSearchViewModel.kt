@@ -1,29 +1,33 @@
 package com.example.thesstransit.ui.viewModels
 
 import androidx.lifecycle.ViewModel
-import kotlinx.coroutines.Job
 import androidx.lifecycle.viewModelScope
 import com.example.thesstransit.ui.item.SearchResult
 import com.example.thesstransit.ui.network.NominatimAddress
 import com.example.thesstransit.ui.network.NominatimClient
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
-class LocationSearchViewModel: ViewModel() {
+class LocationSearchViewModel : ViewModel() {
+
     private var job: Job? = null
 
     private fun formatAddress(address: NominatimAddress?): String {
-        if (address == null)
+        if (address == null) {
             return ""
+        }
 
         val road = buildString {
-            address.road?.let { append(it) }
+            address.road?.let {
+                append(it)
+            }
 
             address.houseNumber?.let {
-                if ( isNotBlank() )
+                if (isNotBlank()) {
                     append(" ")
-
+                }
                 append(it)
             }
         }
@@ -36,16 +40,13 @@ class LocationSearchViewModel: ViewModel() {
                 ?: address.municipality
 
         val region = address.county
-            ?.replace(
-                oldValue = "Περιφερειακή Ενότητα",
-                newValue = ""
-            )
+            ?.replace(oldValue = "Περιφερειακή Ενότητα", newValue = "")
             ?.trim()
 
         return listOfNotNull(
             road.takeIf { it.isNotBlank() },
-            locality,
-            region
+            locality?.takeIf { it.isNotBlank() },
+            region?.takeIf { it.isNotBlank() }
         )
             .distinct()
             .joinToString(", ")
@@ -53,55 +54,66 @@ class LocationSearchViewModel: ViewModel() {
 
     fun search(
         query: String,
-        onResult:(List<SearchResult>) -> Unit
+        onResult: (List<SearchResult>) -> Unit
     ) {
-
         job?.cancel()
+        val cleanQuery = query.trim()
 
-        if (query.length < 2) {
-
-            onResult( emptyList() )
+        if (cleanQuery.length < 2) {
+            onResult(emptyList())
             return
-
         }
 
         job = viewModelScope.launch {
+
             delay(500.milliseconds)
 
-            runCatching {
+            try {
 
-                val response = NominatimClient.api.search(
-                    query =
-                        if (query.contains("Ελλάδα", true))
-                            query
-                        else
-                            "$query, Ελλάδα"
-                )
+                val searchQuery =
+                    if (cleanQuery.contains("Ελλάδα", ignoreCase = true)) {
+                        cleanQuery
+                    } else {
+                        "$cleanQuery, Ελλάδα"
+                    }
 
-                val wantsNumber = query.any { it.isDigit() }
+                val response = NominatimClient.api.search(query = searchQuery)
+
+                val wantsNumber = cleanQuery.any { it.isDigit() }
 
                 val results = response
-                    .filter {
-                        if (wantsNumber)
-                            it.address?.houseNumber != null
-                        else
+                    .filter { result ->
+                        if (wantsNumber) {
+                            result.address?.houseNumber != null
+                        } else {
                             true
+                        }
                     }
-                    .map {
+                    .mapNotNull { result ->
+
+                        val latitude = result.lat?.toDoubleOrNull()
+                        val longitude = result.lon?.toDoubleOrNull()
+
+                        if (latitude == null || longitude == null) {
+                            return@mapNotNull null
+                        }
+
+                        val displayName = result.displayName ?: return@mapNotNull null
+
+                        val title = formatAddress(result.address).ifBlank { displayName }
+
                         SearchResult(
-                            title = formatAddress(it.address).ifBlank { it.displayName },
-                            latitude = it.lat.toDouble(),
-                            longitude = it.lon.toDouble()
+                            title = title,
+                            latitude = latitude,
+                            longitude = longitude
                         )
                     }
                     .distinctBy { it.title.lowercase() }
-                    .sortedByDescending {
-                        it.title.contains(query, true)
-                    }
+                    .sortedByDescending { it.title.contains(cleanQuery, ignoreCase = true) }
 
                 onResult(results)
-            }.onFailure {
-                onResult( emptyList() )
+            } catch (e: Exception) {
+                onResult(emptyList())
             }
         }
     }
@@ -111,29 +123,27 @@ class LocationSearchViewModel: ViewModel() {
         lon: Double,
         onResult: (String) -> Unit
     ) {
-
         viewModelScope.launch {
-             runCatching {
-                 val result =
-                     NominatimClient.api.reverse(
-                         lat,
-                         lon
-                     )
+            try {
+                val result =
+                    NominatimClient.api.reverse(
+                        lat = lat,
+                        lon = lon
+                    )
 
-                 val address = formatAddress(result.address)
+                val address = formatAddress(result.address)
 
-                 onResult(
-                     address.ifBlank {
-                         result.displayName
-                             ?: "$lat, $lon"
-                     }
-                 )
+                val finalName: String =
+                    if (address.isNotBlank()) {
+                        address
+                    } else {
+                        result.displayName ?: "$lat, $lon"
+                    }
 
-             }.onFailure {
-                 onResult(
-                     "$lat , $lon"
-                 )
-             }
+                onResult(finalName)
+            } catch (e: Exception) {
+                onResult("$lat, $lon")
+            }
         }
     }
 }
