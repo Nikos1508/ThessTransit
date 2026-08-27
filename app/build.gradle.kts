@@ -74,6 +74,8 @@ dependencies {
     implementation("org.osmdroid:osmdroid-android:6.1.20")
     implementation("org.osmdroid:osmdroid-wms:6.1.20")
 
+    implementation("com.google.android.gms:play-services-location:21.4.0")
+
     //Search Results on maps
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")

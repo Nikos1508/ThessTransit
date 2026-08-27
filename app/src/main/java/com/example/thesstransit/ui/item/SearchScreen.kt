@@ -1,12 +1,15 @@
 package com.example.thesstransit.ui.item
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -27,7 +30,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -64,6 +66,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.thesstransit.R
 import com.example.thesstransit.ui.components.SearchField
@@ -77,6 +80,8 @@ import com.example.thesstransit.ui.viewModels.TransitSearchViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -88,6 +93,10 @@ fun SearchScreen(
     viewModel: TransitSearchViewModel = viewModel()
 ) {
     val context = LocalContext.current
+
+    val keyboard = LocalSoftwareKeyboardController.current
+    val scope = rememberCoroutineScope()
+    val scrollState = rememberScrollState()
 
     val myLocationString = stringResource(R.string.my_location)
 
@@ -137,6 +146,59 @@ fun SearchScreen(
         ReverseGeocoder(context)
     }
 
+    var locationPermissionDenied by remember {
+        mutableStateOf(false)
+    }
+
+    val locationPermissionLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestMultiplePermissions()
+        ) { permissions ->
+
+            val fineGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true
+
+            val coarseGranted = permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+
+            if (fineGranted || coarseGranted) {
+                Log.d("SearchScreen", "Location permission granted")
+
+                scope.launch {
+
+                    val location = locationProvider.getCurrentLocation()
+
+                    if (location != null) {
+                        Log.d(
+                            "SearchScreen",
+                            "Current location: ${location.latitude}, ${location.longitude}"
+                        )
+
+                        val name =
+                            reverseGeocoder.getName(
+                                location.latitude,
+                                location.longitude
+                            ) ?: currentLocationString
+
+                        fromPlace =
+                            Place(
+                                name = name,
+                                latitude = location.latitude,
+                                longitude = location.longitude,
+                                type = PlaceType.CURRENT_LOCATION
+                            )
+
+                        fromQuery = name
+                        searchingFrom = true
+
+                    } else {
+                        Log.w("SearchScreen", "Could not obtain current location")
+                    }
+                }
+            } else {
+                Log.w("SearchScreen", "Location permission denied")
+                locationPermissionDenied = true
+            }
+        }
+
     val storage = remember {
         RecentSearchStorage(context)
     }
@@ -148,12 +210,6 @@ fun SearchScreen(
     val destinationFocus = remember {
         FocusRequester()
     }
-
-    val keyboard = LocalSoftwareKeyboardController.current
-
-    val scope = rememberCoroutineScope()
-
-    val scrollState = rememberScrollState()
 
     val locationScale by animateFloatAsState(
         targetValue = if (locationPressed) 0.9f else 1f,
@@ -174,38 +230,62 @@ fun SearchScreen(
         keyboard?.hide()
     }
 
-    LaunchedEffect(Unit) {
-        showContent = true
+    fun requestLocation() {
+        val fineGranted = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
 
-        scope.launch {
-            try {
-                Log.d("SearchScreen", "Getting current location...")
+        val coarseGranted = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+
+        if (fineGranted || coarseGranted) {
+            Log.d("SearchScreen", "Location permission already granted")
+
+            scope.launch {
+                locationPressed = true
+
                 val location = locationProvider.getCurrentLocation()
 
+                locationPressed = false
+
                 if (location != null) {
-                    Log.d("SearchScreen", "Current location: " + "${location.latitude}, ${location.longitude}")
+                    Log.d("SearchScreen", "Current location: ${location.latitude}, ${location.longitude}")
 
                     val name = reverseGeocoder.getName(
                         location.latitude,
                         location.longitude
                     ) ?: currentLocationString
 
-                    fromPlace =
-                        Place(
-                            name = name,
-                            latitude = location.latitude,
-                            longitude = location.longitude,
-                            type = PlaceType.CURRENT_LOCATION
-                        )
+                    fromPlace = Place(
+                        name = name,
+                        latitude = location.latitude,
+                        longitude = location.longitude,
+                        type = PlaceType.CURRENT_LOCATION
+                    )
 
                     fromQuery = name
+                    searchingFrom = true
                 } else {
-                    Log.w("SearchScreen", "Could not get current location")
+                    Log.w("SearchScreen", "Location return null")
                 }
-            } catch (e: Exception) {
-                Log.e("SearchScreen", "Failed to get current location", e)
             }
+        } else {
+            Log.d("SearchScreen", "Requesting location permission")
+
+            locationPermissionLauncher.launch(
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                )
+            )
         }
+    }
+
+    LaunchedEffect(Unit) {
+        showContent = true
         delay(300.milliseconds)
 
         destinationFocus.requestFocus()
@@ -368,38 +448,7 @@ fun SearchScreen(
                         ) {
 
                             IconButton(
-                                onClick = {
-                                    locationPressed = true
-
-                                    scope.launch {
-                                        delay(duration = 100.milliseconds)
-
-                                        locationPressed = false
-                                        val location = locationProvider.getCurrentLocation()
-
-                                        location?.let {
-
-                                            val name =
-                                                reverseGeocoder
-                                                    .getName(
-                                                        it.latitude,
-                                                        it.longitude
-                                                    )
-                                                    ?: currentLocationString
-
-                                            fromPlace =
-                                                Place(
-                                                    name = name,
-                                                    latitude = it.latitude,
-                                                    longitude = it.longitude,
-                                                    type = PlaceType.CURRENT_LOCATION
-                                                )
-
-                                            fromQuery = name
-                                            searchingFrom = true
-                                        }
-                                    }
-                                }
+                                onClick = { requestLocation() }
                             ) {
                                 Icon(
                                     imageVector = Icons.Outlined.MyLocation,
@@ -639,12 +688,41 @@ fun SearchScreen(
             }
         }
     }
+
+    if (locationPermissionDenied) {
+        AlertDialog(
+            onDismissRequest = { locationPermissionDenied = false },
+            title = { Text("Χρειάζεται πρόσβαση στην τοποθεσία") },
+            text = {
+                Text(
+                    "Για να χρησιμοποιείσουμε την τρέχουσα τοποθεσία σας, " +
+                    "το ThessTransit χρειάζεται άδεια πρόσβασης στην τοποθεσία"
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        locationPermissionDenied = false
+                        locationPermissionLauncher.launch(
+                            arrayOf(
+                                Manifest.permission.ACCESS_FINE_LOCATION,
+                                Manifest.permission.ACCESS_COARSE_LOCATION
+                            )
+                        )
+                    }
+                ) { Text("Επιτρέπω") }
+            },
+            dismissButton = {
+                TextButton(onClick = {locationPermissionDenied = false} ) { Text("Όχι τώρα") }
+            }
+        )
+    }
 }
 
 private fun LogSearchSelection(
     place: Place
 ) {
-    android.util.Log.d(
+    Log.d(
         "SearchScreen",
         "Selected place: ${place.name} " + "(${place.latitude}, ${place.longitude})"
     )
