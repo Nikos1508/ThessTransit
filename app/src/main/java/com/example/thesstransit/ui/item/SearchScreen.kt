@@ -163,7 +163,6 @@ fun SearchScreen(
                 Log.d("SearchScreen", "Location permission granted")
 
                 scope.launch {
-
                     val location = locationProvider.getCurrentLocation()
 
                     if (location != null) {
@@ -190,11 +189,10 @@ fun SearchScreen(
                         searchingFrom = true
 
                     } else {
-                        Log.w("SearchScreen", "Could not obtain current location")
+                        Log.w("SearchScreen", "Permission granted but location is null")
                     }
                 }
             } else {
-                Log.w("SearchScreen", "Location permission denied")
                 locationPermissionDenied = true
             }
         }
@@ -241,17 +239,27 @@ fun SearchScreen(
             Manifest.permission.ACCESS_COARSE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED
 
-        if (fineGranted || coarseGranted) {
+        if (!fineGranted && !coarseGranted) {
             Log.d("SearchScreen", "Location permission already granted")
 
-            scope.launch {
-                locationPressed = true
+            locationPermissionLauncher.launch(
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                )
+            )
+
+            return
+        }
+
+        scope.launch {
+            locationPressed = true
+
+            try {
 
                 val location = locationProvider.getCurrentLocation()
 
-                locationPressed = false
-
-                if (location != null) {
+                if(location != null) {
                     Log.d("SearchScreen", "Current location: ${location.latitude}, ${location.longitude}")
 
                     val name = reverseGeocoder.getName(
@@ -271,21 +279,18 @@ fun SearchScreen(
                 } else {
                     Log.w("SearchScreen", "Location return null")
                 }
+            } catch (e: Exception) {
+                Log.e("SearchScreen", "Location error", e)
+            } finally {
+                locationPressed = false
             }
-        } else {
-            Log.d("SearchScreen", "Requesting location permission")
-
-            locationPermissionLauncher.launch(
-                arrayOf(
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-                )
-            )
         }
     }
 
     LaunchedEffect(Unit) {
         showContent = true
+
+        requestLocation()
         delay(300.milliseconds)
 
         destinationFocus.requestFocus()
@@ -516,7 +521,7 @@ fun SearchScreen(
 
                                             modifier = Modifier.clickable {
 
-                                                    LogSearchSelection(place)
+                                                    logSearchSelection(place)
                                                     selectPlace(place)
 
                                                     scope.launch {
@@ -719,7 +724,7 @@ fun SearchScreen(
     }
 }
 
-private fun LogSearchSelection(
+private fun logSearchSelection(
     place: Place
 ) {
     Log.d(

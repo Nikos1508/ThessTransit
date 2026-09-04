@@ -11,6 +11,8 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
+import androidx.annotation.RequiresPermission
+
 class LocationProvider(
     private val context: Context
 ) {
@@ -29,29 +31,39 @@ class LocationProvider(
                 ) == PackageManager.PERMISSION_GRANTED
     }
 
+    @RequiresPermission(anyOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
     suspend fun getCurrentLocation(): Location? {
+
         if (!hasLocationPermission()) {
             return null
         }
 
         val request = CurrentLocationRequest.Builder()
             .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
-            .setMaxUpdateAgeMillis(10_000)
+            .setMaxUpdateAgeMillis(30_000)
             .build()
 
         return suspendCancellableCoroutine { continuation ->
+
             fusedLocationClient
                 .getCurrentLocation(request, null)
                 .addOnSuccessListener { location ->
+
                     if (continuation.isActive) {
                         continuation.resume(location)
                     }
                 }
-                .addOnFailureListener {
+                .addOnFailureListener { exception ->
+
+                    exception.printStackTrace()
+
                     if (continuation.isActive) {
                         continuation.resume(null)
                     }
                 }
+
+            continuation.invokeOnCancellation {
+            }
         }
     }
 }
