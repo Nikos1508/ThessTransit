@@ -77,8 +77,13 @@ dependencies {
     implementation("com.google.android.gms:play-services-location:21.4.0")
 
     //Search Results on maps
-    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation("com.squareup.retrofit2:retrofit:2.11.0") {
+        exclude(group = "com.squareup.okhttp3", module = "okhttp")
+    }
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")
+
+    implementation(platform("com.squareup.okhttp3:okhttp-bom:4.12.0"))
+    implementation("com.squareup.okhttp3:okhttp")
 
     //Supabase
     implementation(platform("io.github.jan-tennert.supabase:bom:3.1.1"))

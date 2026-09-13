@@ -5,9 +5,9 @@ import android.util.Log
 import io.gitlab.mitsiosm.oseth.Oseth
 import io.gitlab.mitsiosm.oseth.data.Route
 import io.gitlab.mitsiosm.oseth.data.Stop
+import io.gitlab.mitsiosm.oseth.data.StopId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -57,6 +57,8 @@ class JourneyRepository(
                 return@withContext it
             }
 
+            ensureFreshData()
+
             Log.d(TAG, "Loading routes from Oseth...")
 
             val routes = oseth.getRoutes()
@@ -88,6 +90,27 @@ class JourneyRepository(
             Log.d(TAG, "Successfully loaded ${data.size} route")
             data
         }
+
+    @OptIn(ExperimentalTime::class)
+    private suspend fun ensureFreshData() {
+        val today = Clock.System.now()
+            .toLocalDateTime(TimeZone.currentSystemDefault())
+            .date
+
+        val servicesToday = oseth.getServicesForDate(today)
+
+        // Έτσι και χαλάσει εδώ έγινε η πατάτα, δεν ξέρω αν πρέπει να φορτώνω ξανά 70ΜΒ δεδομένων
+        if (servicesToday.isEmpty()) {
+            Log.w(TAG, "No active service for $today in local DB. Forcing resync...")
+            val synced = oseth.sync(ignoreHash = true)
+            Log.d(TAG, "Forced sync finished, success=$synced")
+
+            val servicesAfter = oseth.getServicesForDate(today)
+            Log.d(TAG, "Active services for $today after resync: ${servicesAfter.size}")
+        } else {
+            Log.d(TAG, "LOcal DB already has ${servicesToday.size} active service(s) for $today")
+        }
+    }
 
     @OptIn(ExperimentalTime::class)
     suspend fun findJourneys(
@@ -153,6 +176,8 @@ class JourneyRepository(
         val today = localDateTime.date
 
         val results = mutableListOf<JourneyOption>()
+
+        val walkCache = mutableMapOf<StopId, WalkingRoute>()
 
         for ((originStop, originDistance) in originStops) {
 
@@ -242,9 +267,34 @@ class JourneyRepository(
                     val departureTime = time.time
                     val arrivalTime = destinationCandidate.time
 
-                    val walkToOriginSeconds = (originDistance / 1.35).toInt()
-                    val walkFromDestinationSeconds = (destinationDistance / 1.35).toInt()
-                    val totalWalkSeconds = walkToOriginSeconds + walkFromDestinationSeconds
+                    val originWalk  = walkCache.getOrPut(originStop.id) {
+                        WalkingRouter.walkingRoute(
+                            fromLat = originLat,
+                            fromLon = originLon,
+                            toLat = originStop.latitude,
+                            toLon = originStop.longitude,
+                            straightLineFallbackMeters = originDistance
+                        )
+                    }
+
+                    val destWalk = walkCache.getOrPut(destinationCandidate.stop.id) {
+                        WalkingRouter.walkingRoute(
+                            fromLat = destinationCandidate.stop.latitude,
+                            fromLon = destinationCandidate.stop.longitude,
+                            toLat = destLat,
+                            toLon = destLon,
+                            straightLineFallbackMeters = destinationDistance
+                        )
+                    }
+
+                    if (originWalk.distanceMeters > MAX_WALK_DISTANCE_METERS || destWalk.distanceMeters > MAX_WALK_DISTANCE_METERS) {
+                        Log.d(TAG, "Real walking distance exceeds limit, skipping trip")
+                        continue
+                    }
+
+                    val walkToOriginSeconds = originWalk.durationSeconds
+                    val walkFromDestinationSeconds = destWalk.durationSeconds
+                    val totalWalkSeconds = walkFromDestinationSeconds + walkToOriginSeconds
 
                     val transitMinutes = minutesBetween(departureTime, arrivalTime)
                     val totalDurationMinutes = transitMinutes + totalWalkSeconds / 60
