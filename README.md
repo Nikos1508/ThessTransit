@@ -14,7 +14,7 @@
 
 To download the application:
 
-1) Download the latest release APK (version 0.10.3) from **[HERE](https://github.com/Nikos1508/ThessTransit/releases/tag/v0.10.3)**.
+1) Download the latest release APK (version 0.15.0) from **[HERE](https://github.com/Nikos1508/ThessTransit/releases/tag/v0.15.0)**.
 2. Open the app and wait approximately **2–3 minutes** while all routes, stops, and timetable information are downloaded and stored locally.
 3) Enjoy the application! More updates and features will be announced here as development continues.
 
@@ -28,18 +28,20 @@ The application is primarily developed by me, for now (Hallooo), with AI being u
 
 ---
 
-## Features available in Version 0.9
+## Features available in Version 0.15
 
-- Fully working **offline mode** (not yet fully integrated), providing access to all routes and stops without an internet connection.
+- Partially working **offline mode** (not yet fully integrated), providing access to all routes and stops without an internet connection.
 - Local storage of user preferences (theme, language, favourite routes, home, work, etc.).
-- Fully functional Home Screen UI.
+- Fully functional Home Screen UI (not all features working).
 - Detailed ticket information on the Tickets screen.
 - Maps for selecting your home and work locations to easily compare nearby bus stops.
 - Complete route information, including stops, timetables, and their locations on the map.
 - Settings page with options for changing the application theme and language.
 - Grouped routes (based on route numbers) for easier navigation towards different areas of Thessaloniki.
 - Working Login screen UI.
-- Early version of the route search page.
+- Fully working maps without access issues.
+- Interactive onboarding tutorial on the Home Screen for new users.
+- Partially working Search ENgine (working but niehter in it's full extend nor with nice UI)
 
 <br>
 
@@ -55,14 +57,14 @@ The application is primarily developed by me, for now (Hallooo), with AI being u
 
 ---
 
-## Planned Features for Versions 1.0 - 1.1
+## Planned Features for Versions 0.16 - 1.2
 
-- Interactive onboarding tutorial on the Home Screen for new users.
 - Fully functional login system with cloud synchronization for themes, favourite routes, language preferences, and more.
-- Fully working maps without access issues.
 - Improved map search results.
-- Functional search screen supporting transfers between routes.
+- Functional search screen supporting transfers between routes and working location option.
 - Working notifications system.
+- Metro Screen working with right timing and without UI issues.
+- Fully implemented English version o n  the app and not just partially translated app.
 
 ---
 
