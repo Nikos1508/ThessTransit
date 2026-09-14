@@ -5,12 +5,14 @@ import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
 private val Context.recentSearchDataStore by preferencesDataStore(
     name = "recent_searches"
 )
 
+@Serializable
 data class RecentSearch(
     val title: String,
     val latitude: Double,
@@ -39,10 +41,9 @@ class RecentSearchStorage(
 
             try {
                 json.decodeFromString<List<RecentSearch>>(raw)
-            } catch(e: Exception) {
+            } catch (e: Exception) {
                 emptyList()
             }
-
         }
 
     suspend fun saveSearch(
@@ -67,18 +68,19 @@ class RecentSearchStorage(
                 it.title == title
             }
 
-            val updated = if(existing != null){
+            val updated =
+                if (existing != null) {
                     current.map {
-                        if (it.title == title){
+                        if (it.title == title) {
                             it.copy(
                                 timesOpened = it.timesOpened + 1,
                                 lastUsed = now
                             )
-                        } else{
+                        } else {
                             it
                         }
                     }
-                } else{
+                } else {
                     current + RecentSearch(
                         title = title,
                         latitude = latitude,
@@ -86,10 +88,10 @@ class RecentSearchStorage(
                         timesOpened = 1,
                         lastUsed = now
                     )
-            }
+                }
 
             val finalList = updated
-                .sortedWith (
+                .sortedWith(
                     compareByDescending<RecentSearch> {
                         it.timesOpened
                     }.thenByDescending {
@@ -119,8 +121,7 @@ class RecentSearchStorage(
             .sortedWith(
                 compareByDescending<RecentSearch> {
                     it.timesOpened
-                }
-                    .thenByDescending { it.lastUsed }
+                }.thenByDescending { it.lastUsed }
             )
             .take(4)
     }

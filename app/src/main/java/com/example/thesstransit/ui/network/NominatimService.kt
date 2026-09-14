@@ -1,36 +1,51 @@
 package com.example.thesstransit.ui.network
 
+import com.google.gson.annotations.SerializedName
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Query
 
 data class NominatimAddress(
+    @SerializedName("road")
     val road: String? = null,
+    @SerializedName("house_number")
     val houseNumber: String? = null,
+    @SerializedName("neighbourhood")
     val neighbourhood: String? = null,
+    @SerializedName("suburb")
     val suburb: String? = null,
+    @SerializedName("village")
     val village: String? = null,
+    @SerializedName("town")
     val town: String? = null,
+    @SerializedName("city")
     val city: String? = null,
+    @SerializedName("municipality")
     val municipality: String? = null,
+    @SerializedName("county")
     val county: String? = null,
+    @SerializedName("state")
     val state: String? = null
 )
 
 data class NominatimPlace(
-    val displayName: String,
-    val lat: String,
-    val lon: String,
+    @SerializedName("display_name")
+    val displayName: String? = null,
+
+    @SerializedName("lat")
+    val lat: String? = null,
+
+    @SerializedName("lon")
+    val lon: String? = null,
+
+    @SerializedName("address")
     val address: NominatimAddress? = null
 )
 
-
 interface NominatimService {
-
 
     @GET("search")
     suspend fun search(
-
         @Query("q")
         query: String,
 
@@ -56,14 +71,11 @@ interface NominatimService {
         addressDetails: Int = 1,
 
         @Header("User-Agent")
-        userAgent: String = "ThessTransit/0.9.1"
-
+        userAgent: String = "ThessTransit/1.0 (Android)"
     ): List<NominatimPlace>
-
 
     @GET("reverse")
     suspend fun reverse(
-
         @Query("lat")
         lat: Double,
 
@@ -71,19 +83,20 @@ interface NominatimService {
         lon: Double,
 
         @Query("format")
-        format:String = "json",
+        format: String = "json",
 
         @Query("addressdetails")
         addressDetails: Int = 1,
 
         @Header("User-Agent")
-        userAgent:String = "ThessTransit/1.0"
-
+        userAgent: String = "ThessTransit/1.0 (Android)"
     ): NominatimReverseResult
-
 }
 
 data class NominatimReverseResult(
-    val displayName: String?,
+    @SerializedName("display_name")
+    val displayName: String? = null,
+
+    @SerializedName("address")
     val address: NominatimAddress? = null
 )

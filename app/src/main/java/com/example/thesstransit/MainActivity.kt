@@ -1,6 +1,5 @@
 package com.example.thesstransit
 
-import android.content.Context
 import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -30,6 +29,7 @@ import com.example.thesstransit.ui.data.TutorialPreferences
 import com.example.thesstransit.ui.data.TutorialViewModelFactory
 import com.example.thesstransit.ui.item.GroupRouteDetailsScreen
 import com.example.thesstransit.ui.item.HomeScreen
+import com.example.thesstransit.ui.item.JourneyResultsScreen
 import com.example.thesstransit.ui.item.LocationPickerScreen
 import com.example.thesstransit.ui.item.LoginScreen
 import com.example.thesstransit.ui.item.MetroScreen
@@ -92,6 +92,16 @@ data class StopDetailsRoute(
 
 @Serializable
 object SearchRoute
+
+@Serializable
+data class JourneyResultsRoute(
+    val originLat: Double,
+    val originLon: Double,
+    val destLat: Double,
+    val destLon: Double,
+    val departTime: String
+)
+
 
 val CustomRouteType = object : NavType<Route>(isNullableAllowed = false) {
     override fun get(bundle: Bundle, key: String): Route? {
@@ -295,6 +305,23 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
 
+                            composable<JourneyResultsRoute> {
+
+                                val args =
+                                    it.toRoute<JourneyResultsRoute>()
+
+                                JourneyResultsScreen(
+                                    originLat = args.originLat,
+                                    originLon = args.originLon,
+                                    destLat = args.destLat,
+                                    destLon = args.destLon,
+                                    departTime = args.departTime,
+                                    onBackClick = {
+                                        navController.popBackStack()
+                                    }
+                                )
+                            }
+
                             composable<SettingsRoute> {
                                 val authViewModel:AuthViewModel=viewModel()
                                 val user by authViewModel.user.collectAsState()
@@ -385,9 +412,27 @@ class MainActivity : ComponentActivity() {
                             composable<SearchRoute> {
                                 SearchScreen(
                                     sharedTransitionScope = this@SharedTransitionLayout,
+
                                     animatedContentScope = this,
+
                                     onBackClick = {
                                         navController.popBackStack()
+                                    },
+
+                                    onFindRouteClick = { from, to ->
+                                        navController.navigate(
+                                            JourneyResultsRoute(
+                                                originLat = from.latitude,
+                                                originLon = from.longitude,
+                                                destLat = to.latitude,
+                                                destLon = to.longitude,
+                                                departTime = java.time.LocalTime
+                                                    .now()
+                                                    .format(
+                                                        java.time.format.DateTimeFormatter.ofPattern("HH:mm")
+                                                    )
+                                            )
+                                        )
                                     }
                                 )
                             }
